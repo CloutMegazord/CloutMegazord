@@ -1,0 +1,20 @@
+{
+  "name": "cloutmegazord",
+  "version": "1.0.0",
+  "description": "Bitclout tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"To be implemented\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BogdanDidenko/CloutMegazord.git"
+  },
+  "author": "BohdanDidenko",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BogdanDidenko/CloutMegazord/issues"
+  },
+  "homepage": "https://github.com/BogdanDidenko/CloutMegazord#readme"
+}
