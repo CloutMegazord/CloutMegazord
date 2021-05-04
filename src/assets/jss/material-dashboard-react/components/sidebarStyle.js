@@ -4,7 +4,9 @@ import {
   boxShadow,
   defaultFont,
   primaryColor,
+  secondaryColor,
   primaryBoxShadow,
+  secondaryBoxShadow,
   infoColor,
   successColor,
   warningColor,
@@ -77,7 +79,6 @@ const sidebarStyle = theme => ({
   },
   logoLink: {
     ...defaultFont,
-    textTransform: "uppercase",
     padding: "5px 0",
     display: "block",
     fontSize: "18px",
@@ -87,7 +88,7 @@ const sidebarStyle = theme => ({
     textDecoration: "none",
     backgroundColor: "transparent",
     "&,&:hover": {
-      color: whiteColor
+      color: blackColor
     }
   },
   logoLinkRTL: {
@@ -142,7 +143,7 @@ const sidebarStyle = theme => ({
     display: "block",
     textDecoration: "none",
     "&:hover,&:focus,&:visited,&": {
-      color: whiteColor
+      color: secondaryColor[0]
     }
   },
   itemLink: {
@@ -165,7 +166,7 @@ const sidebarStyle = theme => ({
     marginRight: "15px",
     textAlign: "center",
     verticalAlign: "middle",
-    color: "rgba(" + hexToRgb(whiteColor) + ", 0.8)"
+    color: "rgba(" + hexToRgb(blackColor) + ", 0.8)"
   },
   itemIconRTL: {
     marginRight: "3px",
@@ -177,7 +178,7 @@ const sidebarStyle = theme => ({
     margin: "0",
     lineHeight: "30px",
     fontSize: "14px",
-    color: whiteColor
+    color: blackColor
   },
   itemTextRTL: {
     textAlign: "right"
@@ -186,11 +187,11 @@ const sidebarStyle = theme => ({
     color: whiteColor
   },
   purple: {
-    backgroundColor: primaryColor[0],
-    ...primaryBoxShadow,
+    backgroundColor: secondaryColor[0],
+    ...secondaryBoxShadow,
     "&:hover,&:focus": {
-      backgroundColor: primaryColor[0],
-      ...primaryBoxShadow
+      backgroundColor: secondaryColor[0],
+      ...secondaryBoxShadow
     }
   },
   blue: {

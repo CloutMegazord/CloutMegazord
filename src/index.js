@@ -26,12 +26,34 @@ import 'firebase/auth';
 import { firebaseApp, auth, api_functions } from './firebase_init';
 
 import Admin from "layouts/Admin.js";
+import Landing from "layouts/Landing.js";
 import RTL from "layouts/RTL.js";
 import SignIn from "components/SignIn/SignIn.js"
 import SignUp from "components/SignUp/SignUp.js"
 
 // core components
 
+/**
+ * Crypto
+ * Buffer.from("dfc4901c82c1f9f758d28368077eb2db7836b7720cfd94ca156fd2192ca25698", 'hex')
+ * var myArrays = [ent1, ent2]
+// Get the total length of all arrays.
+let length = 0;
+myArrays.forEach(item => {
+  length += item.length;
+});
+
+// Create a new array with total length and merge all source arrays.
+var mergedArray = new Uint8Array(length);
+let offset = 0;
+myArrays.forEach(item => {
+  mergedArray.set(item, offset);
+  offset += item.length;
+});
+
+// Should print an array with length 90788 (5x 16384 + 8868 your source arrays)
+console.log(mergedArray);
+ */
 import "assets/css/material-dashboard-react.css?v=1.9.0";
 
 const hist = createBrowserHistory();
@@ -77,19 +99,17 @@ const hist = createBrowserHistory();
     return (
         <Router history={hist}>
           <Switch>
-            <Route path="/sign-in">
-              <SignIn firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/>
+            <Route path="/landing">
+              <Route path="/landing" component={Landing} />
+              {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
             </Route>
-            <Route path="/sign-up">
-              <SignUp firebaseAuth={firebaseApp.auth()} api_signup={api_functions.signUp}/>
-            </Route>
-            <Route path="/admin" component={Admin} />
-            <Redirect from="/" to="/admin/dashboard" />
+            {/* <Route path="/admin" component={Admin} />
+            <Redirect from="/" to="/admin/dashboard" /> */}
             {this.state.isSignedIn &&
               <Route path="/admin" component={Admin} />
             }
             {!this.state.isSignedIn &&
-              <Redirect from="/" to="/sign-in" />
+              <Redirect from="/" to="/landing" />
             }
             {this.state.isSignedIn &&
                <Redirect from="/" to="/admin/dashboard" />

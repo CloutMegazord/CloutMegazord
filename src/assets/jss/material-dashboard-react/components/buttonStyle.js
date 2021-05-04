@@ -1,6 +1,7 @@
 import {
   grayColor,
   primaryColor,
+  secondaryColor,
   infoColor,
   successColor,
   warningColor,
@@ -135,6 +136,30 @@ const buttonStyle = {
         hexToRgb(blackColor) +
         ", 0.12), 0 8px 10px -5px rgba(" +
         hexToRgb(primaryColor[0]) +
+        ", 0.2)"
+    }
+  },
+  secondary: {
+    backgroundColor: secondaryColor[0],
+    color: blackColor,
+    boxShadow:
+      "0 2px 2px 0 rgba(" +
+      hexToRgb(secondaryColor[0]) +
+      ", 0.14), 0 3px 1px -2px rgba(" +
+      hexToRgb(secondaryColor[0]) +
+      ", 0.2), 0 1px 5px 0 rgba(" +
+      hexToRgb(secondaryColor[0]) +
+      ", 0.12)",
+    "&:hover,&:focus": {
+      backgroundColor: secondaryColor[0],
+      color: primaryColor[0],
+      boxShadow:
+        "0 14px 26px -12px rgba(" +
+        hexToRgb(secondaryColor[0]) +
+        ", 0.42), 0 4px 23px 0px rgba(" +
+        hexToRgb(blackColor) +
+        ", 0.12), 0 8px 10px -5px rgba(" +
+        hexToRgb(secondaryColor[0]) +
         ", 0.2)"
     }
   },

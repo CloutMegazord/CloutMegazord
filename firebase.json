@@ -2,18 +2,20 @@
   "database": {
     "rules": "database.rules.json"
   },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
   "hosting": {
-    "public": "public",
+    "public": "build",
     "ignore": [
+      "dev_data",
       "firebase.json",
+      "dev_data",
       "**/.*",
       "**/node_modules/**"
     ],
     "rewrites": [
+      {
+        "source": "/helloWorld",
+        "function": "helloWorld"
+      },
       {
         "source": "**",
         "destination": "/index.html"
@@ -22,8 +24,5 @@
   },
   "storage": {
     "rules": "storage.rules"
-  },
-  "remoteconfig": {
-    "template": "remoteconfig.template.json"
   }
 }

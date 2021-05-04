@@ -10,13 +10,21 @@ import Fab from '@material-ui/core/Fab';
 
 import styles from "assets/jss/material-dashboard-react/components/buttonStyle.js";
 
-const useStyles = makeStyles(styles);
+const useStyles = makeStyles(Object.assign(styles, {
+  fab: {
+    bottom: 20,
+    right: 20,
+    zIndex: 999,
+    position: 'fixed',
+  }
+}));
 
 export default function CustomFab(props) {
   const classes = useStyles();
   const {
     color,
     circle,
+    fab,
     children,
     disabled,
     simple,
@@ -33,6 +41,7 @@ export default function CustomFab(props) {
     [classes[size]]: size,
     [classes[color]]: color,
     [classes.circle]: true,
+    [classes.fab]: true,
     [classes.disabled]: disabled,
     [classes.simple]: simple,
     [classes.block]: block,
@@ -60,6 +69,7 @@ CustomFab.propTypes = {
   ]),
   size: PropTypes.oneOf(["sm", "lg"]),
   simple: PropTypes.bool,
+  fab: PropTypes.bool,
   circle: PropTypes.bool,
   disabled: PropTypes.bool,
   block: PropTypes.bool,

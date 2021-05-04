@@ -22,8 +22,9 @@ export default function Header(props) {
   const classes = useStyles();
   function makeBrand() {
     var name;
+    var targ = window.location.href.split('/').map(it => '/' + it)
     props.routes.map(prop => {
-      if (window.location.href.indexOf(prop.layout + prop.path) !== -1) {
+      if (targ.includes(prop.layout) && targ.includes(prop.path)) {
         name = props.rtlActive ? prop.rtlName : prop.name;
       }
       return null;

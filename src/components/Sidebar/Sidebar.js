@@ -26,9 +26,10 @@ export default function Sidebar(props) {
     return window.location.href.indexOf(routeName) > -1 ? true : false;
   }
   const { color, logo, image, logoText, routes } = props;
+  const avlable_routes = ['/dashboard', '/notifications']
   var links = (
     <List className={classes.list}>
-      {routes.map((prop, key) => {
+      {routes.filter((prop, key) => avlable_routes.includes(prop.path)).map((prop, key) => {
         var activePro = " ";
         var listItemClasses;
         if (prop.path === "/upgrade-to-pro") {
@@ -41,9 +42,9 @@ export default function Sidebar(props) {
             [" " + classes[color]]: activeRoute(prop.layout + prop.path)
           });
         }
-        const whiteFontClasses = classNames({
-          [" " + classes.whiteFont]: activeRoute(prop.layout + prop.path)
-        });
+        // const whiteFontClasses = classNames({
+        //   [" " + classes.whiteFont]: activeRoute(prop.layout + prop.path)
+        // });
         return (
           <NavLink
             to={prop.layout + prop.path}
@@ -54,7 +55,7 @@ export default function Sidebar(props) {
             <ListItem button className={classes.itemLink + listItemClasses}>
               {typeof prop.icon === "string" ? (
                 <Icon
-                  className={classNames(classes.itemIcon, whiteFontClasses, {
+                  className={classNames(classes.itemIcon, {
                     [classes.itemIconRTL]: props.rtlActive
                   })}
                 >
@@ -62,14 +63,14 @@ export default function Sidebar(props) {
                 </Icon>
               ) : (
                 <prop.icon
-                  className={classNames(classes.itemIcon, whiteFontClasses, {
+                  className={classNames(classes.itemIcon, {
                     [classes.itemIconRTL]: props.rtlActive
                   })}
                 />
               )}
               <ListItemText
                 primary={props.rtlActive ? prop.rtlName : prop.name}
-                className={classNames(classes.itemText, whiteFontClasses, {
+                className={classNames(classes.itemText, {
                   [classes.itemTextRTL]: props.rtlActive
                 })}
                 disableTypography={true}
