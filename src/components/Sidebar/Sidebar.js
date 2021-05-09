@@ -26,7 +26,7 @@ export default function Sidebar(props) {
     return window.location.href.indexOf(routeName) > -1 ? true : false;
   }
   const { color, logo, image, logoText, routes } = props;
-  const avlable_routes = ['/dashboard', '/notifications']
+  const avlable_routes = ['/megazordslist', '/notifications']
   var links = (
     <List className={classes.list}>
       {routes.filter((prop, key) => avlable_routes.includes(prop.path)).map((prop, key) => {
@@ -115,10 +115,10 @@ export default function Sidebar(props) {
           }}
         >
           {brand}
-          <div className={classes.sidebarWrapper}>
+          {/* <div className={classes.sidebarWrapper}>
             {props.rtlActive ? <RTLNavbarLinks /> : <AdminNavbarLinks />}
             {links}
-          </div>
+          </div> */}
           {image !== undefined ? (
             <div
               className={classes.background}

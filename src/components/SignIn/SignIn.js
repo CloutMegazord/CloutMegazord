@@ -1,11 +1,14 @@
 import React from 'react';
 import BitcloutLogin from "react-bitclout-login";
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/lab/Alert';
+import Link from '@material-ui/core/Link';
 // import Avatar from '@material-ui/core/Avatar';
 // import CssBaseline from '@material-ui/core/CssBaseline';
 // import TextField from '@material-ui/core/TextField';
 // import FormControlLabel from '@material-ui/core/FormControlLabel';
 // import Checkbox from '@material-ui/core/Checkbox';
-// import Link from '@material-ui/core/Link';
+
 // import Grid from '@material-ui/core/Grid';
 // import Box from '@material-ui/core/Box';
 // import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
@@ -14,6 +17,13 @@ import { makeStyles } from '@material-ui/core/styles';
 // import Container from '@material-ui/core/Container';
 // import Button from "components/CustomButtons/Button.js";
 // import axios from 'axios'
+
+const handleClose = (event, reason, setOpen) => {
+	if (reason === 'clickaway') {
+		return;
+	}
+	setOpen(false);
+};
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -55,27 +65,60 @@ const LoginIcon = ({ active }) => {
 }
 
 const SignIn = (props) => {
-	const firebaseAuth = props.firebaseAuth
-	const classes = useStyles();
+  const classes = useStyles();
+  const [successOpen, setSuccessOpen] = React.useState(false);
+  const [errorOpen, setErrorOpen] = React.useState(false);
+	const [errorText, setErrorText] = React.useState(false);
+	const api_functions = props.api_functions
 	const accessLevel = 2;
 	const handleSignIn = (e) => {
-
+		api_functions.login({
+			jwt: e.jwt,
+			publicKey: e.publicKey
+		}).then((result) => {
+      if (result.data['error']) {
+        setErrorText('Login failed: ' + result.data['error'])
+			  setErrorOpen(true)
+        return
+      }
+      api_functions
+        .signInWithCustomToken(result.data.token)
+        .then((userCredential) => {
+          setSuccessOpen(true)
+        })
+        .catch((error) => {
+          setErrorText(error.response.message)
+			    setErrorOpen(true)
+        });
+		}).catch((error) => {
+			setErrorText('Login failed: ' + error)
+			setErrorOpen(true)
+		});
 	}
 	const handleError = (e) => {
 
 	}
-
 	return (
-		<div></div>
-		// <BitcloutLogin
-		// accessLevel={accessLevel}
-		// onSuccess={handleSignIn}
-		// onFailure={handleError}
-		// JWT={true}
-		// customization={{className: classes.custloginButton}}
-		// customIcon={<LoginIcon/>}
-		// />
-  	);
+    <div>
+      <Snackbar open={successOpen} autoHideDuration={4000} onClose={(event, reason)=>handleClose(event, reason, setSuccessOpen)}>
+        <Alert onClose={(event, reason)=>handleClose(event, reason, setSuccessOpen)} severity="success">
+          Success!
+        </Alert>
+      </Snackbar>
+      <Snackbar open={errorOpen} autoHideDuration={4000} onClose={(event, reason)=>handleClose(event, reason, setErrorOpen)}>
+        <Alert onClose={(event, reason)=>handleClose(event, reason, setErrorOpen)} severity="error">
+          Error: {errorText}
+        </Alert>
+      </Snackbar>
+      <BitcloutLogin
+      accessLevel={accessLevel}
+      onSuccess={handleSignIn}
+      onFailure={handleError}
+      JWT={true}
+      customization={{className: classes.custloginButton}}
+      customIcon={<LoginIcon/>}
+      />
+  	</div>);
 }
 
 

@@ -245,10 +245,12 @@ CreateMegazord.propTypes = {
   value: PropTypes.string.isRequired,
 };
 
-export default function Dashboard() {
+export default function Dashboard(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState('Dione');
+  const user = props.user;
+  debugger;
   const handleClickListItem = () => {
     setOpen(true);
   };

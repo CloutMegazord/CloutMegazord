@@ -4,14 +4,18 @@ import classNames from "classnames";
 import { makeStyles } from "@material-ui/core/styles";
 import MenuItem from "@material-ui/core/MenuItem";
 import MenuList from "@material-ui/core/MenuList";
+import Link from "@material-ui/core/Link";
+
 import Grow from "@material-ui/core/Grow";
 import Paper from "@material-ui/core/Paper";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import Hidden from "@material-ui/core/Hidden";
 import Poppers from "@material-ui/core/Popper";
 import Divider from "@material-ui/core/Divider";
+import Avatar from '@material-ui/core/Avatar';
 // @material-ui/icons
 import Person from "@material-ui/icons/Person";
+import { SvgIcon } from '@material-ui/core';
 import Notifications from "@material-ui/icons/Notifications";
 import Dashboard from "@material-ui/icons/Dashboard";
 import Search from "@material-ui/icons/Search";
@@ -21,10 +25,24 @@ import Button from "components/CustomButtons/Button.js";
 
 import styles from "assets/jss/material-dashboard-react/components/headerLinksStyle.js";
 
-const useStyles = makeStyles(styles);
 
-export default function AdminNavbarLinks() {
-  const classes = useStyles();
+const useStyles = makeStyles(styles);
+const useStyles2 = makeStyles(theme => ({
+  avatarSmall: {
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+  },
+  avatarLarge: {
+    width: theme.spacing(7),
+    height: theme.spacing(7),
+  },
+}));
+
+export default function AdminNavbarLinks(props) {
+  const user = props.user || {};
+  const notifications = user.notifications;
+  const notifications_count = notifications ? Object.keys(notifications).length : 0;
+  const classes = Object.assign(useStyles(), useStyles2());
   const [openNotification, setOpenNotification] = React.useState(null);
   const [openProfile, setOpenProfile] = React.useState(null);
   const handleClickNotification = event => {
@@ -49,7 +67,7 @@ export default function AdminNavbarLinks() {
   };
   return (
     <div>
-      <div className={classes.searchWrapper}>
+      {/* <div className={classes.searchWrapper}>
         <CustomInput
           formControlProps={{
             className: classes.margin + " " + classes.search
@@ -64,8 +82,8 @@ export default function AdminNavbarLinks() {
         <Button color="white" aria-label="edit" justIcon round>
           <Search />
         </Button>
-      </div>
-      <Button
+      </div> */}
+      {/* <Button
         color={window.innerWidth > 959 ? "transparent" : "white"}
         justIcon={window.innerWidth > 959}
         simple={!(window.innerWidth > 959)}
@@ -76,7 +94,7 @@ export default function AdminNavbarLinks() {
         <Hidden mdUp implementation="css">
           <p className={classes.linkText}>Dashboard</p>
         </Hidden>
-      </Button>
+      </Button> */}
       <div className={classes.manager}>
         <Button
           color={window.innerWidth > 959 ? "transparent" : "white"}
@@ -88,7 +106,9 @@ export default function AdminNavbarLinks() {
           className={classes.buttonLink}
         >
           <Notifications className={classes.icons} />
-          <span className={classes.notifications}>5</span>
+          {(notifications_count !== 0) &&
+            <span className={classes.notifications}>{notifications_count}</span>
+          }
           <Hidden mdUp implementation="css">
             <p onClick={handleCloseNotification} className={classes.linkText}>
               Notification
@@ -118,36 +138,17 @@ export default function AdminNavbarLinks() {
               <Paper>
                 <ClickAwayListener onClickAway={handleCloseNotification}>
                   <MenuList role="menu">
-                    <MenuItem
-                      onClick={handleCloseNotification}
-                      className={classes.dropdownItem}
-                    >
-                      Mike John responded to your email
-                    </MenuItem>
-                    <MenuItem
-                      onClick={handleCloseNotification}
-                      className={classes.dropdownItem}
-                    >
-                      You have 5 new tasks
-                    </MenuItem>
-                    <MenuItem
-                      onClick={handleCloseNotification}
-                      className={classes.dropdownItem}
-                    >
-                      You{"'"}re now friend with Andrew
-                    </MenuItem>
-                    <MenuItem
-                      onClick={handleCloseNotification}
-                      className={classes.dropdownItem}
-                    >
-                      Another Notification
-                    </MenuItem>
-                    <MenuItem
-                      onClick={handleCloseNotification}
-                      className={classes.dropdownItem}
-                    >
-                      Another One
-                    </MenuItem>
+                    {notifications && Object.keys(notifications).map(key => {
+                      return (
+                        <MenuItem
+                          key={key}
+                          onClick={handleCloseNotification}
+                          className={classes.dropdownItem}
+                        >
+                          {notifications[key].message.replace('%username%', user.Username)}
+                        </MenuItem>
+                      )
+                    })}
                   </MenuList>
                 </ClickAwayListener>
               </Paper>
@@ -165,7 +166,13 @@ export default function AdminNavbarLinks() {
           onClick={handleClickProfile}
           className={classes.buttonLink}
         >
-          <Person className={classes.icons} />
+          {(user && user.ProfilePic) ? (
+            <Avatar alt={user.Username} src={user.ProfilePic}/>
+          ): (
+            <Person className={classes.icons} />
+          )}
+          {/* <SvgIcon /> */}
+          {/* <Person className={classes.icons} /> */}
           <Hidden mdUp implementation="css">
             <p className={classes.linkText}>Profile</p>
           </Hidden>
@@ -193,18 +200,20 @@ export default function AdminNavbarLinks() {
               <Paper>
                 <ClickAwayListener onClickAway={handleCloseProfile}>
                   <MenuList role="menu">
-                    <MenuItem
-                      onClick={handleCloseProfile}
-                      className={classes.dropdownItem}
-                    >
-                      Profile
-                    </MenuItem>
-                    <MenuItem
+                    <Link target="_blank" href={"https://bitclout.com/u/" + user.Username}>
+                      <MenuItem
+                        // onClick={handleCloseProfile}
+                        className={classes.dropdownItem}
+                      >
+                        Profile
+                      </MenuItem>
+                    </Link>
+                    {/* <MenuItem
                       onClick={handleCloseProfile}
                       className={classes.dropdownItem}
                     >
                       Settings
-                    </MenuItem>
+                    </MenuItem> */}
                     <Divider light />
                     <MenuItem
                       onClick={handleCloseProfile}

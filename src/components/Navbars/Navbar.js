@@ -31,7 +31,7 @@ export default function Header(props) {
     });
     return name;
   }
-  const { color } = props;
+  const { color, user } = props;
   const appBarClasses = classNames({
     [" " + classes[color]]: color
   });
@@ -44,9 +44,9 @@ export default function Header(props) {
             {makeBrand()}
           </Button>
         </div>
-        <Hidden smDown implementation="css">
-          {props.rtlActive ? <RTLNavbarLinks /> : <AdminNavbarLinks />}
-        </Hidden>
+        {/* <Hidden smDown implementation="css"> */}
+        <AdminNavbarLinks user={user} />
+        {/* </Hidden> */}
         <Hidden mdUp implementation="css">
           <IconButton
             color="inherit"

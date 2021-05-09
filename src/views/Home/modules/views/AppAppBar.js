@@ -47,8 +47,7 @@ const styles = (theme) => ({
 });
 
 function AppAppBar(props) {
-  const { classes } = props;
-
+  const { classes, api_functions } = props;
   return (
     <div>
       <AppBar position="fixed">
@@ -61,12 +60,12 @@ function AppAppBar(props) {
             target="_blank"
             rel="noopener"
             className={classes.title}
-            href="https://bitclout.com/u/transhumanist"
+            href="https://bitclout.com/u/CloutMegazord"
           >
             {'CloutMegazord'}
           </Link>
           <div className={classes.right}>
-          <SignIn/>
+          <SignIn api_functions={api_functions}/>
             {/* <Link
               color="inherit"
               variant="h6"
@@ -94,6 +93,7 @@ function AppAppBar(props) {
 
 AppAppBar.propTypes = {
   classes: PropTypes.object.isRequired,
+  api_functions: PropTypes.object,
 };
 
 export default withStyles(styles)(AppAppBar);

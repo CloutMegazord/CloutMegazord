@@ -26,7 +26,7 @@ import Unarchive from "@material-ui/icons/Unarchive";
 import Language from "@material-ui/icons/Language";
 
 // core components/views for Admin layout
-import DashboardPage from "views/Dashboard/Dashboard.js";
+import MegazordsList from "views/MegazordsList/MegazordsList.js";
 import UserProfile from "views/UserProfile/UserProfile.js";
 import TasksList from "views/TasksList/TasksList.js";
 import Typography from "views/Typography/Typography.js";
@@ -48,11 +48,11 @@ const routes = [
       layout: "/landing"
     },
     {
-      path: "/dashboard",
-      name: "Dashboard",
+      path: "/megazordslist",
+      name: "Megazords List",
       rtlName: "لوحة القيادة",
       icon: Dashboard,
-      component: DashboardPage,
+      component: MegazordsList,
       layout: "/admin"
     },
     {

@@ -22,10 +22,11 @@ export default function CustomInput(props) {
     id,
     labelProps,
     inputProps,
+    onChange,
     error,
     success
   } = props;
-
+  inputProps['spellCheck'] = 'false'
   const labelClasses = classNames({
     [" " + classes.labelRootError]: error,
     [" " + classes.labelRootSuccess]: success && !error
@@ -59,6 +60,8 @@ export default function CustomInput(props) {
           underline: underlineClasses
         }}
         id={id}
+        spellCheck='false'
+        onChange={onChange}
         {...inputProps}
       />
       {error ? (

@@ -18,19 +18,15 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { createBrowserHistory } from "history";
-import { Router, Route, Switch, Redirect } from "react-router-dom";
+import { Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
 
 // Firebase.
 import firebase from 'firebase/app';
 import 'firebase/auth';
-import { firebaseApp, auth, api_functions } from './firebase_init';
+import { firebaseApp, api_functions} from './firebase_init';
 
 import Admin from "layouts/Admin.js";
 import Landing from "layouts/Landing.js";
-import RTL from "layouts/RTL.js";
-import SignIn from "components/SignIn/SignIn.js"
-import SignUp from "components/SignUp/SignUp.js"
-
 // core components
 
 /**
@@ -61,6 +57,7 @@ const hist = createBrowserHistory();
  * The Splash Page containing the login UI.
  */
  class App extends React.Component {
+
   uiConfig = {
     signInFlow: 'popup',
     signInOptions: [
@@ -74,14 +71,28 @@ const hist = createBrowserHistory();
 
   state = {
     isSignedIn: undefined,
+    user: undefined,
+    redirect: ''
   };
 
   /**
    * @inheritDoc
    */
   componentDidMount() {
-    this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((user) => {
-      this.setState({isSignedIn: !!user});
+    this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
+      const isSignedIn = !!userAuth;
+      this.setState({isSignedIn})
+      if (isSignedIn) {
+        api_functions.onUserData(userAuth.uid, (user) => {
+          this.setState({user: user});
+          var targ = window.location.href.split('/').map(it => '/' + it)
+          if (targ.includes('/admin') === false) {
+            this.setState({redirect: '/admin/megazordslist'});
+          }
+        })
+      } else {
+        this.setState({redirect: '/landing/home'});
+      }
     });
   }
 
@@ -100,21 +111,20 @@ const hist = createBrowserHistory();
         <Router history={hist}>
           <Switch>
             <Route path="/landing">
-              <Route path="/landing" component={Landing} />
+              <Landing api_functions={api_functions}></Landing>
               {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
             </Route>
             {/* <Route path="/admin" component={Admin} />
             <Redirect from="/" to="/admin/dashboard" /> */}
-            {this.state.isSignedIn &&
-              <Route path="/admin" component={Admin} />
-            }
-            {!this.state.isSignedIn &&
-              <Redirect from="/" to="/landing" />
-            }
-            {this.state.isSignedIn &&
-               <Redirect from="/" to="/admin/dashboard" />
+            {this.state.isSignedIn === true &&
+              <Route path="/admin">
+                <Admin api_functions={api_functions} user={this.state.user}></Admin>
+              </Route>
             }
           </Switch>
+          {this.state.isSignedIn !== undefined &&
+            <Redirect to={this.state.redirect} />
+          }
         </Router>
     );
       // <div className={styles.container}>
@@ -137,7 +147,6 @@ const hist = createBrowserHistory();
       // </div>
   }
 }
-
 ReactDOM.render(<App></App>, document.getElementById("root"));
 //   <Router history={hist}>
 //     <Switch>

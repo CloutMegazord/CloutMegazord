@@ -11,17 +11,17 @@ import ProductCTA from './modules/views/ProductCTA';
 import AppAppBar from './modules/views/AppAppBar';
 import Footer from '../../components/Footer/Footer'
 
-function Index() {
+function Index(props) {
   return (
     <React.Fragment>
-      <AppAppBar />
-      <ProductHero />
-      {/* <ProductValues />
-      <ProductCategories />
-      <ProductHowItWorks />
-      <ProductCTA />
-      <ProductSmokingHero /> */}
-      <Footer />
+      <AppAppBar {...props} />
+      <ProductHero {...props} />
+      {/* <ProductValues {...props} />
+      <ProductCategories {...props} />
+      <ProductHowItWorks {...props} />
+      <ProductCTA {...props} />
+      <ProductSmokingHero {...props} /> */}
+      <Footer {...props} />
     </React.Fragment>
   );
 }

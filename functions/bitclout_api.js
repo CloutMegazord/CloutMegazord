@@ -8,12 +8,12 @@ class BitcloiutApi {
         this.api_adapter = api_adapter;
     }
 
-    async getUserInfo(Username) {
+    async getUserInfo({username, publicKey}) {
         try {
             console.log('Post inf', commandsMap['getProfile'], Username)
             const resp = await axios.post(commandsMap['getProfile'], {
-                PublicKeyBase58Check: "",
-                Username: Username
+                PublicKeyBase58Check: publicKey || "",
+                Username: username || ""
             });
             console.log(resp.data);
             return resp.data.Profile;
