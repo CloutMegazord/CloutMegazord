@@ -20,10 +20,12 @@ export default function CustomInput(props) {
     formControlProps,
     labelText,
     id,
+    disabled,
     labelProps,
     inputProps,
     onChange,
     error,
+    value,
     success
   } = props;
   inputProps['spellCheck'] = 'false'
@@ -59,7 +61,9 @@ export default function CustomInput(props) {
           disabled: classes.disabled,
           underline: underlineClasses
         }}
+        disabled={disabled}
         id={id}
+        value={value}
         spellCheck='false'
         onChange={onChange}
         {...inputProps}
@@ -73,12 +77,13 @@ export default function CustomInput(props) {
   );
 }
 
-CustomInput.propTypes = {
-  labelText: PropTypes.node,
-  labelProps: PropTypes.object,
-  id: PropTypes.string,
-  inputProps: PropTypes.object,
-  formControlProps: PropTypes.object,
-  error: PropTypes.bool,
-  success: PropTypes.bool
-};
+// CustomInput.propTypes = {
+//   labelText: PropTypes.node,
+//   labelProps: PropTypes.object,
+//   id: PropTypes.string,
+//   inputProps: PropTypes.object,
+//   inputRef: PropTypes.object,
+//   formControlProps: PropTypes.object,
+//   error: PropTypes.bool,
+//   success: PropTypes.bool
+// };

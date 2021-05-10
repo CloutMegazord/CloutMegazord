@@ -42,6 +42,7 @@ functions.useEmulator("localhost", 5001);
 db.useEmulator("localhost", 9000)
 export const api_functions = {
   'login': functions.httpsCallable('api/login'),
+  'createMegazord': functions.httpsCallable('api/createMegazord'),
   'signInWithCustomToken': auth.signInWithCustomToken.bind(auth),
   'getBitcloutAcc': getBitcloutAcc,
   'onUserData': async (publicKey, callback, errorCallback = () => {}) => {
