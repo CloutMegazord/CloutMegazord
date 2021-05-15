@@ -40,6 +40,7 @@ const useStyles2 = makeStyles(theme => ({
 
 export default function AdminNavbarLinks(props) {
   const user = props.user || {};
+  const api_functions = props.api_functions;
   const notifications = user.notifications;
   const notifications_count = notifications ? Object.keys(notifications).length : 0;
   const classes = Object.assign(useStyles(), useStyles2());
@@ -216,7 +217,7 @@ export default function AdminNavbarLinks(props) {
                     </MenuItem> */}
                     <Divider light />
                     <MenuItem
-                      onClick={handleCloseProfile}
+                      onClick={e => api_functions.logout()}
                       className={classes.dropdownItem}
                     >
                       Logout

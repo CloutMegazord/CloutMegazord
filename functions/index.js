@@ -6,6 +6,7 @@ const functions = require("firebase-functions");
 const cors = require('cors');
 const express = require('express');
 const adapters = require('./api_adapters').adapters;
+const Tasks = require('./tasks').Tasks;
 const BitcloiutApi = require('./bitclout_api').BitcloiutApi
 const helmet = require("helmet");
 const sanitizer = require('sanitizer');
@@ -18,6 +19,7 @@ admin.initializeApp();
 const db = admin.database();
 const auth = admin.auth()
 db.useEmulator("localhost", 9000)
+const AdminBTLTPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
 //
@@ -66,6 +68,21 @@ const validatePublicKey = (jwt_token, publicKey) => {
     }
 }
 
+async function bitcloutProxy(data) {
+    return new Promise((resolve, reject) => {
+        const action = data['action'];
+        delete data['action']
+        axios.post("https://api.bitclout.com/" + action,
+            data,
+            {headers: {'Content-Type': 'application/json'}
+        }).then(resp => {
+            resolve(resp.data)
+        }).catch(error => {
+            reject(error)
+        });
+    })
+}
+
 async function getUser(userId) {
     var user = null, snapshot;
     snapshot = await db.ref().child("users").child(userId).get();
@@ -77,12 +94,49 @@ async function getUser(userId) {
 
 async function addUser(userId) {
     const userRef = db.ref('users');
-    await userRef.set({
-        [userId]: {
-            createTime: Date.now(),
-        }
-      });
+    const megazordsRef = db.ref('megazords');
+    await new Promise((resolve, reject) => {
+        megazordsRef.orderByChild('pendingZords/' + userId).once('value', async function(s) {
+            var pendingZords = s.val() || {};
+            pendingZords = Object.keys(pendingZords).reduce((prev, curr) => {
+                prev[curr] = true;
+                return prev;
+            }, {});
+            await userRef.child(userId).set({
+                createTime: Date.now(),
+                megazords: pendingZords
+              });
+            if (Object.keys(pendingZords).length) {
+                userRef.child(userId).child('notifications').push(notifications('newMegazord', {}))
+            }
+            resolve();
+        }, function(error) {
+            reject();
+        })
+    })
+
     await userRef.child(userId).child('notifications').push(notifications('welcome', {}))
+}
+
+async function addMegazord(zords, owner) {
+    const megazordsRef = db.ref('megazords');
+    var newMegazordRef = await megazordsRef.push({
+        seedSignature: [owner, ...zords],
+        confirmedZords: {[owner]: true},
+        pendingZords: zords.reduce((prev, curr, i) => {
+            prev[curr] = true;
+            return prev;
+        }, {})
+    });
+    await db.ref('users/' + owner).child('megazords').child(newMegazordRef.key).set(true);
+    for (const zord of zords) {
+        user = await getUser(zord);
+        if (!user) {continue;}
+        var userRef = db.ref('users/' + zord)
+        var userMegazordsRef = userRef.child('megazords')
+        await userMegazordsRef.child(newMegazordRef.key).set(true);
+        await userRef.child('notifications').push(notifications('newMegazord', {}))
+    }
 }
 
 app.post('/login', async (req, res, next) => {
@@ -107,49 +161,92 @@ app.post('/login', async (req, res, next) => {
         const customToken = await auth.createCustomToken(publicKey);
         res.status(200).send({data: {"token": customToken}});
     } catch(err) {
-        console.log(err)
         res.send({data:{error: 'Firebase Error.'}})
         return;
     }
-
-    // const customToken = auth.createCustomToken(publicKey);
-    // if (user) {
-
-    //     res.status(200).send({data: {"token": user.customToken}})
-    // }
-
-    // const [isValid, _] = validatePublicKey(jwt_token, publicKey)
-    // if (isValid) {
-    //     auth.createCustomToken(publicKey)
-    //     .then((customToken) => {
-    //         // Send token back to client
-    //         res.status(200).send({data: {"token": customToken}})
-    //     })
-    //     .catch((error) => {
-    //         console.log(error)
-    //         res.status(400).send({data: {message: 'Firebase Error.'}})
-    //     });
-    // } else {
-    //     res.status(401).send({data: {message: 'Uncorrect user data.'}})
-    // }
 })
 
-app.post('/sign-up', async (req, res, next) => {
+app.post('/confirmMegazord', async (req, res, next) => {
+    var data = req.body.data;
+    const megazordId = data.megazordId;
+    var customToken = req.headers.authorization.replace('Bearer ', '');
+    var publicKey;
+    try {
+        let verif = await auth.verifyIdToken(customToken);
+        publicKey = verif.uid;
+    } catch(error) {
+        res.send({data:{error: error.message}})
+        return
+    }
+    const megazordRef = db.ref('megazords/' + megazordId);
+    var megazorSnap = await megazordRef.get()
+    if (megazorSnap.exists()) {
+        var megazord = megazorSnap.val();
+    }
+    delete megazord.pendingZords[publicKey];
+    megazord.confirmedZords[publicKey] = true;
 
+    await megazordRef.set(megazord)
+    const task = Tasks.createTask({
+        type: 'getPublicKey',
+        addedBy: AdminBTLTPubKey,
+        megazord: megazordRef
+    });
+    console.log(task.toDBRecord())
+    await megazordRef.child('tasks').push(task.toDBRecord());
+    // await megazordRef.child('pendingZords').child(publicKey).remove()
+    // await megazordRef.child('confirmedZords').child(publicKey).set(true);
+    res.send({data:{success: true}})
+});
+
+app.post('/createMegazord', async (req, res, next) => {
+    var data = req.body.data;
+    var zordsList = [];
+    var publicKey;
+    var customToken = req.headers.authorization.replace('Bearer ', '');
+    try {
+        let verif = await auth.verifyIdToken(customToken);
+        publicKey = verif.uid;
+    } catch(error) {
+        res.send({data:{error: error.message}})
+        return
+    }
+    zordsList = data.zords;
+    isValid = (zordsList.length + 1) < 5;
+    //All Id are unique
+    isValid = isValid && ([...new Set([publicKey].concat(zordsList))].length === [publicKey].concat(zordsList).length)
+    if (!isValid) {
+        res.send({data:{error: 'Zords data invalid.'}})
+        return
+    }
+    for (i = 0; i < zordsList.length; i += 1) {
+        let zord = zordsList[i];
+        try {
+            let profile = await bitcloutProxy({
+                action: 'get-single-profile',
+                PublicKeyBase58Check: zord,
+                Username: ''
+            });
+            if (!profile.Profile.Username) {
+                throw new Error('Incorret zord publicKey')
+            }
+        } catch(error) {
+            res.send({data:{error: error.message}})
+            return
+        }
+    }
+    await addMegazord(zordsList, publicKey);
+    res.send({data:{}})
 })
 
 app.post('/bitclout-proxy', async (req, res, next) => {
     var data = req.body.data;
-    const action = data['action'];
-    delete data['action']
-    axios.post("https://api.bitclout.com/" + action,
-        data,
-        {headers: {'Content-Type': 'application/json'}
-    }).then(resp => {
-        res.send({data: resp.data})
-    }).catch(error => {
+    try {
+        let result = await bitcloutProxy(data);
+        res.send({data: result})
+    } catch(error) {
         res.send({data: { error: error.toString()}})
-    });
+    }
 });
 
 exports.api = functions.https.onRequest(app);

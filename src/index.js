@@ -72,7 +72,7 @@ const hist = createBrowserHistory();
   state = {
     isSignedIn: undefined,
     user: undefined,
-    redirect: ''
+    redirect: window.location.pathname
   };
 
   /**
@@ -101,6 +101,11 @@ const hist = createBrowserHistory();
    */
   componentWillUnmount() {
     this.unregisterAuthObserver();
+  }
+
+  validatePath() {
+    var targ = window.location.href.split('/').map(it => '/' + it);
+    return targ.includes('/admin');
   }
 
   /**

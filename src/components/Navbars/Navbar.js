@@ -31,7 +31,7 @@ export default function Header(props) {
     });
     return name;
   }
-  const { color, user } = props;
+  const { color, user, api_functions } = props;
   const appBarClasses = classNames({
     [" " + classes[color]]: color
   });
@@ -45,7 +45,7 @@ export default function Header(props) {
           </Button>
         </div>
         {/* <Hidden smDown implementation="css"> */}
-        <AdminNavbarLinks user={user} />
+        <AdminNavbarLinks user={user} api_functions={api_functions}/>
         {/* </Hidden> */}
         <Hidden mdUp implementation="css">
           <IconButton

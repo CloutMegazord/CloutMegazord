@@ -11,6 +11,7 @@ const tasksStyle = {
   ...checkboxAdnRadioStyle,
   table: {
     marginBottom: "0",
+    textAlign: "center",
     overflow: "visible"
   },
   tableRow: {
@@ -27,6 +28,7 @@ const tasksStyle = {
     ...defaultFont,
     padding: "8px",
     verticalAlign: "middle",
+    textAlign: "center",
     border: "none",
     lineHeight: "1.42857143",
     fontSize: "14px"
@@ -37,6 +39,7 @@ const tasksStyle = {
   tableActionButton: {
     width: "27px",
     height: "27px",
+    margin: "5px",
     padding: "0"
   },
   tableActionButtonIcon: {

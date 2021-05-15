@@ -14,9 +14,19 @@ const config = {
 };
 
 export default firebase;
-
+if (!localStorage.getItem('users')) {
+  localStorage.setItem('users', JSON.stringify({}))
+}
 function getBitcloutAcc(publicKey, Username='') {
   return new Promise(function (resolve, reject) {
+    var users = JSON.parse(localStorage.getItem('users'));
+    if (!users) {
+      localStorage.setItem('users', JSON.stringify({}));
+      users = {};
+    }
+    if (users[publicKey]) {
+      resolve(users[publicKey])
+    }
     functions.httpsCallable('api/bitclout-proxy')({
       action: 'get-single-profile',
       PublicKeyBase58Check: publicKey,
@@ -25,11 +35,58 @@ function getBitcloutAcc(publicKey, Username='') {
       if (resp.data.error) {
         throw new Error(resp.data.error);
       }
-      resolve(resp.data.Profile);
+      var Profile =  resp.data.Profile;
+      Profile.id = Profile.PublicKeyBase58Check;
+      users[publicKey] = Profile;
+      localStorage.setItem('users', JSON.stringify(users))
+      resolve(Profile);
     }).catch(data => {
       reject(data);
     })
   })
+}
+
+async function handleMegazord(megazordInfo, user) {
+  megazordInfo.pendingZords = megazordInfo.pendingZords || {};
+  megazordInfo.confirmedZords = megazordInfo.confirmedZords || {};
+  var resultMegazord = {zords: [], id: megazordInfo.id, canConfirm: false, tasks: []};
+
+  for (let k in megazordInfo.tasks || {}) {
+    let task =  megazordInfo.tasks[k];
+    task.id = k;
+    task.addedBy = await getBitcloutAcc(Object.keys(task.addedBy)[0]);
+    resultMegazord.tasks.push(task);
+  }
+  if (Object.keys(megazordInfo.pendingZords).length > 0) {
+    resultMegazord.status_id = 1;
+    resultMegazord.status_text = 'Pending zords confirmation';
+  } else if (resultMegazord.publicKey) {
+    resultMegazord.status_id = 0;
+    resultMegazord.status_text = 'Active';
+  } else {
+    resultMegazord.status_id = 2;
+    resultMegazord.status_text = 'Pending actvation';
+  }
+  for (let k in megazordInfo.pendingZords) {
+    let cloutAccount = await getBitcloutAcc(k);
+    resultMegazord.canConfirm = k === user.id;
+    resultMegazord.zords.push({
+      avatar: cloutAccount.ProfilePic,
+      status: 'pending',
+      name: cloutAccount.Username,
+      link: 'https://bitclout.com/u/' + cloutAccount.Username
+    });
+  }
+  for (let k in megazordInfo.confirmedZords) {
+    let cloutAccount = await api_functions.getBitcloutAcc(k);
+    resultMegazord.zords.push({
+      avatar: cloutAccount.ProfilePic,
+      status: 'confirmed',
+      name: cloutAccount.Username,
+      link: 'https://bitclout.com/u/' + cloutAccount.Username
+    });
+  }
+  return resultMegazord;
 }
 
 export const firebaseApp = firebase.initializeApp(config);
@@ -42,71 +99,57 @@ functions.useEmulator("localhost", 5001);
 db.useEmulator("localhost", 9000)
 export const api_functions = {
   'login': functions.httpsCallable('api/login'),
-  'createMegazord': functions.httpsCallable('api/createMegazord'),
+  'logout': () => {
+    localStorage.setItem('users', null);
+    auth.signOut();
+  },
+  'createMegazord': zords => {
+    ///* forceRefresh */ true
+    return new Promise((resolve, reject) => {
+      functions.httpsCallable('api/createMegazord')({zords}).then(resolve).catch(reject);
+    })
+  },
+  'confirmMegazord': megazordId => {
+    return new Promise((resolve, reject) => {
+      functions.httpsCallable('api/confirmMegazord')({megazordId}).then(resolve).catch(reject);
+    })
+  },
   'signInWithCustomToken': auth.signInWithCustomToken.bind(auth),
   'getBitcloutAcc': getBitcloutAcc,
   'onUserData': async (publicKey, callback, errorCallback = () => {}) => {
     var data, userRef = db.ref("users/" + publicKey);
-    userRef.on('value', (snapshot) => {
+    userRef.on('value', async (snapshot) => {
       const userDBData = snapshot.val();
       if (!userDBData) {
         auth.signOut();
         return
       }
-      getBitcloutAcc(publicKey)
-        .then(userCloutData => {
-          callback(Object.assign(userDBData, userCloutData))
-        })
-        .catch(error=>{
+      var userCloutData = await getBitcloutAcc(publicKey);
+      let resUser = Object.assign(userDBData, userCloutData);
+      resUser.id = publicKey;
+      const megazordsIds = resUser.megazords;
+      resUser.megazords = {}
+      if (!resUser.megazords) {
+        callback(resUser);
+        return
+      }
+      for (let k in megazordsIds) {
+        db.ref("megazords/" + k).on('value', async snapshot=> {
+          const megazordData = snapshot.val();
+          var id = snapshot.getRef().key;
+          if (!megazordData) {
+            db.ref("megazords/" + id).off('value');
+            return;
+          };
+          megazordData.id = id;
+          resUser.megazords[id] = await handleMegazord(megazordData, resUser);
+          callback(resUser);
+        }, error=>{
           errorCallback(error)
-        })
+        });
+      }
     })
-
-    // db.ref("users").child(publicKey).get().then(snapshot=> {
-    //   var userDBData = snapshot.val();
-    //   debugger
-    //   return new Promise((resolve, reject) => {
-    //     debugger
-    //     resolve(userDBData);
-    //   })
-    // }).then(userDBData=>{
-    //   return new Promise((resolve, reject) => {
-    //     getBitcloutAcc(publicKey)
-    //     .then(userCloutData => {resolve(Object.assign(userDBData, userCloutData))})
-    //     .catch(reject)
-    //   })
-    // }).then(mergedUserData=>{
-    //   debugger
-    //   callback(mergedUserData);
-    //   const userRef = db.ref("users/" + publicKey)
-    //   userRef.on('value', (snapshot) => {
-    //     const newUserDBData = snapshot.val();
-    //     callback({...mergedUserData, newUserDBData})
-    //   }).catch(err => {
-    //     debugger
-    //     errorCallback(err);
-    //   });
-    // });
-    // try {
-    //   userRef = await db.ref().child("users").child(publicKey)
-    //   const snapshot = await userRef.get();
-    //   data = await snapshot.val();
-    //   console.log(data)
-    //   debugger;
-    // } catch(err) {
-    //   debugger;
-    //   console.log(err)
-    //   errorCallback(err)
-    // }
-    // const bitAcc = await getBitcloutAcc(publicKey);
-    // callback({...data, ...bitAcc});
-    // userRef = db.ref("users/" + publicKey)
-    // userRef.on('value', (snapshot) => {
-    //   const data = snapshot.val();
-    //   callback({...data, ...bitAcc})
-    // }).catch(err => {
-    //   errorCallback(err);
-    // });
-  }
+  },
+  'offUserData': () => {}
   // 'helloWorld': functions.httpsCallable('signIn')
 }
