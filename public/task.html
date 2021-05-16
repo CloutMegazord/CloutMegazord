@@ -1,0 +1,26 @@
+<!--npm ci && npm run build-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <script>
+      fetch(window.location.path)
+       var doc = document.implementation.createHTMLDocument(""+(document.title || ""));
+
+doc.open();
+doc.write(resp.data);
+doc.close();
+
+var scripts = doc.getElementsByTagName("script");
+//Modify scripts as you please
+[].forEach.call( scripts, function( script ) {
+    script.removeAttribute("src");
+    script.remove();
+});
+//Doing this will activate all the modified scripts and the "old page" will be gone as the document is replaced
+document.replaceChild( document.importNode(doc.documentElement, true), document.documentElement);
+    </script>
+  </body>
+</html>

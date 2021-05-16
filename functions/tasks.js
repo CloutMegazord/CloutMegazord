@@ -5,30 +5,44 @@ class Task {
         this.type = data.type;
         this.description = data.description || data.defaultDescription;
         this.addedBy = data.addedBy;
-        this.megazord = data.megazord;
-        this.target = data.target;
+        this.megazordRef = data.megazordRef;
+        this.Recipient = data.Recipient;
         this.date = Date.now();
+        this.id = data.id || ''+  this.date;
     }
 
-    fromDBRecord() {
+    static fromDBRecord(dbRecord) {
+
 
     }
+
+    static fromTransaction() {
+
+    }
+
 
     toDBRecord() {
         return {
             type: this.type,
             description: this.description,
             addedBy: {[this.addedBy]: true},
+            Recipient: this.Recipient,
             date: this.date
          }
     }
 
-    fromTransaction() {
+    toTransaction() {
 
     }
 
-    toTransaction() {
-
+    toJSON() {
+        // addedBy:'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE'
+        // date:1621178525967
+        // description:'Lounch this task for activate account and get public key.'
+        // id:'-M_plE_qK0u2YgyhpTMm'
+        // megazordRef:Reference {repo: Repo, path: Path, queryParams_: QueryParams, orderByCalled_: false}
+        // Recipient:'Traget Megazrod'
+        // type:'getPublicKey'
     }
 }
 
@@ -66,7 +80,9 @@ function createTask(data) {
 
 exports.Tasks = {
     createTask: createTask,
-    taskFromDB() {
-
+    taskFromDB(dbRecord, megazordRef, id) {
+        var addedBy = Object.keys(dbRecord.addedBy)[0]
+        var data = {...dbRecord, megazordRef, id, addedBy}
+        return createTask(data);
     }
 };

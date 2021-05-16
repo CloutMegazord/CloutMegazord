@@ -13,11 +13,15 @@
     ],
     "rewrites": [
       {
-        "source": "/helloWorld",
-        "function": "helloWorld"
+        "source": "/getTaskSession/**",
+        "function": "getTaskSession"
       },
       {
-        "source": "**",
+        "source": "/s/**",
+        "function": "shortener"
+      },
+      {
+        "source": "!(/getTaskSession/**|/s/**)",
         "destination": "/index.html"
       }
     ]

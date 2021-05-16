@@ -1,25 +1,27 @@
-const BitcloutUsername = {
+import React from "react";
+import {InputBitcloutAccount, InputAmount, BitcloutAccountItem} from "components/FormControls/FormControls";
 
-}
-
-
+// const InputBitcloutAccount = FormControls.InputBitcloutAccount;
 
 // SenderPublicKeyBase58Check,
 // RecipientPublicKeyOrUsername,
 // AmountNanos,
-
-const getPublicKey = (user) => {
+const getPublicKey = (data) => {
+  const megazord = data.megazord;
+  const user = data.user;
+  megazord.Username = 'Traget Megazrod'
   return {
     controls: [
       {
         name: 'Recipient',
-        component: InputBitcloutAccount,
-        possibleValue: user.id,
-        possibleInputType: ['Current Account'],
+        component: <BitcloutAccountItem item={megazord}/>,
+        possibleValue: megazord.Username || megazord.PubKeyShort || "TargetMegazord",
+        // possibleInputType: ['Current Account'],
         disabled: true
       }
     ],
-    disabled: false
+    disabled: false,
+    order: 0
   }
 }
 
@@ -39,7 +41,8 @@ const updateProfile = (user) => {
         possibleInputType: ['BTCLT', 'Coins']
       }
     ],
-    disabled: true
+    disabled: true,
+    order: 1
   }
 }
 
@@ -59,7 +62,8 @@ const send = (user) => {
         possibleInputType: ['BTCLT', 'Coins']
       }
     ],
-    disabled: true
+    disabled: true,
+    order: 2
   }
 }
 
@@ -79,7 +83,8 @@ const buy = (user) => {
         possibleInputType: ['BTCLT', 'Coins']
       }
     ],
-    disabled: true
+    disabled: true,
+    order: 3
   }
 }
 
@@ -99,7 +104,8 @@ const sell = (user) => {
         possibleInputType: ['BTCLT', 'Coins']
       }
     ],
-    disabled: true
+    disabled: true,
+    order: 4
   }
 }
 

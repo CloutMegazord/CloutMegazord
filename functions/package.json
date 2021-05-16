@@ -21,6 +21,7 @@
     "helmet": "^4.5.0",
     "jsonwebtoken": "^8.5.1",
     "key-encoder": "^2.0.3",
+    "mkdirp": "^1.0.4",
     "puppeteer": "^9.0.0",
     "sanitizer": "^0.1.3"
   },

@@ -79,6 +79,28 @@ const hist = createBrowserHistory();
    * @inheritDoc
    */
   componentDidMount() {
+    // var targ = window.location.href.split('/').map(it => '/' + it);
+    // if (targ.includes('/taskSessions')) {
+    //   api_functions.getTaskSession().then(resp => {
+    //     var doc = document.implementation.createHTMLDocument(""+(document.title || ""));
+
+    //     doc.open();
+    //     doc.write(resp.data);
+    //     doc.close();
+
+    //     var scripts = doc.getElementsByTagName("script");
+    //     //Modify scripts as you please
+    //     [].forEach.call( scripts, function( script ) {
+    //         script.removeAttribute("src");
+    //         script.remove();
+    //     });
+    //     //Doing this will activate all the modified scripts and the "old page" will be gone as the document is replaced
+    //     document.replaceChild( document.importNode(doc.documentElement, true), document.documentElement);
+
+    //   });
+    //   return
+    // }
+
     this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
       const isSignedIn = !!userAuth;
       this.setState({isSignedIn})
@@ -86,7 +108,7 @@ const hist = createBrowserHistory();
         api_functions.onUserData(userAuth.uid, (user) => {
           this.setState({user: user});
           var targ = window.location.href.split('/').map(it => '/' + it)
-          if (targ.includes('/admin') === false) {
+          if (targ.includes('/admin') === false && targ.includes('/taskSessions') === false ) {
             this.setState({redirect: '/admin/megazordslist'});
           }
         })
@@ -113,24 +135,24 @@ const hist = createBrowserHistory();
    */
   render() {
     return (
-        <Router history={hist}>
-          <Switch>
-            <Route path="/landing">
-              <Landing api_functions={api_functions}></Landing>
-              {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
+      <Router history={hist}>
+        <Switch>
+          <Route path="/landing">
+            <Landing api_functions={api_functions}></Landing>
+            {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
+          </Route>
+          {/* <Route path="/admin" component={Admin} />
+          <Redirect from="/" to="/admin/dashboard" /> */}
+          {this.state.isSignedIn === true &&
+            <Route path="/admin">
+              <Admin api_functions={api_functions} user={this.state.user}></Admin>
             </Route>
-            {/* <Route path="/admin" component={Admin} />
-            <Redirect from="/" to="/admin/dashboard" /> */}
-            {this.state.isSignedIn === true &&
-              <Route path="/admin">
-                <Admin api_functions={api_functions} user={this.state.user}></Admin>
-              </Route>
-            }
-          </Switch>
-          {this.state.isSignedIn !== undefined &&
-            <Redirect to={this.state.redirect} />
           }
-        </Router>
+        </Switch>
+        {this.state.isSignedIn !== undefined &&
+          <Redirect to={this.state.redirect} />
+        }
+      </Router>
     );
       // <div className={styles.container}>
       //   <div className={styles.logo}>

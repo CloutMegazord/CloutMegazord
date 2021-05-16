@@ -37,6 +37,7 @@ function getBitcloutAcc(publicKey, Username='') {
       }
       var Profile =  resp.data.Profile;
       Profile.id = Profile.PublicKeyBase58Check;
+      Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 6) + '...'
       users[publicKey] = Profile;
       localStorage.setItem('users', JSON.stringify(users))
       resolve(Profile);
@@ -46,6 +47,7 @@ function getBitcloutAcc(publicKey, Username='') {
   })
 }
 
+const defaultAvatar = 'https://cdn.pixabay.com/photo/2019/09/26/19/08/hourglass-4506807__340.png'
 async function handleMegazord(megazordInfo, user) {
   megazordInfo.pendingZords = megazordInfo.pendingZords || {};
   megazordInfo.confirmedZords = megazordInfo.confirmedZords || {};
@@ -86,6 +88,8 @@ async function handleMegazord(megazordInfo, user) {
       link: 'https://bitclout.com/u/' + cloutAccount.Username
     });
   }
+  resultMegazord.ProfilePic = resultMegazord.ProfilePic || defaultAvatar;
+  resultMegazord.Username = resultMegazord.Username || resultMegazord.PubKeyShort || 'Not Activated';
   return resultMegazord;
 }
 
@@ -98,6 +102,14 @@ export const functions = firebase.functions()
 functions.useEmulator("localhost", 5001);
 db.useEmulator("localhost", 9000)
 export const api_functions = {
+  'getTaskSession': () => {
+    var path = window.location.href.split('/').pop();
+    var task = path.split('&')[0].split('=')[1];
+    return functions.httpsCallable('api/getTaskSession')({
+      task: task
+    });
+  },
+  'task': functions.httpsCallable('api/task'),
   'login': functions.httpsCallable('api/login'),
   'logout': () => {
     localStorage.setItem('users', null);
@@ -128,11 +140,11 @@ export const api_functions = {
       let resUser = Object.assign(userDBData, userCloutData);
       resUser.id = publicKey;
       const megazordsIds = resUser.megazords;
-      resUser.megazords = {}
-      if (!resUser.megazords) {
+      if (!megazordsIds) {
         callback(resUser);
         return
       }
+      resUser.megazords = {}
       for (let k in megazordsIds) {
         db.ref("megazords/" + k).on('value', async snapshot=> {
           const megazordData = snapshot.val();
