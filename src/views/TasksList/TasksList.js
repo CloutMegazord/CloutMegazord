@@ -242,7 +242,8 @@ export default function TableList(props) {
       task: {id:taskId},
       megazordId: megazordId
     }).then((resp) => {
-      window.powerOnWindow = window.open(resp.data.taskLink, null);
+      window.location.href = resp.data.taskLink
+      // window.powerOnWindow = window.open(resp.data.taskLink, null);
     })
   }
 

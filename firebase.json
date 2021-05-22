@@ -13,7 +13,7 @@
     ],
     "rewrites": [
       {
-        "source": "/getTaskSession/**",
+        "source": "/gts/**",
         "function": "getTaskSession"
       },
       {
@@ -21,7 +21,11 @@
         "function": "shortener"
       },
       {
-        "source": "!(/getTaskSession/**|/s/**)",
+        "source": "/powerTask/**",
+        "function": "powerTask"
+      },
+      {
+        "source": "!(/gts/**|/s/**|/powerTask/**)",
         "destination": "/index.html"
       }
     ]

@@ -91,8 +91,19 @@ export function InputBitcloutAccount(props) {
     var inputAccount = event.target.value;
     setValue(inputAccount);
     clearTimeout(sleepVar);
+    setBitcloutAccount(null);
     let _sleepVar = setTimeout(() => {
-      api_functions.getBitcloutAcc('', inputAccount).then(bitcloutAccount => {
+      var [accName, PubKey] = ['', ''];
+      if (inputAccount.startsWith('BC1') && inputAccount.length > 30) {
+        PubKey = inputAccount;
+      } else {
+        accName = inputAccount;
+      }
+      if (!PubKey && !accName) {
+        setInputState(3);
+        return
+      }
+      api_functions.getBitcloutAcc(PubKey, accName).then(bitcloutAccount => {
         bitcloutAccount.id = bitcloutAccount.PublicKeyBase58Check;
         try {
           validate(bitcloutAccount);
@@ -105,18 +116,23 @@ export function InputBitcloutAccount(props) {
         setInputState(3);
       })
     }, 1000);
+
     setSleepVar(_sleepVar);
   }
 
   const _addHandler = (e) => {
     e.preventDefault();
     addHandler({...bitcloutAccount})
+    setBitcloutAccount(null)
+    clearTimeout(sleepVar);
     setValue('');
     setInputState(0);
   }
 
   onCloseSubscribe(() => {
     setValue('');
+    setBitcloutAccount(null)
+    clearTimeout(sleepVar);
     setInputState(0);
   })
 

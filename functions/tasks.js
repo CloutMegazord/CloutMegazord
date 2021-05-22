@@ -7,12 +7,11 @@ class Task {
         this.addedBy = data.addedBy;
         this.megazordRef = data.megazordRef;
         this.Recipient = data.Recipient;
+        this.status = data.status || 0; //Status 0 - active
         this.date = Date.now();
-        this.id = data.id || ''+  this.date;
     }
 
     static fromDBRecord(dbRecord) {
-
 
     }
 
@@ -20,10 +19,10 @@ class Task {
 
     }
 
-
     toDBRecord() {
         return {
             type: this.type,
+            megazord: this.megazordRef.key,
             description: this.description,
             addedBy: {[this.addedBy]: true},
             Recipient: this.Recipient,
@@ -36,13 +35,7 @@ class Task {
     }
 
     toJSON() {
-        // addedBy:'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE'
-        // date:1621178525967
-        // description:'Lounch this task for activate account and get public key.'
-        // id:'-M_plE_qK0u2YgyhpTMm'
-        // megazordRef:Reference {repo: Repo, path: Path, queryParams_: QueryParams, orderByCalled_: false}
-        // Recipient:'Traget Megazrod'
-        // type:'getPublicKey'
+
     }
 }
 

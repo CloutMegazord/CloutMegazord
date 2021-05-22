@@ -38,7 +38,8 @@ function getBitcloutAcc(publicKey, Username='') {
       var Profile =  resp.data.Profile;
       Profile.id = Profile.PublicKeyBase58Check;
       Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 6) + '...'
-      users[publicKey] = Profile;
+      Profile.ProfilePic = Profile.ProfilePic || '/assets/img/default_profile_pic.png';
+      users[Profile.id] = Profile;
       localStorage.setItem('users', JSON.stringify(users))
       resolve(Profile);
     }).catch(data => {
