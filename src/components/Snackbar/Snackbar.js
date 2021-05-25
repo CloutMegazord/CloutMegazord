@@ -14,7 +14,7 @@ const useStyles = makeStyles(styles);
 
 export default function Snackbar(props) {
   const classes = useStyles();
-  const { message, color, close, icon, place, open, rtlActive } = props;
+  const { message, color, close, icon, place, open, rtlActive, autoHideDuration } = props;
   var action = [];
   const messageClasses = classNames({
     [classes.iconMessage]: icon !== undefined
@@ -44,6 +44,7 @@ export default function Snackbar(props) {
             : "right"
       }}
       open={open}
+      autoHideDuration={autoHideDuration}
       message={
         <div>
           {icon !== undefined ? <props.icon className={classes.icon} /> : null}
@@ -70,5 +71,6 @@ Snackbar.propTypes = {
   place: PropTypes.oneOf(["tl", "tr", "tc", "br", "bl", "bc"]),
   open: PropTypes.bool,
   rtlActive: PropTypes.bool,
+  autoHideDuration: PropTypes.number,
   closeNotification: PropTypes.func
 };

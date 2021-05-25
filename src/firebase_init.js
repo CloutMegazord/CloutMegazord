@@ -1,4 +1,5 @@
 import firebase from 'firebase';
+import axios from 'axios';
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 const config = {
@@ -14,18 +15,52 @@ const config = {
 };
 
 export default firebase;
-if (!localStorage.getItem('users')) {
-  localStorage.setItem('users', JSON.stringify({}))
+export const firebaseApp = firebase.initializeApp(config);
+export const db = firebase.database();
+export const auth = firebase.auth();
+export const storage = firebase.storage();
+// export const messaging = firebase.messaging();
+export const functions = firebase.functions()
+functions.useEmulator("localhost", 5001);
+db.useEmulator("localhost", 9000)
+
+export const onErrorSubscribers = [];
+const fireError = (e) => {
+  onErrorSubscribers.forEach(func => func(e))
 }
+const waitingMegazordAvatar = '/assets/img/waitingMegazord.png';
+const defaultAvatar = '/assets/img/default_profile_pic.png';
+
+function IsJsonString(str) {
+  try {JSON.parse(str);} catch (e) {return false;}
+  return true;
+}
+
+function getFromStorage(namespace, key) {
+  var res = null;
+  var item = localStorage.getItem(namespace);
+  if (!item || !IsJsonString(item)) {
+    localStorage.setItem(namespace, JSON.stringify({}));
+    return null;
+  }
+  var namespaceObj = JSON.parse(localStorage.getItem(namespace));
+  if (namespaceObj[key]) {
+    if (Date.now() > namespaceObj[key].expired) {
+      delete namespaceObj[key]
+      localStorage.setItem(namespace, JSON.stringify(namespaceObj));
+    } else {
+      res = namespaceObj[key];
+    }
+  }
+  return res;
+}
+
 function getBitcloutAcc(publicKey, Username='') {
   return new Promise(function (resolve, reject) {
-    var users = JSON.parse(localStorage.getItem('users'));
-    if (!users) {
-      localStorage.setItem('users', JSON.stringify({}));
-      users = {};
-    }
-    if (users[publicKey]) {
-      resolve(users[publicKey])
+    var user = getFromStorage('users', publicKey);
+    if (user) {
+      resolve(user)
+      return;
     }
     functions.httpsCallable('api/bitclout-proxy')({
       action: 'get-single-profile',
@@ -33,13 +68,17 @@ function getBitcloutAcc(publicKey, Username='') {
       Username: Username
     }).then(resp => {
       if (resp.data.error) {
-        throw new Error(resp.data.error);
+        reject(resp.data.error);
+        return;
       }
       var Profile =  resp.data.Profile;
       Profile.id = Profile.PublicKeyBase58Check;
       Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 6) + '...'
-      Profile.ProfilePic = Profile.ProfilePic || '/assets/img/default_profile_pic.png';
+      Profile.ProfilePic = Profile.ProfilePic || defaultAvatar;
+
+      var users = JSON.parse(localStorage.getItem('users'))
       users[Profile.id] = Profile;
+      users[Profile.id].expired = Date.now() + (48 * 60 * 60 * 1000)
       localStorage.setItem('users', JSON.stringify(users))
       resolve(Profile);
     }).catch(data => {
@@ -48,7 +87,45 @@ function getBitcloutAcc(publicKey, Username='') {
   })
 }
 
-const defaultAvatar = 'https://cdn.pixabay.com/photo/2019/09/26/19/08/hourglass-4506807__340.png'
+function getExchangeRate() {
+  return new Promise(async function (resolve, reject) {
+    var exchangeRate = getFromStorage('bitcloutData', 'exchangeRate');
+    if (exchangeRate) {
+      resolve(exchangeRate)
+      return;
+    }
+    try {
+      var exRateResp = await functions.httpsCallable('api/bitclout-proxy')({method: 'get', action: 'get-exchange-rate'});
+      var tickerResp = await axios.get('https://blockchain.info/ticker');
+    } catch (e) {
+      reject(e);
+      return
+    }
+    if (exRateResp.data.error) {
+      reject(exRateResp.data.error);
+      return
+    }
+
+    var bitcloutData = JSON.parse(localStorage.getItem('bitcloutData'))
+    var exchangeRate = exRateResp.data;
+    if (tickerResp.data.error) {
+      reject(tickerResp.data.error);
+    }
+    var ticker = tickerResp.data;
+    // var exchangeRate =  (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
+    var exchangeRate =  {
+      SatoshisPerBitCloutExchangeRate: exchangeRate.SatoshisPerBitCloutExchangeRate,
+      USDCentsPerBitcoinExchangeRate: ticker.USD.last,
+      USDbyBTCLT: (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
+    }
+    exchangeRate.expired = Date.now() + (1 * 60 * 60 * 1000)
+    bitcloutData.exchangeRate = exchangeRate;
+    localStorage.setItem('bitcloutData', JSON.stringify(bitcloutData))
+    resolve(exchangeRate);
+
+  });
+}
+
 async function handleMegazord(megazordInfo, user) {
   megazordInfo.pendingZords = megazordInfo.pendingZords || {};
   megazordInfo.confirmedZords = megazordInfo.confirmedZords || {};
@@ -57,7 +134,7 @@ async function handleMegazord(megazordInfo, user) {
   for (let k in megazordInfo.tasks || {}) {
     let task =  megazordInfo.tasks[k];
     task.id = k;
-    task.addedBy = await getBitcloutAcc(Object.keys(task.addedBy)[0]);
+    task.addedBy = await api_functions.getBitcloutAcc(Object.keys(task.addedBy)[0]);
     resultMegazord.tasks.push(task);
   }
   if (Object.keys(megazordInfo.pendingZords).length > 0) {
@@ -71,7 +148,7 @@ async function handleMegazord(megazordInfo, user) {
     resultMegazord.status_text = 'Pending actvation';
   }
   for (let k in megazordInfo.pendingZords) {
-    let cloutAccount = await getBitcloutAcc(k);
+    let cloutAccount = await api_functions.getBitcloutAcc(k);
     resultMegazord.canConfirm = k === user.id;
     resultMegazord.zords.push({
       avatar: cloutAccount.ProfilePic,
@@ -89,19 +166,17 @@ async function handleMegazord(megazordInfo, user) {
       link: 'https://bitclout.com/u/' + cloutAccount.Username
     });
   }
-  resultMegazord.ProfilePic = resultMegazord.ProfilePic || defaultAvatar;
+  if (!resultMegazord.ProfilePic) {
+    if (resultMegazord.PublicKeyBase58Check) {
+      resultMegazord.ProfilePic = defaultAvatar;
+    } else {
+      resultMegazord.ProfilePic = waitingMegazordAvatar;
+    }
+  }
   resultMegazord.Username = resultMegazord.Username || resultMegazord.PubKeyShort || 'Not Activated';
   return resultMegazord;
 }
 
-export const firebaseApp = firebase.initializeApp(config);
-export const db = firebase.database();
-export const auth = firebase.auth();
-export const storage = firebase.storage();
-// export const messaging = firebase.messaging();
-export const functions = firebase.functions()
-functions.useEmulator("localhost", 5001);
-db.useEmulator("localhost", 9000)
 export const api_functions = {
   'getTaskSession': () => {
     var path = window.location.href.split('/').pop();
@@ -128,7 +203,30 @@ export const api_functions = {
     })
   },
   'signInWithCustomToken': auth.signInWithCustomToken.bind(auth),
-  'getBitcloutAcc': getBitcloutAcc,
+  'getBitcloutAcc': (publicKey, Username) => {
+    return new Promise((resolve, reject) => {
+      getBitcloutAcc(publicKey, Username).then(resolve).catch(e=>{
+        fireError('Get Bitclout Account ' + e);
+        reject(e);
+      })
+    })
+  },
+  'getExchangeRate': data => {
+    return new Promise((resolve, reject) => {
+      getExchangeRate(data).then(resolve).catch(e=>{
+        fireError('Get Bitclout Exchange Rate ' + e);
+        reject(e);
+      })
+    })
+  },
+  'getFeesMap': () => {
+    return {
+      3: 1 * 10**4,
+      2: 1 * 10**5,
+      1: 1 * 10**6,
+      0.5: Infinity
+    }
+  },
   'onUserData': async (publicKey, callback, errorCallback = () => {}) => {
     var data, userRef = db.ref("users/" + publicKey);
     userRef.on('value', async (snapshot) => {
@@ -137,7 +235,7 @@ export const api_functions = {
         auth.signOut();
         return
       }
-      var userCloutData = await getBitcloutAcc(publicKey);
+      var userCloutData = await api_functions.getBitcloutAcc(publicKey);
       let resUser = Object.assign(userDBData, userCloutData);
       resUser.id = publicKey;
       const megazordsIds = resUser.megazords;
@@ -163,6 +261,9 @@ export const api_functions = {
       }
     })
   },
-  'offUserData': () => {}
+  'offUserData': () => {},
+  'onError': (subscriber) => {
+    onErrorSubscribers.push(subscriber);
+  }
   // 'helloWorld': functions.httpsCallable('signIn')
 }

@@ -182,7 +182,7 @@ function SeedPhraseDialog(props) {
           </MuiTypography>
           <Tooltip
             id="tooltip-top"
-            title={<div contentEditable='true' style={{
+            title={<div style={{
               fontSize:'16px', padding:"4px", lineHeight:"18px"}}
             dangerouslySetInnerHTML={{
               __html: "You also can use any BIP39 Bitcoin mnemonic generator like " +

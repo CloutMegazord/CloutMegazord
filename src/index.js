@@ -19,6 +19,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { createBrowserHistory } from "history";
 import { Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
+import Snackbar from "components/Snackbar/Snackbar.js";
+import AddAlert from "@material-ui/icons/AddAlert";
 
 // Firebase.
 import firebase from 'firebase/app';
@@ -72,38 +74,36 @@ const hist = createBrowserHistory();
   state = {
     isSignedIn: undefined,
     user: undefined,
-    redirect: window.location.pathname
+    redirect: window.location.pathname,
+    errorOpen: false,
+    exchangeRate: null,
+    errorText: ''
   };
 
   /**
    * @inheritDoc
    */
   componentDidMount() {
-    // var targ = window.location.href.split('/').map(it => '/' + it);
-    // if (targ.includes('/taskSessions')) {
-    //   api_functions.getTaskSession().then(resp => {
-    //     var doc = document.implementation.createHTMLDocument(""+(document.title || ""));
-
-    //     doc.open();
-    //     doc.write(resp.data);
-    //     doc.close();
-
-    //     var scripts = doc.getElementsByTagName("script");
-    //     //Modify scripts as you please
-    //     [].forEach.call( scripts, function( script ) {
-    //         script.removeAttribute("src");
-    //         script.remove();
-    //     });
-    //     //Doing this will activate all the modified scripts and the "old page" will be gone as the document is replaced
-    //     document.replaceChild( document.importNode(doc.documentElement, true), document.documentElement);
-
-    //   });
-    //   return
-    // }
-
+    var timer;
+    api_functions.onError((e)=>{
+      this.setState({
+        errorText: e.toString(),
+        errorOpen: true
+      });
+      clearTimeout(timer);
+      timer = setTimeout(()=>{
+        this.setState({
+          errorText: '',
+          errorOpen: false
+        });
+      }, 3000)
+    });
     this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
       const isSignedIn = !!userAuth;
       this.setState({isSignedIn})
+      api_functions.getExchangeRate(exchangeRate => {
+        this.setState({exchangeRate: exchangeRate});
+      })
       if (isSignedIn) {
         api_functions.onUserData(userAuth.uid, (user) => {
           this.setState({user: user});
@@ -123,6 +123,7 @@ const hist = createBrowserHistory();
    */
   componentWillUnmount() {
     this.unregisterAuthObserver();
+    api_functions.onErrorSubscribers = [];
   }
 
   validatePath() {
@@ -130,29 +131,59 @@ const hist = createBrowserHistory();
     return targ.includes('/admin');
   }
 
+  handleErrorClose(event, reason) {
+    // debugger
+    // if (reason === 'clickaway') {
+    //   return;
+    // }
+    this.setState({
+      errorText: '',
+      errorOpen: false
+    });
+  }
+
+
   /**
    * @inheritDoc
    */
   render() {
     return (
-      <Router history={hist}>
-        <Switch>
-          <Route path="/landing">
-            <Landing api_functions={api_functions}></Landing>
-            {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
-          </Route>
-          {/* <Route path="/admin" component={Admin} />
-          <Redirect from="/" to="/admin/dashboard" /> */}
-          {this.state.isSignedIn === true &&
-            <Route path="/admin">
-              <Admin api_functions={api_functions} user={this.state.user}></Admin>
+      <div>
+        <Router history={hist}>
+          <Switch>
+            <Route path="/landing">
+              <Landing api_functions={api_functions}></Landing>
+              {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
             </Route>
+            {/* <Route path="/admin" component={Admin} />
+            <Redirect from="/" to="/admin/dashboard" /> */}
+            {this.state.isSignedIn === true &&
+              <Route path="/admin">
+                <Admin api_functions={api_functions} user={this.state.user} exchangeRate={this.state.exchangeRate}></Admin>
+              </Route>
+            }
+          </Switch>
+          {this.state.isSignedIn !== undefined &&
+            <Redirect to={this.state.redirect} />
           }
-        </Switch>
-        {this.state.isSignedIn !== undefined &&
-          <Redirect to={this.state.redirect} />
-        }
-      </Router>
+        </Router>
+        <Snackbar
+          place="tc"
+          color="danger"
+          icon={AddAlert}
+          message={this.state.errorText}
+          open={this.state.errorOpen}
+          autoHideDuration={1000}
+          onClose={(event, reason)=>this.handleErrorClose(event, reason)}
+          closeNotification={() =>  this.setState({errorText: '', errorOpen: false})}
+          close
+        />
+        {/* <Snackbar open={this.state.errorOpen} autoHideDuration={4000} onClose={(event, reason)=>this.handleErrorClose(event, reason)}>
+          <Alert onClose={(event, reason)=>handleClose(event, reason, setErrorOpen)} severity="error">
+            Error: {errorText}
+          </Alert>
+        </Snackbar> */}
+      </div>
     );
       // <div className={styles.container}>
       //   <div className={styles.logo}>

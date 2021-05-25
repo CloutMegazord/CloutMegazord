@@ -98,13 +98,18 @@ const useCreateTaskStyles = makeStyles((theme) => ({
     textAlign: 'center'
   },
   formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
+    minWidth: theme.spacing(15),
+    margin: theme.spacing(1)
+  },
+  taskForm: {
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: '30%'
   }
 }));
 
 function CreateTask(props) {
-  const { onCreate, onClose, open, user, megazord, ...other } = props;
+  const { onCreate, onClose, open, user, megazord, api_functions, exchangeRate, ...other } = props;
   const classes = useCreateTaskStyles();
   const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
   const [inputState, setInputState] = React.useState(0);
@@ -115,7 +120,7 @@ function CreateTask(props) {
   var tasksTypes = new Array(Object.keys(TasksMap).length);
   var tasksMap = {}
   for (let key in TasksMap) {
-    tasksMap[key] = TasksMap[key]({user, megazord});
+    tasksMap[key] = TasksMap[key]({user, megazord, api_functions, exchangeRate});
     tasksTypes[tasksMap[key].order] = {key, disabled: tasksMap[key].disabled}
   }
   if (taskType) {
@@ -160,6 +165,7 @@ function CreateTask(props) {
   }
 
   const handleChange = (event) => {
+    event.preventDefault();
     setTaskType(event.target.value);
   };
 
@@ -178,36 +184,35 @@ function CreateTask(props) {
       <DialogContent dividers className={classes.paper}>
 
         {/*  className={classes.addOwnerWrapper} */}
-
-        <FormControl className={classes.formControl}>
-          <InputLabel id="demo-simple-select-label">Task Type</InputLabel>
-          <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
-            inputProps={{
-              id: 'taskType',
-            }}
-            value={taskType}
-            onChange={handleChange}
-          >{tasksTypes.map(item => {
-            return (
-              <MenuItem
-                key={item.key}
-                id={item.key}
-                value={item.disabled ? '' : item.key}>{item.key + (item.disabled ? ' (soon)' : '')}</MenuItem>)
-          })}
-          </Select>
+        <form className={classes.taskForm}>
+          <FormControl className={classes.formControl}>
+            <InputLabel id="demo-simple-select-label">Task Type</InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              value={taskType}
+              onChange={handleChange}
+            >
+              {tasksTypes.map(item => {
+                return (
+                  <MenuItem
+                    key={item.key}
+                    id={item.key}
+                    value={item.disabled ? '' : item.key}>{item.key + (item.disabled ? ' (soon)' : '')}</MenuItem>)
+              })}
+            </Select>
+          </FormControl>
           {(taskType &&
             taskForm.controls.map(item => {
               return (
-                <div key={item.name}>
-                  <p>{item.name}</p>
+                <div className={classes.formControl} key={item.name}>
+                  {/* <InputLabel id={item}>{item.name}</InputLabel> */}
                   {item.component}
                 </div>
               )
             })
           )}
-        </FormControl>
+        </form>
       </DialogContent>
       <DialogActions>
         <Button autoFocus onClick={handleCancel} color="secondary">
@@ -228,6 +233,7 @@ export default function TableList(props) {
   const classes = useStyles();
   const user = props.user || {};
   const api_functions = props.api_functions;
+  const exchangeRate = props.exchangeRate;
 
   const megazordId = window.location.pathname.split('/').pop();
   var megazord = user.megazords ? user.megazords[megazordId] : {};
@@ -272,8 +278,8 @@ export default function TableList(props) {
     <div>
       {user.id &&
         <CreateTask
-          open={openCT} user={user} megazord={megazord}
-          onCreate={createHandler} onClose={closeHandler}
+          open={openCT} user={user} megazord={megazord} api_functions={api_functions}
+          exchangeRate={exchangeRate} onCreate={createHandler} onClose={closeHandler}
         />
       }
       <GridContainer>

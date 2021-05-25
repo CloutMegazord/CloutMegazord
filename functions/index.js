@@ -50,8 +50,37 @@ app.use(express.json({limit:'100kb'}))
 
 const AdminBTLTPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
 const taskSessionsExpire = (10 * 60 * 10**3);//10 mins
+const bitcloutCahceExpire = {
+    'get-exchange-rate': 2 * 60 * 1000,
+    'ticker': 2 * 60 * 1000,
+    'get-single-profile': 24 * 60 * 60 * 1000
+}
+
 const tskSessFold = __dirname + '/tmp/taskSessions/';
 const functionsUrl = 'http://localhost:5001/cloutmegazord/us-central1/';
+
+function expireCleaner(ref) {
+    ref.orderByChild('expire').once('value', async function(s) {
+        if (!s.val()) {return}
+        const items = s.val();
+        for (let key in items) {
+            let item = items[key];
+            if (Date.now() > item.expire) {
+                s.ref.child(key).remove();
+            }
+        }
+
+    })
+}
+
+setInterval(() => {
+    expireCleaner(db.ref('protected/encryptedSeeds'));
+    expireCleaner(db.ref('taskSessions'));
+}, 2 * 60 * 1000)
+
+setInterval(() => {
+    expireCleaner(db.ref('bitcloutCache'));
+}, 1 * 60 * 60 * 1000)
 
 function getReqData(req, field) {
     let data = req.body.data[field];
@@ -84,20 +113,23 @@ const validatePublicKey = (jwt_token, publicKey) => {
 async function bitcloutProxy(data) {
     return new Promise(async (resolve, reject) => {
         const action = data['action'];
+        const method = data['method'] || 'post';
         var cachedData  = null;
         delete data['action']
+        delete data['method']
         const cachedDataRef = await db.ref('bitcloutCache').child(JSON.stringify(data)).get();
         if (cachedDataRef.exists()) {
             console.log('Cache Hit')
             cachedData = cachedDataRef.val();
             resolve(cachedData.data);
         }
-        axios.post("https://bitclout.com/api/v0/" + action,
+        axios[method]("https://bitclout.com/api/v0/" + action,
             data,
             {headers: {'Content-Type': 'application/json'}
         }).then(resp => {
             db.ref('bitcloutCache').child(JSON.stringify(data)).set({
-                data: resp.data, expire: Date.now() + (24 * 60 * 60 * 1000)})
+                data: resp.data, expire: Date.now() + bitcloutCahceExpire[action]
+            })
             resolve(resp.data)
         }).catch(error => {
             reject(error)
@@ -512,7 +544,6 @@ function zordsToMegazord(encryptedZordsEntropy, encryptionKey) {
     }
     const megazordMnemonic = bip39.entropyToMnemonic(megazordEntropy);
     try {
-        let megazordEntropy = bip39.mnemonicToEntropy(megazordMnemonic);
         if (!entropyService.isValidCustomEntropyHex(megazordEntropy.toString())) {
             throw new Error('Invalid mnemonic');
         }
