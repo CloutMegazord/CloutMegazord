@@ -70,7 +70,8 @@ import {
   roseColor,
   whiteColor,
   blackColor,
-  hexToRgb
+  hexToRgb,
+  defaultFont
 } from "assets/jss/material-dashboard-react.js";
 
 import { bugs, website, server } from "variables/general.js";
@@ -186,10 +187,10 @@ function SeedPhraseDialog(props) {
               fontSize:'16px', padding:"4px", lineHeight:"18px"}}
             dangerouslySetInnerHTML={{
               __html: "You also can use any BIP39 Bitcoin mnemonic generator like " +
-              " <a target='_blank' href='https://iancoleman.io/bip39/'>Ian Coleman</a>" +
+              " Ian Coleman bip39 generator" +
               " or just use generator on " +
-              " <a target='_blank' href='https://identity.bitclout.com/sign-up/'>BitClout Sign-Up page.</a> " +
-              " <br>Main restriction: seed pharese <b style='color:"+dangerColor[0]+"'>should include exactly 12 words!</b>" }}></div>}
+              " BitClout Sign-Up page." +
+              " <br>Main restriction: seed pharese should include exactly <b style='color:"+dangerColor[0]+"'>12</b> words!" }}></div>}
             placement="top"
           >
             <b style={{cursor:'pointer', fontSize:'16px', color:primaryColor[0]}}>Advanced</b>
@@ -279,9 +280,10 @@ function CreateMegazord(props) {
       <DialogContent dividers>
         <InputBitcloutAccount
           disabled={accounts.length > 2}
-          placeholder={(accounts.length > 2) ? "Limit reached" : "Add BitClout account"}
+          placeholder={(accounts.length > 2) ? "Limit reached" : "Invite BitClout User as Zord for new Megazord"}
           addHandler={addToList}
           onCloseSubscribe={onCloseSubscribe}
+          htmlIds={{Recipient: "add_Zord_value"}}
           validate={validate}
           user={user}
           valueProp=''
@@ -331,14 +333,40 @@ function CreateMegazord(props) {
   );
 }
 
+const useStyles2 = makeStyles(theme => ({
+  notifications: {
+    zIndex: "4",
+    [theme.breakpoints.up("md")]: {
+      position: "absolute",
+      top: "-3px",
+      border: "1px solid " + whiteColor,
+      right: "-8px",
+      fontSize: "12px",
+      background: secondaryColor[0],
+      color: blackColor,
+      minWidth: "24px",
+      height: "24px",
+      borderRadius: "24px",
+      textAlign: "center",
+      lineHeight: "24px",
+      verticalAlign: "middle",
+      display: "block"
+    },
+    [theme.breakpoints.down("sm")]: {
+      ...defaultFont,
+      fontSize: "14px",
+      marginRight: "8px"
+    }
+  }
+}));
+
 export default function MegazordsList(props) {
-  const classes = useStyles();
+  const classes = Object.assign(useStyles(), useStyles2());
   const [open, setOpen] = React.useState(false);
   const [seedOpen, setSeedOpen] = React.useState(false);
   const [value, setValue] = React.useState('');
   const [zords, setZords] = React.useState([]);
   const [zordId, setZordId] = React.useState(null);
-
   // const [megazords, setMegazords] = React.useState([]);
   const api_functions = props.api_functions;
 
@@ -380,7 +408,13 @@ export default function MegazordsList(props) {
     setZordId(megazordId)
     setSeedOpen(true)
   }
-  const defaultAvatar = 'https://cdn.pixabay.com/photo/2019/09/26/19/08/hourglass-4506807__340.png'
+
+  const createCopyPubKeyHandler = (pubKey) => {
+    return (e) => {
+      e.preventDefault();
+      navigator.clipboard.writeText(pubKey)
+    }
+  }
 
   return (
     <div>
@@ -412,20 +446,39 @@ export default function MegazordsList(props) {
                   <CardHeader>
                     <CardAvatar profile>
                       <a href={item.link ? item.link : '#'} target='_blank'>
-                        <img src={item.avatar ?  item.avatar : defaultAvatar}
+                        <img src={item.ProfilePic}
                             alt={item.name ? item.name : item.pub_key ? item.pub_key : ''}
                             style={{
                               objectFit: 'contain',
-                              width: '8rem',
-                              height: '8rem',
+                              width: '100%',
+                              height: '100%',
                             }} />
                       </a>
                     </CardAvatar>
                   </CardHeader>
                   <CardBody profile>
-                    <h6 className={classes.cardCategory}>{item.status_text}</h6>
+                    <h6 className={classes.cardCategory}>{
+                      (item.status_id === 0 &&
+                        <a target="_blank" href={item.link}>{item.Username}</a>)
+                      ||(item.status_id === 1 &&
+                        <span>{item.status_text}</span>)
+                      ||(item.status_id === 2 &&
+                        <span>{item.status_text}</span>)
+                      // item.status_text
+                    }</h6>
                     <h4 className={classes.cardTitle}>
-                      {item.name ? item.name : item.pub_key ? item.pub_key.slice(0, 12) + '...' : '...'}
+                      {item.PubKeyShort ? (
+                        <div>
+                          {item.PubKeyShort}
+                          {/* BC1YLfqhoWhgfrcNnCGiNauSo6Hj1Q2PJRic39hj8H3rP9agDvBc5uu */}
+                          <IconButton
+                           tooltip="Copy to clipboard" style={{cursor: 'pointer'}}
+                          size="sm" edge="end" onClick={createCopyPubKeyHandler(item.PublicKeyBase58Check)}>
+                            <Icon fontSize="small">content_copy</Icon>
+                          </IconButton>
+                        </div>
+                        ) : (<span>...</span>)
+                      }
                     </h4>
                     <h5 className={classes.cardCategory}><b>Zords:</b></h5>
                     <GridContainer justify="center" style={{minHeight: '6rem', padding: '0.5rem 0 0 0'}}>
@@ -463,10 +516,13 @@ export default function MegazordsList(props) {
                       human foundation in truth And I love you like Kanye loves Kanye
                       I love Rick Owens’ bed design but the back is...
                     </p> */}
-                    {(item.status_id === 2 &&
+                    {(item.status_id !== 1 &&
                       <Button color="primary" href={"tasks_list/" + item.id} round>
                       <Icon>task</Icon>
                         Tasks
+                        {(item.tasks.length !== 0) &&
+                          <span className={classes.notifications}>{item.tasks.length}</span>
+                        }
                       </Button>)
                     || ((item.status_id === 1) &&
                       (!item.canConfirm &&

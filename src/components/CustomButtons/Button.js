@@ -62,6 +62,7 @@ RegularButton.propTypes = {
   ]),
   size: PropTypes.oneOf(["sm", "lg"]),
   simple: PropTypes.bool,
+  visibility: PropTypes.string,
   round: PropTypes.bool,
   disabled: PropTypes.bool,
   block: PropTypes.bool,

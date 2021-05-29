@@ -48,7 +48,7 @@ app.use(cors({ origin: true }));
 app.use(express.json({limit:'100kb'}))
 
 
-const AdminBTLTPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
+const CloutMegazordPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
 const taskSessionsExpire = (10 * 60 * 10**3);//10 mins
 const bitcloutCahceExpire = {
     'get-exchange-rate': 2 * 60 * 1000,
@@ -69,7 +69,6 @@ function expireCleaner(ref) {
                 s.ref.child(key).remove();
             }
         }
-
     })
 }
 
@@ -193,8 +192,25 @@ async function addMegazord(zords, owner) {
     }
 }
 
-async function storePublicKey(publicKey, megazord) {
-    await db.ref('megazords/' + megazord).child('PublicKeyBase58Check').set(publicKey);
+async function getExchangeRate() {
+    try {
+        var exchangeRate = await bitcloutProxy({method: 'get', action: 'get-exchange-rate'});
+        var tickerResp = await axios.get('https://blockchain.info/ticker');
+      } catch (e) {
+        throw new Error(e);
+      }
+
+      if (tickerResp.data.error) {
+        reject(tickerResp.data.error);
+      }
+      var ticker = tickerResp.data;
+      // var exchangeRate =  (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
+      var exchangeRate =  {
+        SatoshisPerBitCloutExchangeRate: exchangeRate.SatoshisPerBitCloutExchangeRate,
+        USDCentsPerBitcoinExchangeRate: ticker.USD.last,
+        USDbyBTCLT: ticker.USD.last * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
+      }
+      return exchangeRate;
 }
 
 app.post('/bitclout-proxy', async (req, res, next) => {
@@ -205,6 +221,16 @@ app.post('/bitclout-proxy', async (req, res, next) => {
     } catch(error) {
         res.send({data: { error: error.toString()}})
     }
+});
+
+app.post('/getExchangeRate', async (req, res, next) => {
+    try {
+        var exchangeRate = await getExchangeRate();
+      } catch (e) {
+        res.send({data:{ error: e.toString()}});
+        return
+      }
+      res.send({data:exchangeRate});
 });
 
 app.post('/login', async (req, res, next) => {
@@ -229,7 +255,6 @@ app.post('/login', async (req, res, next) => {
         const customToken = await auth.createCustomToken(publicKey);
         res.status(200).send({data: {"token": customToken}});
     } catch(err) {
-        debugger
         res.send({data:{error: 'Firebase Error.'}})
         return;
     }
@@ -251,6 +276,9 @@ app.post('/confirmMegazord', async (req, res, next) => {
     var megazorSnap = await megazordRef.get()
     if (megazorSnap.exists()) {
         var megazord = megazorSnap.val();
+    } else {
+        res.send({data:{error: "Megazord not found."}})
+        return
     }
     if (publicKey in megazord.pendingZords) {
         delete megazord.pendingZords[publicKey];
@@ -262,12 +290,13 @@ app.post('/confirmMegazord', async (req, res, next) => {
     await megazordRef.set(megazord)
     const task = Tasks.createTask({
         type: 'getPublicKey',
-        addedBy: AdminBTLTPubKey,
-        megazordRef: megazordRef,
+        addedBy: CloutMegazordPubKey,
+        megazorSnap: megazorSnap,
         Recipient: 'TargetMegazord'
     });
     console.log(task.toDBRecord())
     await megazordRef.child('tasks').push(task.toDBRecord());
+
     // await megazordRef.child('pendingZords').child(publicKey).remove()
     // await megazordRef.child('confirmedZords').child(publicKey).set(true);
     res.send({data:{success: true}})
@@ -313,6 +342,22 @@ app.post('/createMegazord', async (req, res, next) => {
     res.send({data:{}})
 })
 
+async function testTask() {
+    var task = Tasks.createTask({
+        addedBy:'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE',
+        AmountNanos:'1000000000',
+        Recipient:'BC1YLj8LTffNBmCnrmGCgEG9y5upH14a9cnCrqw5ipC7sgEMi3TxgLa',
+        Currency:'$BitClouts',
+        megazord:{
+            key: '-Map4bNttVTay3mSQalg',
+            PublicKeyBase58Check: 'BC1YLi1A7nWDTEmDjaT3F1ba32nqH8YSqVP2TBHcrZZNnf2eyadTkSN'},
+        type:'send'
+    })
+    const exhRate = await getExchangeRate();
+    const transaction = task.getTransaction(exhRate.USDbyBTCLT);
+}
+
+// testTask().then(() =>{});
 app.post('/task', async (req, res, next) => {
     var data = req.body.data;
     var publicKey;
@@ -327,12 +372,19 @@ app.post('/task', async (req, res, next) => {
     }
 
     const megazordRef = db.ref('megazords/' + data.megazordId);
+    var megazorSnap = await megazordRef.get();
+    // var megazorSnap = await megazordRef.get()
+    if (megazorSnap.exists()) {
+        var megazord = megazorSnap.val();
+    } else {
+        res.send({data:{error: 'Task not Found'}});
+    }
     switch (data.action) {
         case 'create':
             task = Tasks.createTask({
                 ...data.task,
                 addedBy: publicKey,
-                megazordRef: megazordRef
+                megazorSnap: megazorSnap
             });
 
             await megazordRef.child('tasks').push(task.toDBRecord());
@@ -346,14 +398,6 @@ app.post('/task', async (req, res, next) => {
             var taskId = data.task.id;
             var taskShrtId = crypto.randomBytes(3).toString('hex');
             var encryptionKey = crypto.randomBytes(8).toString('hex');
-            var megazorSnap = await megazordRef.get();
-
-            // var megazorSnap = await megazordRef.get()
-            if (megazorSnap.exists()) {
-                var megazord = megazorSnap.val();
-            } else {
-                res.send({data:{error: 'Task not Found'}});
-            }
 
             var dbTask = megazord.tasks[data.task.id];
             // task = Tasks.taskFromDB(dbTask, megazordRef);
@@ -371,7 +415,6 @@ app.post('/task', async (req, res, next) => {
                 }
                 var zords = megazord.confirmedZords;
                 var resZords = [];
-                var trgShrtId;
                 for (let zordId in zords) {
                     let shrtId = crypto.randomBytes(2).toString('hex');
                     try {
@@ -482,17 +525,13 @@ nestedApp.use(helmet());
 nestedApp.use(cors({ origin: true }));
 nestedApp.use(express.json({limit:'100kb'}))
 
-async function finishTask(zords, megazordId, task) {
-    await db.ref('megazords/' + megazordId + '/' + task.id).remove();
-    for (let zord of zords) {
-        db.ref('users/' + zord).child('notifications').push(notifications('taskDone', {taskType: task.type}))
+async function finishTask(zords, megazordId, task, error) {
+    if (!error) {
+        await db.ref('megazords/' + megazordId + '/tasks').child(task.id).remove();
     }
-    rimraf(tskSessFold + task, function () {});
-}
-
-async function taskFailed(zords, task, error) {
+    var notificationType = error ? 'taskFailed' : 'taskDone'
     for (let zord of zords) {
-        db.ref('users/' + zord).child('notifications').push(notifications('taskFailed', {
+        await db.ref('users/' + zord).child('notifications').push(notifications(notificationType, {
             taskType: task.type,
             error: error
         }))
@@ -526,6 +565,7 @@ function decryptSeedHex(seedHex, encryptionKey) {
 function zordsToMegazord(encryptedZordsEntropy, encryptionKey) {
     let length = 0;
     var zordsEntropy = [];
+
     for (let zordEntropy of encryptedZordsEntropy) {
         const decipher = crypto.createDecipher('aes-256-gcm', encryptionKey);
         zordEntropy = decipher.update(Buffer.from(zordEntropy, 'hex')).toString();
@@ -544,7 +584,7 @@ function zordsToMegazord(encryptedZordsEntropy, encryptionKey) {
     }
     const megazordMnemonic = bip39.entropyToMnemonic(megazordEntropy);
     try {
-        if (!entropyService.isValidCustomEntropyHex(megazordEntropy.toString())) {
+        if (!entropyService.isValidCustomEntropyHex(Buffer.from(megazordEntropy).toString('hex'))) {
             throw new Error('Invalid mnemonic');
         }
     } catch {
@@ -595,7 +635,6 @@ nestedApp.post('/power', async (req, res, next) => {
     res.send({data: { ok: true }});
     if (encryptedSeeds.zordsEntropy.length !== zordsCount) {
         await db.ref('protected/encryptedSeeds').child(taskShrtId).set(encryptedSeeds);
-        res.send({data: { ok: true }});
         return
     }
 
@@ -606,24 +645,24 @@ nestedApp.post('/power', async (req, res, next) => {
         zordsEntropySignature[zord.signPos] = zord.encryptedEntropy
     }
 
+    var taksError = ''
     try {
         var [megazordSeedHex, megazordPublicKey] = zordsToMegazord(zordsEntropySignature, encryptionKey);
     } catch(e) {
-        taskFailed(zordsIds, task, 'Zord Seeds is Uncorrect');
+        taksError = 'Zord Seeds is Uncorrect';
+        finishTask(zordsIds, taskSession.megazordId, task, taksError);
         return
     }
     if (task.type === 'getPublicKey') {
-        storePublicKey(megazordPublicKey, taskSession.megazordId);
-        finishTask(zordsIds, taskSession.megazordId, task);
+        await db.ref('megazords/' + taskSession.megazordId).child('PublicKeyBase58Check').set(megazordPublicKey);
     } else {
-        taskFailed(zordsIds, task, 'Task Not Implemented yet.');
+        taksError = 'Task Not Implemented yet.';
     }
+    finishTask(zordsIds, taskSession.megazordId, task, taksError);
     //clear seed phrases
     encryptedSeeds = {};
-    encryptedSeedsSignature = [];
-    encryptedSeedHex = '';
-    seedHex = '';
-    zordSeeds = [];
+    zordsEntropySignature = [];
+    megazordSeedHex = '';
     await db.ref('protected/encryptedSeeds').child(taskShrtId).remove();
     await db.ref('taskSessions').child(taskShrtId).remove();
 })

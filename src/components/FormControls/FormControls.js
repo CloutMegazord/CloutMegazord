@@ -60,7 +60,12 @@ const useStyles = makeStyles((theme) => ({
   },
   formControl: {
     width:'100%',
-    margin: theme.spacing(1)
+    marginTop: theme.spacing(1),
+    marginBottom: '26px'
+  },
+  currency: {
+    display: 'flex',
+    flexDirection: 'row'
   },
   wideInput: {
     width:'100%'
@@ -69,17 +74,26 @@ const useStyles = makeStyles((theme) => ({
     cursor: 'pointer',
     marginTop: '-3px',
     verticalAlign: 'middle'
+  },
+  success: {
+    // borderRight: '5px solid green'
+  },
+  inputAccount: {
+    marginBottom: '0px'
+  },
+  helper: {
+    fontSize: '0.9rem'
   }
 }));
 
-export function BitcloutAccountItem({item, id, label, value}) {
+export function BitcloutAccountItem({item, htmlIds, label, values}) {
   const ProfilePic = item.ProfilePic;
   const classes = useStyles();
   return (
     <FormControl className={classes.formControl}>
-      <InputLabel htmlFor={id}>{label}</InputLabel>
+      <InputLabel htmlFor="accountItem">{label}</InputLabel>
       <Input
-        id={id}
+        id="accountItem"
         startAdornment={
         <InputAdornment position="end">
           <Avatar style={{width: '28px', height: '28px', backgroundColor: '#ffffff00'}}>
@@ -91,7 +105,7 @@ export function BitcloutAccountItem({item, id, label, value}) {
         }}
         disabled
         variant="outlined"
-        defaultValue={value}
+        defaultValue={values.Recipient}
       />
       {/* <Tooltip
         id="tooltip-top"
@@ -102,13 +116,13 @@ export function BitcloutAccountItem({item, id, label, value}) {
           <img style={{width: '4rem', height: '4rem', objectFit: 'contain'}} src={ProfilePic}></img>
         </Avatar>
       </Tooltip> */}
-      <input type="hidden" id={id} value={value}></input>
+      <input type="hidden" id={htmlIds.Recipient} value={values.Recipient}></input>
     </FormControl>
     )
 }
 export function InputBitcloutAccount(
   {disabled=false, placeholder, valueProp, addHandler, onCloseSubscribe=()=>{}, user, validate,
-  htmlId='input_bitclout_account', ...rest }) {
+  htmlIds={Recipient: "input_bitclout_account"}, ...rest }) {
   const classes = useStyles();
   const [inputState, setInputState] = React.useState(0);
   const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
@@ -134,10 +148,11 @@ export function InputBitcloutAccount(
       }
       try {
         var bitcloutAccountResp = await api_functions.getBitcloutAcc(PubKey, accName);
-        bitcloutAccountResp.id = bitcloutAccount.PublicKeyBase58Check;
+        bitcloutAccountResp.id = bitcloutAccountResp.PublicKeyBase58Check;
         validate(bitcloutAccountResp);
       } catch (err) {
         setInputState(3);
+        return
       }
       setBitcloutAccount(bitcloutAccountResp);
       setInputState(2);
@@ -163,32 +178,42 @@ export function InputBitcloutAccount(
   })
 
   return (
-    <FormControl className={classes.formControl}>
-      <InputLabel htmlFor={htmlId}>{placeholder}</InputLabel>
+    <FormControl className={classes.inputAccount + ' ' + classes.formControl}>
+      <InputLabel htmlFor={'input_bitclout_account_control'}>{placeholder}</InputLabel>
       <Input
         error={(inputState === 3)}
-        success={(inputState === 2).toString()}
+        className={(inputState === 2) ? classes.success : ''}
         onChange={inputOnChange}
         disabled={disabled}
         value={value}
+        id={'input_bitclout_account_control'}
+        required
         endAdornment={
-          <InputAdornment position="end">
+          <InputAdornment>
             {(inputState == 1 &&
               <CircularProgress size="1rem" style={{ color: primaryColor[0] }}></CircularProgress>
             )}
           </InputAdornment>
         }
-        id={htmlId}
         inputProps = {{
+          "spellCheck": false,
           "aria-label": "BitClout account"
         }}
       />
-
-      {((inputState == 2 && addHandler) &&
-        <Button edge="end" size='sm' onClick={_addHandler} round aria-label="add" color="primary" >
+      <FormHelperText component={'div'} id={'input_bitclout_account_helper_text'}
+        style={{visibility: bitcloutAccount ? 'visible' : 'hidden'}} className={classes.helper}>
+        {bitcloutAccount ? bitcloutAccount.PubKeyShort : 'Account Publick Key'}
+      </FormHelperText>
+      {((addHandler) &&
+        <Button edge="end" size='sm'
+        style={{visibility: (inputState == 2) ? 'visible' : 'hidden'}}
+        onClick={_addHandler}
+        round aria-label="add"
+        color="primary" >
           Add
         </Button>
       )}
+      <input type="hidden" id={htmlIds.Recipient} value={bitcloutAccount ? bitcloutAccount.id : ''}></input>
     </FormControl>
   )
 
@@ -196,13 +221,13 @@ export function InputBitcloutAccount(
 
 export function InputAmount(props) {
   const classes = useStyles();
+  const {htmlIds, exchRate, feesMap, currencyTypes} = props;
   const [USDAmount, setUSDAmount] = React.useState(0);
   const [BTCLTAmount, setBTCLTAmount] = React.useState(0);
-  const [nanosAmount, setNanosAmount] = React.useState(0);
+  const [amountNanos, setAmountNanos] = React.useState(0);
   const [MGZDfee, setMGZDFee] = React.useState(0);
-  const {htmlId, getExchangeRate, feesMap, exchRate} = props;
-  //SatoshisPerBitCloutExchangeRate
-  //USDCentsPerBitcoinExchangeRate
+  const [currency, setCurrency] = React.useState(currencyTypes[0]);
+
   var feesMapTable = '<table style="width:100%"><thead><td>Amount</td><td>Fee</td></thead>';
   var fees = Object.keys(feesMap).sort().reverse();
   for (let i = 0; i < fees.length; i += 1) {
@@ -218,63 +243,87 @@ export function InputAmount(props) {
   }
   feesMapTable += '</table>'
   const handleChange = (event) => {
-    // var exchangeRate =  (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
-    // setBTCLTAmount(event.target.value);
-    // if (exchRate.USDbyBTCLT) {
-    //   var USDAmount = BTCLTAmount * exchRate.USDbyBTCLT;
-    //   setUSDAmount(USDAmount);
-    //   var nanosAmount = BTCLTAmount * 1e-9;
-    //   setNanosAmount(nanosAmount);
-    //   var trgFee = 0;
-    //   for (let fee in feesMap) {
-    //     let range = feesMap[fee];
-    //     if (USDAmount < range) {
-    //       trgFee = fee;
-    //     } else {break}
-    //   }
-    //   setMGZDFee(trgFee);
-    // }
+    var _BTCLTAmount = parseInt(event.target.value);
+    setBTCLTAmount(_BTCLTAmount);
+    if (exchRate.USDbyBTCLT) {
+      var USDAmount = _BTCLTAmount * exchRate.USDbyBTCLT;
+      setUSDAmount(USDAmount);
+      var amountNanos = _BTCLTAmount * 1e9;
+      setAmountNanos(amountNanos);
+      var trgFee = fees[0];
+      for (let fee of fees) {
+        let range = feesMap[fee];
+        if (USDAmount < range) {
+          trgFee = fee;
+          break
+        }
+      }
+      setMGZDFee(trgFee);
+    }
   }
-  // placeholder={ "Input Name or Public Key"}
-  // validate={validateUsername}
-  // user={user}
-  // htmlId="update_name_id"
-  // valueProp={megazord.Username || ''}
-    // InputLabelProps={{
-      //   shrink: true,
-  // }}
-  //helperText={USDAmount ? `USD ≈ ${USDAmount}` : '1'}
+
+  const handleCurrencyChange = (event) => {
+    event.preventDefault();
+    setCurrency(event.target.value);
+  }
+
   return (
   <div>
+    <FormControl className={classes.formControl + ' ' + classes.currency}>
+      <InputLabel id="currency-select-label">Currency</InputLabel>
+      <Select
+        labelId="currency-select-label"
+        id="currency-select"
+        value={currency}
+        onChange={handleCurrencyChange}
+      >
+        {currencyTypes.map(item => {
+          return (
+            <MenuItem
+              key={item}
+              id={'currency_' + item}
+              value={item}>{item}</MenuItem>)
+      })}
+      </Select>
+    </FormControl>
     <FormControl className={classes.formControl}>
-      <InputLabel htmlFor={'interact_' + htmlId}>Amount of $BitClout to send:</InputLabel>
+      <InputLabel htmlFor={'interact_amount'}>Amount of {currency} to send:</InputLabel>
       <Input
-        id={'interact_' + htmlId}
+        id={'interact_interact_amount'}
         type="number"
         // endAdornment={<InputAdornment position="end">$BitClout</InputAdornment>}
-        aria-describedby={htmlId + '_helper_text'}
+        aria-describedby={'interact_amount_helper_text'}
         inputProps={{
           'aria-label': 'amount',
         }}
         onChange={handleChange}
-        value={BTCLTAmount}
+        required
+        placeholder={BTCLTAmount.toLocaleString()}
+        value={BTCLTAmount ? BTCLTAmount : ''}
       />
-      <FormHelperText id={htmlId + '_helper_text'}>
-        Platform fee: {MGZDfee}%
-        <Tooltip
-          id="tooltip-top"
-          title={<div dangerouslySetInnerHTML={{
-            __html: `Platform Fees included in Total and depending of amount:${feesMapTable}`
-          }}></div>}
-          placement="right"
-        >
-          <Icon className={classes.icon} fontSize="small">info</Icon>
-        </Tooltip>
-        <br/>
-        Total: {BTCLTAmount + BTCLTAmount * (MGZDfee / 100)} (≈ ${USDAmount.toLocaleString} USD)
+      <FormHelperText component={'div'} id={'interact_amount_helper_text'} className={classes.helper}>
+        <div>
+          <div>
+          Platform fee: {MGZDfee}%
+          <Tooltip
+            id="tooltip-top"
+            title={<div dangerouslySetInnerHTML={{
+              __html: `Platform Fees included in total transaction amount and depending of USD value:${feesMapTable}
+                <i>NOTE:The USD value is calculated at the time of the task execution.</i>`
+            }}></div>}
+            placement="right"
+          >
+            <Icon className={classes.icon} fontSize="small">info</Icon>
+          </Tooltip>
+          </div>
+          <div>
+            Will receive: {BTCLTAmount - BTCLTAmount * (MGZDfee / 100).toLocaleString()} (≈ ${USDAmount.toLocaleString()} USD)
+          </div>
+        </div>
       </FormHelperText>
     </FormControl>
-    <input type="hidden" value={nanosAmount}></input>
+    <input type="hidden" value={amountNanos} id={htmlIds.AmountNanos}></input>
+    <input type="hidden" value={currency} id={htmlIds.Currency}></input>
   </div>)
 }
 

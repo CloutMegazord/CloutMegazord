@@ -101,9 +101,9 @@ const hist = createBrowserHistory();
     this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
       const isSignedIn = !!userAuth;
       this.setState({isSignedIn})
-      api_functions.getExchangeRate(exchangeRate => {
+      api_functions.getExchangeRate().then(exchangeRate => {
         this.setState({exchangeRate: exchangeRate});
-      })
+      }).catch(err => {})
       if (isSignedIn) {
         api_functions.onUserData(userAuth.uid, (user) => {
           this.setState({user: user});

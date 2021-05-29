@@ -20,12 +20,14 @@ const getPublicKey = (data) => {
       {
         name: 'Recipient',
         component: <BitcloutAccountItem
-          id='get_public_key_recipient'
+          htmlIds={{Recipient: "getPublicKey_Recipient_value"}}
           item={megazord}
           label={'Recipient'}
-          value={megazord.Username || megazord.PubKeyShort || "TargetMegazord"}/>,
-        possibleValue: megazord.Username || megazord.PubKeyShort || "TargetMegazord",
+          values={{Recipient: megazord.Username || megazord.PubKeyShort || "TargetMegazord"}}/>,
         // possibleInputType: ['Current Account'],
+        values: {
+          Recipient: {id: 'getPublicKey_Recipient_value', type: '*'}
+        },
         disabled: true
       }
     ],
@@ -55,7 +57,11 @@ const updateProfile = (data) => {
     controls: [
       {
         name: 'Recipient',
-        component: <BitcloutAccountItem item={megazord}/>,
+        component: <BitcloutAccountItem
+          htmlId='updateProfile_Recipient_value'
+          item={megazord}
+          label={'Recipient'}
+          value={megazord.Username || megazord.PubKeyShort || "TargetMegazord"}/>,
         possibleValue: megazord.Username || megazord.PubKeyShort || "TargetMegazord",
         // possibleInputType: ['Current Account'],
         disabled: true
@@ -133,7 +139,7 @@ const send = (data) => {
   const {megazord, user, api_functions, exchangeRate} = data;
   megazord.Username = 'Traget Megazrod'
   const validateRecipient = (account) => {
-    if (account.id === user.id) {
+    if (account.id === megazord.PublicKeyBase58Check) {
       throw Error('Cant send to self Megazord.');
     }
     return true
@@ -146,10 +152,12 @@ const send = (data) => {
           placeholder={ "Username or Public Key"}
           validate={validateRecipient}
           user={user}
-          htmlId="send_recipient_id"
+          htmlIds={{Recipient: "send_Recipient_value"}}
           valueProp=''
         />,
-        possibleValue: "*",
+        values: {
+          Recipient: {id: 'send_Recipient_value', type: '*'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
@@ -157,14 +165,17 @@ const send = (data) => {
         name: 'Amount',
         component:  <InputAmount
           placeholder={ "Input amount in BitClout"}
+          currencyTypes={['$BitClouts', 'Coins']}
           exchRate={exchangeRate}
           feesMap={api_functions.getFeesMap()}
-          currency='BitCLout'
           user={user}
-          htmlId="send_amount"
+          htmlIds={{AmountNanos: "send_Amount_value", Currency: "send_Currency_value"}}
           valueProp=''
         />,
-        possibleValue: "*",
+        values: {
+          AmountNanos: {id: 'send_Amount_value', type: '*'},
+          Currency: {id: 'send_Currency_value', type: '*'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       }
@@ -220,7 +231,7 @@ const sell = (user) => {
 export default {
   getPublicKey,
   updateProfile,
-  send,
+  send: send,
   buy,
   sell
 }

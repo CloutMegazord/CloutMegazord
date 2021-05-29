@@ -141,10 +141,12 @@ function CreateTask(props) {
   const handleOk = () => {
     var taskResult = {type: taskType};
     for (let control of taskForm.controls) {
-      if (control.possibleValue === '*') {
-        taskResult[control.name] = document.getElementById(control.name + '_value').value;
-      } else {
-        taskResult[control.name] = control.possibleValue;
+      for (let valueName in control.values) {
+        taskResult[valueName] = document.getElementById(control.values[valueName].id).value
+        if (!taskResult[valueName]) {
+          alert(`fill in ${control.name} field`)
+          return
+        }
       }
     }
     onFinish();
@@ -259,7 +261,7 @@ export default function TableList(props) {
       task: taskResult,
       megazordId: megazordId
     })
-    setOpenCT(false)
+    // setOpenCT(false)
   }
 
   const deleteHandler = (e, taskId) => {

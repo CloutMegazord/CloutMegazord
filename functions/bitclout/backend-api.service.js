@@ -1,67 +1,74 @@
-import { HttpClient, HttpErrorResponse } from "@angular/common/http";
+class BackendRoutes {
+    static ExchangeRateRoute = "/api/v0/get-exchange-rate";
+  static BurnBitcoinRoute = "/api/v0/burn-bitcoin";
+  static SendBitCloutRoute = "/api/v0/send-bitclout";
+  static MinerControlRoute = "/api/v0/miner-control";
 
-export class BackendRoutes {
-    static ExchangeRateRoute = "/get-exchange-rate";
-    static BurnBitcoinRoute = "/burn-bitcoin";
-    static SendBitCloutRoute = "/send-bitclout";
-    static MinerControlRoute = "/miner-control";
+  static GetUsersStatelessRoute = "/api/v0/get-users-stateless";
+  static RoutePathSubmitPost = "/api/v0/submit-post";
+  static RoutePathUploadImage = "/api/v0/upload-image";
+  static RoutePathSubmitTransaction = "/api/v0/submit-transaction";
+  static RoutePathUpdateProfile = "/api/v0/update-profile";
+  static RoutePathGetPostsStateless = "/api/v0/get-posts-stateless";
+  static RoutePathGetProfiles = "/api/v0/get-profiles";
+  static RoutePathGetSingleProfile = "/api/v0/get-single-profile";
+  static RoutePathGetPostsForPublicKey = "/api/v0/get-posts-for-public-key";
+  static RoutePathGetDiamondedPosts = "/api/v0/get-diamonded-posts";
+  static RoutePathGetHodlersForPublicKey = "/api/v0/get-hodlers-for-public-key";
+  static RoutePathSendMessageStateless = "/api/v0/send-message-stateless";
+  static RoutePathGetMessagesStateless = "/api/v0/get-messages-stateless";
+  static RoutePathMarkContactMessagesRead = "/api/v0/mark-contact-messages-read";
+  static RoutePathMarkAllMessagesRead = "/api/v0/mark-all-messages-read";
+  static RoutePathGetFollowsStateless = "/api/v0/get-follows-stateless";
+  static RoutePathCreateFollowTxnStateless = "/api/v0/create-follow-txn-stateless";
+  static RoutePathCreateLikeStateless = "/api/v0/create-like-stateless";
+  static RoutePathBuyOrSellCreatorCoin = "/api/v0/buy-or-sell-creator-coin";
+  static RoutePathTransferCreatorCoin = "/api/v0/transfer-creator-coin";
+  static RoutePathUpdateUserGlobalMetadata = "/api/v0/update-user-global-metadata";
+  static RoutePathGetUserGlobalMetadata = "/api/v0/get-user-global-metadata";
+  static RoutePathGetNotifications = "/api/v0/get-notifications";
+  static RoutePathGetAppState = "/api/v0/get-app-state";
+  static RoutePathGetSinglePost = "/api/v0/get-single-post";
+  static RoutePathSendPhoneNumberVerificationText = "/api/v0/send-phone-number-verification-text";
+  static RoutePathSubmitPhoneNumberVerificationCode = "/api/v0/submit-phone-number-verification-code";
+  static RoutePathBlockPublicKey = "/api/v0/block-public-key";
+  static RoutePathGetBlockTemplate = "/api/v0/get-block-template";
+  static RoutePathGetTxn = "/api/v0/get-txn";
+  static RoutePathDeleteIdentities = "/api/v0/delete-identities";
+  static RoutePathSendDiamonds = "/api/v0/send-diamonds";
+  static RoutePathGetDiamondsForPublicKey = "/api/v0/get-diamonds-for-public-key";
 
-    static GetUsersStatelessRoute = "/get-users-stateless";
-    static RoutePathSubmitPost = "/submit-post";
-    static RoutePathSubmitTransaction = "/submit-transaction";
-    static RoutePathUpdateProfile = "/update-profile";
-    static RoutePathGetPostsStateless = "/get-posts-stateless";
-    static RoutePathGetProfiles = "/get-profiles";
-    static RoutePathGetSingleProfile = "/get-single-profile";
-    static RoutePathGetPostsForPublicKey = "/get-posts-for-public-key";
-    static RoutePathGetHodlersForPublicKey = "/get-hodlers-for-public-key";
-    static RoutePathSendMessageStateless = "/send-message-stateless";
-    static RoutePathGetMessagesStateless = "/get-messages-stateless";
-    static RoutePathGetFollowsStateless = "/get-follows-stateless";
-    static RoutePathCreateFollowTxnStateless = "/create-follow-txn-stateless";
-    static RoutePathCreateLikeStateless = "/create-like-stateless";
-    static RoutePathBuyOrSellCreatorCoin = "/buy-or-sell-creator-coin-WVAzTWpGOFFnMlBvWXZhTFA4NjNSZGNW";
-    static RoutePathBuyOrSellCreatorCoinPreview = "/buy-or-sell-creator-coin-preview-WVAzTWpGOFFnMlBvWXZhTFA4NjNSZGNW";
-    static RoutePathTransferCreatorCoin = "/transfer-creator-coin";
-    static RoutePathUpdateUserGlobalMetadata = "/update-user-global-metadata";
-    static RoutePathGetUserGlobalMetadata = "/get-user-global-metadata";
-    static RoutePathGetNotifications = "/get-notifications";
-    static RoutePathGetAppState = "/get-app-state";
-    static RoutePathGetSinglePost = "/get-single-post";
-    static RoutePathSendPhoneNumberVerificationText = "/send-phone-number-verification-text";
-    static RoutePathSubmitPhoneNumberVerificationCode = "/submit-phone-number-verification-code";
-    static RoutePathBlockPublicKey = "/block-public-key";
-    static RoutePathGetBlockTemplate = "/get-block-template";
-    static RoutePathGetTxn = "/get-txn";
-    static RoutePathGetIdentities = "/get-identities";
-    static RoutePathDeleteIdentities = "/delete-identities";
+  // Admin routes.
+  static NodeControlRoute = "/api/v0/admin/node-control";
+  static ReprocessBitcoinBlockRoute = "/api/v0/admin/reprocess-bitcoin-block";
+  static RoutePathSwapIdentity = "/api/v0/admin/swap-identity";
+  static RoutePathAdminUpdateUserGlobalMetadata = "/api/v0/admin/update-user-global-metadata";
+  static RoutePathAdminGetAllUserGlobalMetadata = "/api/v0/admin/get-all-user-global-metadata";
+  static RoutePathAdminGetUserGlobalMetadata = "/api/v0/admin/get-user-global-metadata";
+  static RoutePathAdminUpdateGlobalFeed = "/api/v0/admin/update-global-feed";
+  static RoutePathAdminPinPost = "/api/v0/admin/pin-post";
+  static RoutePathAdminRemoveNilPosts = "/api/v0/admin/remove-nil-posts";
+  static RoutePathAdminGetMempoolStats = "/api/v0/admin/get-mempool-stats";
+  static RoutePathAdminGrantVerificationBadge = "/api/v0/admin/grant-verification-badge";
+  static RoutePathAdminRemoveVerificationBadge = "/api/v0/admin/remove-verification-badge";
+  static RoutePathAdminGetVerifiedUsers = "/api/v0/admin/get-verified-users";
+  static RoutePathAdminGetUsernameVerificationAuditLogs = "/api/v0/admin/get-username-verification-audit-logs";
+  static RoutePathUpdateGlobalParams = "/api/v0/admin/update-global-params";
+  static RoutePathGetGlobalParams = "/api/v0/admin/get-global-params";
+  static RoutePathEvictUnminedBitcoinTxns = "/api/v0/admin/evict-unmined-bitcoin-txns";
 
-    // Admin routes.
-    static NodeControlRoute = "/admin/node-control";
-    static ReprocessBitcoinBlockRoute = "/admin/reprocess-bitcoin-block";
-    static RoutePathSwapIdentity = "/admin/swap-identity";
-    static RoutePathAdminUpdateUserGlobalMetadata = "/admin/update-user-global-metadata";
-    static RoutePathAdminGetAllUserGlobalMetadata = "/admin/get-all-user-global-metadata";
-    static RoutePathAdminGetUserGlobalMetadata = "/admin/get-user-global-metadata";
-    static RoutePathAdminUpdateGlobalFeed = "/admin/update-global-feed";
-    static RoutePathAdminPinPost = "/admin/pin-post";
-    static RoutePathAdminRemoveNilPosts = "/admin/remove-nil-posts";
-    static RoutePathAdminGetMempoolStats = "/admin/get-mempool-stats";
-    static RoutePathAdminGrantVerificationBadge = "/admin/grant-verification-badge";
-    static RoutePathAdminRemoveVerificationBadge = "/admin/remove-verification-badge";
-    static RoutePathAdminGetVerifiedUsers = "/admin/get-verified-users";
-    static RoutePathAdminGetUsernameVerificationAuditLogs = "/admin/get-username-verification-audit-logs";
-    static RoutePathUpdateBitcoinUSDExchangeRate = "/admin/update-bitcoin-usd-exchange-rate";
-    static RoutePathUpdateGlobalParams = "/admin/update-global-params";
-    static RoutePathGetGlobalParams = "/admin/get-global-params";
+  static RoutePathGetFullTikTokURL = "/api/v0/get-full-tiktok-url";
 }
 
-export class BackendApiService {
-    constructor(HttpClient, IdentityService) {}
+exports.BackendApiService = class {
+    constructor(HttpClient, IdentityService) {
+        this.httpClient = HttpClient;
+        this.protocol = 'https';
+    }
 
     // Assemble a URL to hit the BE with.
     _makeRequestURL(endpoint, routeName, adminPublicKey) {
-        let queryURL = location.protocol + "//" + endpoint + routeName;
+        let queryURL =this.protocol + "//" + endpoint + routeName;
         // If the protocol is specified within the endpoint then use that.
         if (endpoint.startsWith("http")) {
             queryURL = endpoint + routeName;
@@ -111,11 +118,11 @@ export class BackendApiService {
     }
 
     get(endpoint, path) {
-        return this.httpClient.get(this._makeRequestURL(endpoint, path)).pipe(catchError(this._handleError));
+        return this.httpClient.get(this._makeRequestURL(endpoint, path));
     }
 
     post(endpoint, path, body) {
-        return this.httpClient.post(this._makeRequestURL(endpoint, path), body).pipe(catchError(this._handleError));
+        return this.httpClient.post(this._makeRequestURL(endpoint, path), body);
     }
 
     static GET_PROFILES_ORDER_BY_INFLUENCER_COIN_PRICE = "influencer_coin_price";

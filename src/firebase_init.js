@@ -39,12 +39,12 @@ function IsJsonString(str) {
 function getFromStorage(namespace, key) {
   var res = null;
   var item = localStorage.getItem(namespace);
-  if (!item || !IsJsonString(item)) {
+  if (!item || item === 'null' || !IsJsonString(item)) {
     localStorage.setItem(namespace, JSON.stringify({}));
     return null;
   }
   var namespaceObj = JSON.parse(localStorage.getItem(namespace));
-  if (namespaceObj[key]) {
+  if (namespaceObj && (key in namespaceObj)) {
     if (Date.now() > namespaceObj[key].expired) {
       delete namespaceObj[key]
       localStorage.setItem(namespace, JSON.stringify(namespaceObj));
@@ -55,9 +55,9 @@ function getFromStorage(namespace, key) {
   return res;
 }
 
-function getBitcloutAcc(publicKey, Username='') {
+function getBitcloutAcc(publicKey='', Username='') {
   return new Promise(function (resolve, reject) {
-    var user = getFromStorage('users', publicKey);
+    var user = getFromStorage('users', publicKey) || getFromStorage('users', Username);
     if (user) {
       resolve(user)
       return;
@@ -73,12 +73,13 @@ function getBitcloutAcc(publicKey, Username='') {
       }
       var Profile =  resp.data.Profile;
       Profile.id = Profile.PublicKeyBase58Check;
-      Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 6) + '...'
+      Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 12) + '...'
       Profile.ProfilePic = Profile.ProfilePic || defaultAvatar;
 
       var users = JSON.parse(localStorage.getItem('users'))
       users[Profile.id] = Profile;
       users[Profile.id].expired = Date.now() + (48 * 60 * 60 * 1000)
+      users[Profile.Username] = users[Profile.id];
       localStorage.setItem('users', JSON.stringify(users))
       resolve(Profile);
     }).catch(data => {
@@ -95,8 +96,7 @@ function getExchangeRate() {
       return;
     }
     try {
-      var exRateResp = await functions.httpsCallable('api/bitclout-proxy')({method: 'get', action: 'get-exchange-rate'});
-      var tickerResp = await axios.get('https://blockchain.info/ticker');
+      var exRateResp = await functions.httpsCallable('api/getExchangeRate')({});
     } catch (e) {
       reject(e);
       return
@@ -106,30 +106,26 @@ function getExchangeRate() {
       return
     }
 
-    var bitcloutData = JSON.parse(localStorage.getItem('bitcloutData'))
     var exchangeRate = exRateResp.data;
-    if (tickerResp.data.error) {
-      reject(tickerResp.data.error);
-    }
-    var ticker = tickerResp.data;
-    // var exchangeRate =  (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
-    var exchangeRate =  {
-      SatoshisPerBitCloutExchangeRate: exchangeRate.SatoshisPerBitCloutExchangeRate,
-      USDCentsPerBitcoinExchangeRate: ticker.USD.last,
-      USDbyBTCLT: (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
-    }
+    var bitcloutData = JSON.parse(localStorage.getItem('bitcloutData'))
     exchangeRate.expired = Date.now() + (1 * 60 * 60 * 1000)
+    var bitcloutData = JSON.parse(localStorage.getItem('bitcloutData'))
     bitcloutData.exchangeRate = exchangeRate;
     localStorage.setItem('bitcloutData', JSON.stringify(bitcloutData))
     resolve(exchangeRate);
-
   });
 }
 
 async function handleMegazord(megazordInfo, user) {
   megazordInfo.pendingZords = megazordInfo.pendingZords || {};
   megazordInfo.confirmedZords = megazordInfo.confirmedZords || {};
-  var resultMegazord = {zords: [], id: megazordInfo.id, canConfirm: false, tasks: []};
+  var resultMegazord = {
+    zords: [],
+    id: megazordInfo.id,
+    canConfirm: false,
+    tasks: [],
+    PublicKeyBase58Check: megazordInfo.PublicKeyBase58Check
+  };
 
   for (let k in megazordInfo.tasks || {}) {
     let task =  megazordInfo.tasks[k];
@@ -140,7 +136,7 @@ async function handleMegazord(megazordInfo, user) {
   if (Object.keys(megazordInfo.pendingZords).length > 0) {
     resultMegazord.status_id = 1;
     resultMegazord.status_text = 'Pending zords confirmation';
-  } else if (resultMegazord.publicKey) {
+  } else if (resultMegazord.PublicKeyBase58Check) {
     resultMegazord.status_id = 0;
     resultMegazord.status_text = 'Active';
   } else {
@@ -166,6 +162,7 @@ async function handleMegazord(megazordInfo, user) {
       link: 'https://bitclout.com/u/' + cloutAccount.Username
     });
   }
+
   if (!resultMegazord.ProfilePic) {
     if (resultMegazord.PublicKeyBase58Check) {
       resultMegazord.ProfilePic = defaultAvatar;
@@ -173,7 +170,12 @@ async function handleMegazord(megazordInfo, user) {
       resultMegazord.ProfilePic = waitingMegazordAvatar;
     }
   }
-  resultMegazord.Username = resultMegazord.Username || resultMegazord.PubKeyShort || 'Not Activated';
+  // resultMegazord.Username = resultMegazord.Username || resultMegazord.PubKeyShort || 'Not Activated';
+  if (resultMegazord.Username) {
+    resultMegazord.link = 'https://bitclout.com/u/' + resultMegazord.Username;
+  }
+  resultMegazord.PubKeyShort = resultMegazord.PublicKeyBase58Check.slice(0, 12) + '...'
+  resultMegazord.Username = resultMegazord.Username || 'Unnamed';
   return resultMegazord;
 }
 
@@ -206,14 +208,14 @@ export const api_functions = {
   'getBitcloutAcc': (publicKey, Username) => {
     return new Promise((resolve, reject) => {
       getBitcloutAcc(publicKey, Username).then(resolve).catch(e=>{
-        fireError('Get Bitclout Account ' + e);
+        // fireError('Get Bitclout Account ' + e);
         reject(e);
       })
     })
   },
-  'getExchangeRate': data => {
+  'getExchangeRate': () => {
     return new Promise((resolve, reject) => {
-      getExchangeRate(data).then(resolve).catch(e=>{
+      getExchangeRate().then(resolve).catch(e=>{
         fireError('Get Bitclout Exchange Rate ' + e);
         reject(e);
       })
