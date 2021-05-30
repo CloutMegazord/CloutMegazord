@@ -76,7 +76,7 @@ const hist = createBrowserHistory();
     user: undefined,
     redirect: window.location.pathname,
     errorOpen: false,
-    exchangeRate: null,
+    bitcloutData: null,
     errorText: ''
   };
 
@@ -101,8 +101,8 @@ const hist = createBrowserHistory();
     this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
       const isSignedIn = !!userAuth;
       this.setState({isSignedIn})
-      api_functions.getExchangeRate().then(exchangeRate => {
-        this.setState({exchangeRate: exchangeRate});
+      api_functions.getBitcloutData().then(bitcloutData => {
+        this.setState({bitcloutData: bitcloutData});
       }).catch(err => {})
       if (isSignedIn) {
         api_functions.onUserData(userAuth.uid, (user) => {
@@ -159,7 +159,8 @@ const hist = createBrowserHistory();
             <Redirect from="/" to="/admin/dashboard" /> */}
             {this.state.isSignedIn === true &&
               <Route path="/admin">
-                <Admin api_functions={api_functions} user={this.state.user} exchangeRate={this.state.exchangeRate}></Admin>
+                <Admin api_functions={api_functions} user={this.state.user}
+                  bitcloutData={this.state.bitcloutData}></Admin>
               </Route>
             }
           </Switch>

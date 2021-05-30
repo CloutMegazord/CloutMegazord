@@ -53,7 +53,8 @@ const taskSessionsExpire = (10 * 60 * 10**3);//10 mins
 const bitcloutCahceExpire = {
     'get-exchange-rate': 2 * 60 * 1000,
     'ticker': 2 * 60 * 1000,
-    'get-single-profile': 24 * 60 * 60 * 1000
+    'get-single-profile': 24 * 60 * 60 * 1000,
+    'get-app-state':  24 * 60 * 60 * 1000
 }
 
 const tskSessFold = __dirname + '/tmp/taskSessions/';
@@ -75,11 +76,8 @@ function expireCleaner(ref) {
 setInterval(() => {
     expireCleaner(db.ref('protected/encryptedSeeds'));
     expireCleaner(db.ref('taskSessions'));
-}, 2 * 60 * 1000)
-
-setInterval(() => {
     expireCleaner(db.ref('bitcloutCache'));
-}, 1 * 60 * 60 * 1000)
+}, 2 * 60 * 1000)
 
 function getReqData(req, field) {
     let data = req.body.data[field];
@@ -126,7 +124,7 @@ async function bitcloutProxy(data) {
             data,
             {headers: {'Content-Type': 'application/json'}
         }).then(resp => {
-            db.ref('bitcloutCache').child(JSON.stringify(data)).set({
+            db.ref('bitcloutCache').child(JSON.stringify({method:data})).set({
                 data: resp.data, expire: Date.now() + bitcloutCahceExpire[action]
             })
             resolve(resp.data)
@@ -174,7 +172,6 @@ async function addUser(userId) {
 async function addMegazord(zords, owner) {
     const megazordsRef = db.ref('megazords');
     var newMegazordRef = await megazordsRef.push({
-        seedSignature: [owner, ...zords],
         confirmedZords: {[owner]: true},
         pendingZords: zords.reduce((prev, curr, i) => {
             prev[curr] = true;
@@ -348,9 +345,13 @@ async function testTask() {
         AmountNanos:'1000000000',
         Recipient:'BC1YLj8LTffNBmCnrmGCgEG9y5upH14a9cnCrqw5ipC7sgEMi3TxgLa',
         Currency:'$BitClouts',
-        megazord:{
+        megazorSnap:{
             key: '-Map4bNttVTay3mSQalg',
-            PublicKeyBase58Check: 'BC1YLi1A7nWDTEmDjaT3F1ba32nqH8YSqVP2TBHcrZZNnf2eyadTkSN'},
+            val:() => {
+                return {
+                    PublicKeyBase58Check: 'BC1YLi1A7nWDTEmDjaT3F1ba32nqH8YSqVP2TBHcrZZNnf2eyadTkSN'}
+            }
+        },
         type:'send'
     })
     const exhRate = await getExchangeRate();
@@ -431,7 +432,6 @@ app.post('/task', async (req, res, next) => {
                         PubKeyShort: zordId.slice(0, 14) + '...',
                         PublicKeyBase58Check: zordId,
                         shrtId: shrtId,
-                        signPos: megazord.seedSignature.indexOf(zordId),
                         Username: profileRes.Profile.Username,
                         ProfilePic: profileRes.Profile.ProfilePic,
                         link: `/gts/${taskShrtId}&${shrtId}&${encryptionKey}`
@@ -502,21 +502,6 @@ exports.getTaskSession = functions.https.onRequest(async (req, res) => {
     res.writeHeader(200, {"Content-Type": "text/html; charset=utf-8"});
     res.write(template);
     res.end();
-
-    // var fileName = await new Promise((resolve, reject) => {
-    //     readdir(tskSessFold + task, (err, files) => {
-    //         if (err) {
-    //             reject(err);
-    //             return
-    //         }
-    //         var _files = files.filter(it => path.extname(it) !== 'html')
-    //         if (_files.length !== 1) {
-    //             reject(new Error('Uncorect task template data'));
-    //         }
-    //         resolve(_files[0]);
-    //     })
-    // })
-    // var taskSessionFile = await readFile(tskSessFold + task + '/' + fileName);
 });
 
 //Protected functionality.
@@ -555,12 +540,6 @@ nestedApp.post('/readyCheck', async (req, res, next) => {
     db.ref('taskSessions/' + taskShrtId).child('readyZordsShrtIds').set(taskSession.readyZordsShrtIds);
     res.send({data: {readyZordsShrtIds: taskSession.readyZordsShrtIds}});
 });
-
-function decryptSeedHex(seedHex, encryptionKey) {
-    const cipher = crypto.createCipher('aes-256-gcm', encryptionKey);
-    return cipher.update(seedHex).toString('hex');
-}
-
 
 function zordsToMegazord(encryptedZordsEntropy, encryptionKey) {
     let length = 0;
@@ -626,7 +605,7 @@ nestedApp.post('/power', async (req, res, next) => {
     for (let zord of taskSession.zords) {
         if (zord.shrtId === zordShrtId) {
             encryptedSeeds.zordsEntropy.push({
-                signPos: zord.signPos,
+                PublicKeyBase58Check: zord.PublicKeyBase58Check,
                 encryptedEntropy: encryptedEntropy
             })
         }
@@ -638,11 +617,12 @@ nestedApp.post('/power', async (req, res, next) => {
         return
     }
 
-    var zordsIds = taskSession.zords.map(it => it.PublicKeyBase58Check);
     var task = {id: taskSession.taskId, type: taskSession.task.type};
-    var zordsEntropySignature = new Array(zordsCount)
+    var zordsIds = taskSession.zords.map(it => it.PublicKeyBase58Check).sort();
+    var zordsEntropySignature = new Array(zordsCount);
     for (let zord of encryptedSeeds.zordsEntropy) {
-        zordsEntropySignature[zord.signPos] = zord.encryptedEntropy
+        let position = zordsIds.indexOf(zord.PublicKeyBase58Check)
+        zordsEntropySignature[position] = zord.encryptedEntropy
     }
 
     var taksError = ''

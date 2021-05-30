@@ -137,11 +137,20 @@ async function handleMegazord(megazordInfo, user) {
     resultMegazord.status_id = 1;
     resultMegazord.status_text = 'Pending zords confirmation';
   } else if (resultMegazord.PublicKeyBase58Check) {
-    resultMegazord.status_id = 0;
-    resultMegazord.status_text = 'Active';
+    try {
+      debugger
+      var megazordProfile = await api_functions.getBitcloutAcc(resultMegazord.PublicKeyBase58Check);
+      resultMegazord.status_id = 0;
+      resultMegazord.status_text = 'Active';
+      resultMegazord = Object.assign(resultMegazord, megazordProfile);
+    } catch (e) {
+      console.log(e);
+      resultMegazord.status_id = 2;
+      resultMegazord.status_text = 'Create a Profile';
+    }
   } else {
-    resultMegazord.status_id = 2;
-    resultMegazord.status_text = 'Pending actvation';
+    resultMegazord.status_id = 3;
+    resultMegazord.status_text = 'Pending Public Key';
   }
   for (let k in megazordInfo.pendingZords) {
     let cloutAccount = await api_functions.getBitcloutAcc(k);
@@ -174,7 +183,9 @@ async function handleMegazord(megazordInfo, user) {
   if (resultMegazord.Username) {
     resultMegazord.link = 'https://bitclout.com/u/' + resultMegazord.Username;
   }
-  resultMegazord.PubKeyShort = resultMegazord.PublicKeyBase58Check.slice(0, 12) + '...'
+  if (resultMegazord.PublicKeyBase58Check) {
+    resultMegazord.PubKeyShort = resultMegazord.PublicKeyBase58Check.slice(0, 12) + '...'
+  }
   resultMegazord.Username = resultMegazord.Username || 'Unnamed';
   return resultMegazord;
 }
@@ -213,12 +224,39 @@ export const api_functions = {
       })
     })
   },
+  'getAppState': () => {
+    return new Promise((resolve, reject) => {
+      functions.httpsCallable('api/bitclout-proxy')({
+        action: 'get-app-state'
+      }).then(resp => {
+        if (resp.data.error) {
+          throw new Error(resp.data.error);
+        }
+        resolve(resp.data);
+      }).catch((e) => {
+        fireError('Get Bitclout App State ' + e);
+        reject(e)
+      })
+    })
+  },
   'getExchangeRate': () => {
     return new Promise((resolve, reject) => {
       getExchangeRate().then(resolve).catch(e=>{
         fireError('Get Bitclout Exchange Rate ' + e);
         reject(e);
       })
+    })
+  },
+  'getBitcloutData': () => {
+    return new Promise(async (resolve, reject) => {
+      var res = {};
+      try{
+        res['exchangeRate'] = await api_functions.getExchangeRate();
+        res['appState'] = await api_functions.getAppState();
+      } catch(e) {
+        reject(e);
+      }
+      resolve(res)
     })
   },
   'getFeesMap': () => {

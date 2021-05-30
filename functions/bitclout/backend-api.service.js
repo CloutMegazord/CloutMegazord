@@ -68,7 +68,7 @@ exports.BackendApiService = class {
 
     // Assemble a URL to hit the BE with.
     _makeRequestURL(endpoint, routeName, adminPublicKey) {
-        let queryURL =this.protocol + "//" + endpoint + routeName;
+        let queryURL =this.protocol + "://" + endpoint + routeName;
         // If the protocol is specified within the endpoint then use that.
         if (endpoint.startsWith("http")) {
             queryURL = endpoint + routeName;

@@ -121,7 +121,6 @@
         const taskSession = "%taskSession%";
         var query
         var isFinished = false;
-        debugger
         query = window.location.pathname.split('/').pop();
         const [taskShrtId, shrtId, encryptionKey]  = query.split('&');
         document.getElementById('taskType').innerText = taskSession.task.type

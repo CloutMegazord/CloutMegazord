@@ -235,8 +235,10 @@ export default function TableList(props) {
   const classes = useStyles();
   const user = props.user || {};
   const api_functions = props.api_functions;
-  const exchangeRate = props.exchangeRate;
 
+  if (props.bitcloutData) {
+    var exchangeRate = props.bitcloutData.exchangeRate;
+  }
   const megazordId = window.location.pathname.split('/').pop();
   var megazord = user.megazords ? user.megazords[megazordId] : {};
   megazord = megazord || {};
