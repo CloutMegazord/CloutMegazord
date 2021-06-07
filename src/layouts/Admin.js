@@ -10,6 +10,8 @@ import Navbar from "components/Navbars/Navbar.js";
 import Footer from "components/Footer/Footer.js";
 import Sidebar from "components/Sidebar/Sidebar.js";
 import FixedPlugin from "components/FixedPlugin/FixedPlugin.js";
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import routes from "routes.js";
 
@@ -42,15 +44,23 @@ function getSwitchRoutes(props) {
 }
 
 const useStyles = makeStyles(styles);
+const useStyles2 = makeStyles((theme) => ({
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 1,
+    color: '#fff',
+  },
+}));
 
 export default function Admin({ ...rest }) {
   // styles
-  const classes = useStyles();
+  const classes = Object.assign(useStyles(), useStyles2());
   // ref to help us initialize PerfectScrollbar on windows devices
   const mainPanel = React.createRef();
   // states and functions
   const [image, setImage] = React.useState(bgImage);
   const [color, setColor] = React.useState("purple");
+  const [openBackdrop, setOpenBackdrop] = React.useState(false);
+  rest.setOpenBackdrop = setOpenBackdrop;
   const [fixedClasses, setFixedClasses] = React.useState("dropdown show");
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const handleImageClick = image => {
@@ -116,6 +126,9 @@ export default function Admin({ ...rest }) {
         <div className={classes.content}>
           <div className={classes.container}>{getSwitchRoutes(rest)}</div>
         </div>
+        <Backdrop className={classes.backdrop} open={openBackdrop}>
+          <CircularProgress className={classes.backdrop} color="secondary" />
+        </Backdrop>
         {/* On the /maps route we want the map to be on full screen - this is not possible if the content and conatiner classes are present because they have some paddings which would make the map smaller */}
         {/* {getRoute() ? (
           <div className={classes.content}>

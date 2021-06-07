@@ -2,7 +2,7 @@ import firebase from 'firebase';
 import axios from 'axios';
 import { getFunctions, httpsCallable } from "firebase/functions";
 
-const config = {
+var config = {
   apiKey: "AIzaSyBG6Uo9bwEnxrVhDvxCnnGM88MfBgBm4EY",
   authDomain: "cloutmegazord.firebaseapp.com",
   // databaseURL: "https://cloutmegazord-default-rtdb.europe-west1.firebasedatabase.app",
@@ -13,7 +13,11 @@ const config = {
   appId: "1:493989806019:web:05c697b2bfeb2f88a84776",
   measurementId: "G-NJHY4QC4FJ"
 };
-
+if (window.location.hostname === "localhost") {
+  config.databaseURL = "http://localhost:9000/?ns=cloutmegazord-default-rtdb";
+} else {
+  config.databaseURL = "https://cloutmegazord-default-rtdb.europe-west1.firebasedatabase.app";
+}
 export default firebase;
 export const firebaseApp = firebase.initializeApp(config);
 export const db = firebase.database();
@@ -21,9 +25,10 @@ export const auth = firebase.auth();
 export const storage = firebase.storage();
 // export const messaging = firebase.messaging();
 export const functions = firebase.functions()
-functions.useEmulator("localhost", 5001);
-db.useEmulator("localhost", 9000)
-
+if (window.location.hostname === "localhost") {
+  functions.useEmulator("localhost", 5001);
+  db.useEmulator("localhost", 9000)
+}
 export const onErrorSubscribers = [];
 const fireError = (e) => {
   onErrorSubscribers.forEach(func => func(e))
@@ -53,6 +58,24 @@ function getFromStorage(namespace, key) {
     }
   }
   return res;
+}
+
+function getUserStateless(publicKey) {
+  return new Promise(function (resolve, reject) {
+    functions.httpsCallable('api/bitclout-proxy')({
+      action: 'get-users-stateless',
+      PublicKeysBase58Check: [publicKey],
+      SkipHodlings: true
+    }).then(resp => {
+      if (resp.data.error) {
+        reject(resp.data.error);
+        return;
+      }
+      resolve(resp.data.UserList[0]);
+    }).catch(err => {
+      reject(err);
+    })
+  })
 }
 
 function getBitcloutAcc(publicKey='', Username='') {
@@ -130,24 +153,22 @@ async function handleMegazord(megazordInfo, user) {
   for (let k in megazordInfo.tasks || {}) {
     let task =  megazordInfo.tasks[k];
     task.id = k;
-    task.addedBy = await api_functions.getBitcloutAcc(Object.keys(task.addedBy)[0]);
+    task.addedBy = await api_functions.getBitcloutAcc(task.addedBy);
     resultMegazord.tasks.push(task);
   }
   if (Object.keys(megazordInfo.pendingZords).length > 0) {
     resultMegazord.status_id = 1;
     resultMegazord.status_text = 'Pending zords confirmation';
   } else if (resultMegazord.PublicKeyBase58Check) {
-    try {
-      debugger
-      var megazordProfile = await api_functions.getBitcloutAcc(resultMegazord.PublicKeyBase58Check);
-      resultMegazord.status_id = 0;
-      resultMegazord.status_text = 'Active';
-      resultMegazord = Object.assign(resultMegazord, megazordProfile);
-    } catch (e) {
-      console.log(e);
-      resultMegazord.status_id = 2;
-      resultMegazord.status_text = 'Create a Profile';
-    }
+    var megazordStateless = await api_functions.getUserStateless(resultMegazord.PublicKeyBase58Check);
+    resultMegazord.status_id = 0;
+    resultMegazord.status_text = 'Active';
+    resultMegazord = Object.assign(resultMegazord, megazordStateless.ProfileEntryResponse || {});
+    resultMegazord.BalanceNanos = megazordStateless.BalanceNanos;
+    // } else {
+    //   resultMegazord.status_id = 2;
+    //   resultMegazord.status_text = 'Pending Update Profile';
+    // }
   } else {
     resultMegazord.status_id = 3;
     resultMegazord.status_text = 'Pending Public Key';
@@ -186,7 +207,7 @@ async function handleMegazord(megazordInfo, user) {
   if (resultMegazord.PublicKeyBase58Check) {
     resultMegazord.PubKeyShort = resultMegazord.PublicKeyBase58Check.slice(0, 12) + '...'
   }
-  resultMegazord.Username = resultMegazord.Username || 'Unnamed';
+  resultMegazord.Username = resultMegazord.Username || 'Anonymus';
   return resultMegazord;
 }
 
@@ -198,7 +219,17 @@ export const api_functions = {
       task: task
     });
   },
-  'task': functions.httpsCallable('api/task'),
+  'task': data => {
+    return new Promise(async (resolve, reject) => {
+      var resp = await functions.httpsCallable('api/task')(data);
+      if (resp.data.error) {
+        fireError('Task error: ' + resp.data.error);
+        reject(resp.data.error);
+        return
+      }
+      resolve(resp.data);
+    })
+  },
   'login': functions.httpsCallable('api/login'),
   'logout': () => {
     localStorage.setItem('users', null);
@@ -219,6 +250,14 @@ export const api_functions = {
   'getBitcloutAcc': (publicKey, Username) => {
     return new Promise((resolve, reject) => {
       getBitcloutAcc(publicKey, Username).then(resolve).catch(e=>{
+        // fireError('Get Bitclout Account ' + e);
+        reject(e);
+      })
+    })
+  },
+  'getUserStateless': (publicKey) => {
+    return new Promise((resolve, reject) => {
+      getUserStateless(publicKey).then(resolve).catch(e=>{
         // fireError('Get Bitclout Account ' + e);
         reject(e);
       })
@@ -269,6 +308,7 @@ export const api_functions = {
   },
   'onUserData': async (publicKey, callback, errorCallback = () => {}) => {
     var data, userRef = db.ref("users/" + publicKey);
+    userRef.off("value");
     userRef.on('value', async (snapshot) => {
       const userDBData = snapshot.val();
       if (!userDBData) {
@@ -285,6 +325,7 @@ export const api_functions = {
       }
       resUser.megazords = {}
       for (let k in megazordsIds) {
+        db.ref("megazords/" + k).off('value');
         db.ref("megazords/" + k).on('value', async snapshot=> {
           const megazordData = snapshot.val();
           var id = snapshot.getRef().key;
@@ -299,6 +340,8 @@ export const api_functions = {
           errorCallback(error)
         });
       }
+    }, async e=>{
+      console.log('EEE', e)
     })
   },
   'offUserData': () => {},

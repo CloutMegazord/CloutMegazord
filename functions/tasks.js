@@ -1,35 +1,14 @@
-const BackendApiService = require('./bitclout/backend-api.service').BackendApiService;
-const axios = require('axios');
 
-const bitcloutApi = new BackendApiService({
-    post: (endpoint, data) => {
-        return axios.post(endpoint, data, {headers: {'Content-Type': 'application/json'}})
-            .then((response) =>{
-                debugger
-            }).catch((e) => {
-                debugger
-            })
-    }
-});
-bitcloutApi._handleError = (e) => {
-    console.log(e);
-    debugger
-}
-const MinFeeRateNanosPerKB = 1000;
-const CloutMegazordPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
-const endpoint = 'bitclout.com';
+const axios = require('axios');
 
 class Task {
     constructor(data) {
         this.type = data.type;
         this.description = data.description || data.defaultDescription;
         this.addedBy = data.addedBy;
-        this.megazord = data.megazorSnap.val();
-        this.megazord.id = data.megazorSnap.key;
         this.Recipient = data.Recipient;
         this.status = data.status || 0; //Status 0 - active
         this.date = Date.now();
-        this.transactions = [];
     }
 
     static fromDBRecord(dbRecord) {
@@ -44,15 +23,10 @@ class Task {
         var dbRecord = {
             type: this.type,
             description: this.description,
-            addedBy: {[this.addedBy]: true},
+            addedBy: this.addedBy,
             Recipient: this.Recipient,
-            megazord: {},
             date: this.date
          }
-        dbRecord.megazord.id = this.megazord.id
-        if (this.megazord.PublicKeyBase58Check) {
-            dbRecord.megazord.PublicKeyBase58Check = this.megazord.PublicKeyBase58Check;
-        }
 
         return dbRecord;
     }
@@ -69,35 +43,26 @@ class Task {
 class GetPublicKey extends Task {
     constructor(data) {
         data.type = 'getPublicKey'
-        data.defaultDescription = 'Lounch this task for activate account and get public key.';
+        data.defaultDescription = 'Lounch this task for activate account and get public key';
         super(data);
     }
 }
 
 class Send extends Task {
     constructor(data) {
+        var AmountNanos = parseFloat(data.AmountNanos) || 0;
+        data.defaultDescription =
+        `Send ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} ${data.Currency} to ${data.Recipient}`;
         super(data);
-        this.AmountNanos = parseFloat(data.AmountNanos);
+        this.AmountNanos = AmountNanos;
+        this.Currency = data.Currency;
     }
 
-    getFee(AmountNanos, bitcloutPriceUSD) {
-        var AmountNanosUSD = AmountNanos / 1e9 * bitcloutPriceUSD;
-        const feesMap = {
-          3: 1 * 10**4,
-          2: 1 * 10**5,
-          1: 1 * 10**6,
-          0.5: Infinity
-        }
-        var fees = Object.keys(feesMap).sort().reverse();
-        var trgFee = fees[0];
-        for (let fee of fees) {
-            let range = feesMap[fee];
-            if (AmountNanosUSD < range) {
-              trgFee = parseFloat(fee);
-              break
-            }
-        }
-        return AmountNanos * (trgFee / 100);
+    toDBRecord() {
+        var record = super.toDBRecord();
+        record.AmountNanos = this.AmountNanos;
+        record.Currency = this.Currency;
+        return record;
     }
 }
 
@@ -122,7 +87,6 @@ class SendBitclouts extends Send {
             debugger
             throw e;
         }
-        debugger
         this.transactions.push(preview);
         // const feePreview = await bitcloutApi.SendBitCloutPreview(
         //     endpoint,
@@ -132,7 +96,6 @@ class SendBitclouts extends Send {
         //     MinFeeRateNanosPerKB
         // );
         // this.transactions.push(feePreview);
-        debugger
     }
 }
 
@@ -147,13 +110,11 @@ function createTask(data) {
     switch (data.type) {
         case 'getPublicKey': {
             task = new GetPublicKey(data)
+            break;
         }
         case 'send': {
-            if (data.Currency === "$BitClouts") {
-                task = new SendBitclouts(data)
-            } else if (data.Currency === "Coins") {
-                task = new SendCoins(data)
-            }
+            task = new Send(data);
+            break;
         }
     }
     return task;
@@ -161,7 +122,7 @@ function createTask(data) {
 
 exports.Tasks = {
     createTask: createTask,
-    taskFromDB(dbRecord, megazorSnap, id) {
+    taskFromDB(dbRecord) {
         var addedBy = Object.keys(dbRecord.addedBy)[0]
         var data = {...dbRecord, megazorSnap, id, addedBy}
         return createTask(data);

@@ -60,7 +60,7 @@ class BackendRoutes {
   static RoutePathGetFullTikTokURL = "/api/v0/get-full-tiktok-url";
 }
 
-exports.BackendApiService = class {
+class BackendApiService {
     constructor(HttpClient, IdentityService) {
         this.httpClient = HttpClient;
         this.protocol = 'https';
@@ -189,4 +189,11 @@ exports.BackendApiService = class {
         return this.signAndSubmitTransaction(endpoint, request, SenderPublicKeyBase58Check);
       }
 
+    SubmitTransaction(endpoint, TransactionHex) {
+        return this.post(endpoint, BackendRoutes.RoutePathSubmitTransaction, {
+            TransactionHex,
+        });
+    }
 }
+
+module.exports = BackendApiService;

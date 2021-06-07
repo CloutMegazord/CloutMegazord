@@ -8,38 +8,16 @@ const cors = require('cors');
 const express = require('express');
 const adapters = require('./api_adapters').adapters;
 const Tasks = require('./tasks').Tasks;
-const BitcloiutApi = require('./bitclout_api').BitcloiutApi
 const helmet = require("helmet");
 const sanitizer = require('sanitizer');
-const rimraf = require("rimraf");
 const admin = require("firebase-admin");
 const jwt = require('jsonwebtoken');
 const bs58check = require('bs58check');
-const bip39 = require('bip39');
-const mkdirp = require('mkdirp')
-const path = require('path');
-const CryptoService = require('./bitclout/crypto.service').CryptoService;
-const EntropyService = require('./bitclout/entropy.service').EntropyService;
-
 const notifications = require('./notifications');
-const {existsSync, readdir, promises: {readFile, readFiles, writeFile, mkdir}} = require("fs");
 
 admin.initializeApp();
 const db = admin.database();
 const auth = admin.auth()
-db.useEmulator("localhost", 9000)
-
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// "adminContent": {
-//     ".read": "auth.uid === 'some-uid'"
-//   }
-// const megazord_seed = require('../dev_data/megazord.json').seed;
-const adapterName = 'puppeteer_adapter'//will get from env
-const bitcloiutApi = new BitcloiutApi(new adapters[adapterName]())
-const cryptoService = new CryptoService();
-const entropyService = new EntropyService();
 const app = express();
 
 app.use(helmet());
@@ -49,16 +27,22 @@ app.use(express.json({limit:'100kb'}))
 
 
 const CloutMegazordPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
-const taskSessionsExpire = (10 * 60 * 10**3);//10 mins
 const bitcloutCahceExpire = {
     'get-exchange-rate': 2 * 60 * 1000,
     'ticker': 2 * 60 * 1000,
     'get-single-profile': 24 * 60 * 60 * 1000,
     'get-app-state':  24 * 60 * 60 * 1000
 }
+var signingEndpoint, CMEndpoint;
 
-const tskSessFold = __dirname + '/tmp/taskSessions/';
-const functionsUrl = 'http://localhost:5001/cloutmegazord/us-central1/';
+if (process.env.NODE_ENV === 'development') {
+    db.useEmulator("localhost", 9000)
+    CMEndpoint = 'http://localhost:3000';
+    signingEndpoint = 'http://localhost:7000';
+} else {
+    signingEndpoint = 'https://signing-cloutmegazord.web.app';
+    CMEndpoint = 'https://cloutmegazord.web.app'
+}
 
 function expireCleaner(ref) {
     ref.orderByChild('expire').once('value', async function(s) {
@@ -74,8 +58,6 @@ function expireCleaner(ref) {
 }
 
 setInterval(() => {
-    expireCleaner(db.ref('protected/encryptedSeeds'));
-    expireCleaner(db.ref('taskSessions'));
     expireCleaner(db.ref('bitcloutCache'));
 }, 2 * 60 * 1000)
 
@@ -114,19 +96,23 @@ async function bitcloutProxy(data) {
         var cachedData  = null;
         delete data['action']
         delete data['method']
-        const cachedDataRef = await db.ref('bitcloutCache').child(JSON.stringify(data)).get();
-        if (cachedDataRef.exists()) {
-            console.log('Cache Hit')
-            cachedData = cachedDataRef.val();
-            resolve(cachedData.data);
+        if (bitcloutCahceExpire[action]) {
+            const cachedDataRef = await db.ref('bitcloutCache').child(JSON.stringify(data)).get();
+            if (cachedDataRef.exists()) {
+                console.log('Cache Hit')
+                cachedData = cachedDataRef.val();
+                resolve(cachedData.data);
+            }
         }
         axios[method]("https://bitclout.com/api/v0/" + action,
             data,
             {headers: {'Content-Type': 'application/json'}
         }).then(resp => {
-            db.ref('bitcloutCache').child(JSON.stringify({method:data})).set({
-                data: resp.data, expire: Date.now() + bitcloutCahceExpire[action]
-            })
+            if (bitcloutCahceExpire[action]) {
+                db.ref('bitcloutCache').child(JSON.stringify({method:data})).set({
+                    data: resp.data, expire: Date.now() + bitcloutCahceExpire[action]
+                })
+            }
             resolve(resp.data)
         }).catch(error => {
             reject(error)
@@ -239,6 +225,13 @@ app.post('/login', async (req, res, next) => {
         res.send({data:{ error: 'BitClout Validation Error.'}});
         return;
     }
+    var allowlist = await db.ref('allowlist').get();
+    if (allowlist.exists()) {
+        if (!allowlist.val().includes(publicKey)) {
+            res.send({data: { error: "You don't allowlisted to particepaite on closed beta. Send message to @CloutMegazord"}});
+            return
+        }
+    }
     try {
         user = await getUser(publicKey);
         if (!user) {
@@ -284,18 +277,14 @@ app.post('/confirmMegazord', async (req, res, next) => {
     }
     megazord.confirmedZords[publicKey] = true;
 
-    await megazordRef.set(megazord)
+    await megazordRef.update(megazord)
     const task = Tasks.createTask({
         type: 'getPublicKey',
         addedBy: CloutMegazordPubKey,
         megazorSnap: megazorSnap,
         Recipient: 'TargetMegazord'
     });
-    console.log(task.toDBRecord())
     await megazordRef.child('tasks').push(task.toDBRecord());
-
-    // await megazordRef.child('pendingZords').child(publicKey).remove()
-    // await megazordRef.child('confirmedZords').child(publicKey).set(true);
     res.send({data:{success: true}})
 });
 
@@ -339,26 +328,27 @@ app.post('/createMegazord', async (req, res, next) => {
     res.send({data:{}})
 })
 
-async function testTask() {
-    var task = Tasks.createTask({
-        addedBy:'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE',
-        AmountNanos:'1000000000',
-        Recipient:'BC1YLj8LTffNBmCnrmGCgEG9y5upH14a9cnCrqw5ipC7sgEMi3TxgLa',
-        Currency:'$BitClouts',
-        megazorSnap:{
-            key: '-Map4bNttVTay3mSQalg',
-            val:() => {
-                return {
-                    PublicKeyBase58Check: 'BC1YLi1A7nWDTEmDjaT3F1ba32nqH8YSqVP2TBHcrZZNnf2eyadTkSN'}
-            }
-        },
-        type:'send'
-    })
-    const exhRate = await getExchangeRate();
-    const transaction = task.getTransaction(exhRate.USDbyBTCLT);
-}
+app.post('/finishTask', async (req, res, next) => {
+    const {task, taskData, taskError} = req.body.data;
+    const megazordRef = db.ref('megazords/' + taskData.megazordId);
+    if (!taskError) {
+        await megazordRef.child('tasks').child(task.id).remove();
+    }
+    var megazorSnap = await megazordRef.get();
+    var megazord = megazorSnap.val();
+    var notificationType = taskError ? 'taskFailed' : 'taskDone'
+    for (let zord in megazord.confirmedZords) {
+        await db.ref('users/' + zord).child('notifications').push(notifications(notificationType, {
+            taskType: task.type,
+            error: taskError
+        }))
+    }
+    if (task.type === 'getPublicKey') {
+        megazordRef.child('PublicKeyBase58Check').set(taskData.megazordPublicKey);
+    }
+    res.send({ok:true});
+});
 
-// testTask().then(() =>{});
 app.post('/task', async (req, res, next) => {
     var data = req.body.data;
     var publicKey;
@@ -371,7 +361,6 @@ app.post('/task', async (req, res, next) => {
         res.send({data:{error: error.message}})
         return
     }
-
     const megazordRef = db.ref('megazords/' + data.megazordId);
     var megazorSnap = await megazordRef.get();
     // var megazorSnap = await megazordRef.get()
@@ -397,61 +386,57 @@ app.post('/task', async (req, res, next) => {
             break;
         case 'powerOn':
             var taskId = data.task.id;
-            var taskShrtId = crypto.randomBytes(3).toString('hex');
-            var encryptionKey = crypto.randomBytes(8).toString('hex');
-
             var dbTask = megazord.tasks[data.task.id];
-            // task = Tasks.taskFromDB(dbTask, megazordRef);
-            var taskSessionRef =  await db.ref('taskSessions/' + taskId).get()
-            if (!taskSessionRef.exists()) {
-                var taskSession = {
-                    taskId: taskId,
-                    initiator: {publicKey},
-                    megazordId: data.megazordId,
-                    task: dbTask,
-                    readyZordsShrtIds: [],
-                    expire: Date.now() + taskSessionsExpire,
-                    endPoint: functionsUrl,
-                    redirect: '/admin/tasks_list/' + data.megazordId
-                }
-                var zords = megazord.confirmedZords;
-                var resZords = [];
-                for (let zordId in zords) {
-                    let shrtId = crypto.randomBytes(2).toString('hex');
-                    try {
-                        var profileRes = await bitcloutProxy({
-                            action: 'get-single-profile',
-                            PublicKeyBase58Check: zordId,
-                            Username: ''
-                        });
-                    } catch (err) {
-                        res.send({data:{error: err.toString()}});
-                        return
-                    }
-                    resZords.push({
-                        PubKeyShort: zordId.slice(0, 14) + '...',
-                        PublicKeyBase58Check: zordId,
-                        shrtId: shrtId,
-                        Username: profileRes.Profile.Username,
-                        ProfilePic: profileRes.Profile.ProfilePic,
-                        link: `/gts/${taskShrtId}&${shrtId}&${encryptionKey}`
-                    })
-                    if (zordId === publicKey) {
-                        taskSession.initiator.shrtId = shrtId;
-                        taskSession.initiator.Username = profileRes.Profile.Username;
-                    }
-                }
-                taskSession.zords = resZords;
-                db.ref('taskSessions').child(taskShrtId).set(taskSession);
-                res.send({data:{taskLink: `/gts/${taskShrtId}&${taskSession.initiator.shrtId}&${encryptionKey}`}})
-
-            } else {
-                let taskSession = taskSessionRef.val();
-                res.send({data:{info: `Task already running. Ask ${taskSession.initiator.Username} for personal link.`}})
+            var taskSession = {
+                initiator: {publicKey},
+                megazordId: data.megazordId,
+                task: dbTask,
+                taskId: taskId,
+                readyZordsShrtIds: [],
+                redirect: CMEndpoint + '/admin/megazordslist'
             }
-
-            // var transaction = task.toTransaction();
-            // template = template.replace('%transaction%', JSON.stringify(transaction));
+            if (megazord.PublicKeyBase58Check) {
+                taskSession.megazordPublicKey = megazord.PublicKeyBase58Check
+            }
+            var zords = megazord.confirmedZords;
+            var resZords = [];
+            for (let zordPublicKey in zords) {
+                let shrtId = crypto.randomBytes(2).toString('hex');
+                try {
+                    var profileRes = await bitcloutProxy({
+                        action: 'get-single-profile',
+                        PublicKeyBase58Check: zordPublicKey,
+                        Username: ''
+                    });
+                } catch (err) {
+                    res.send({data:{error: err.toString()}});
+                    return
+                }
+                resZords.push({
+                    PubKeyShort: zordPublicKey.slice(0, 14) + '...',
+                    PublicKeyBase58Check: zordPublicKey,
+                    shrtId: shrtId,
+                    Username: profileRes.Profile.Username,
+                    ProfilePic: profileRes.Profile.ProfilePic,
+                    link: signingEndpoint + `/ts/get?tid=${taskId}&zid=${shrtId}`
+                })
+                if (zordPublicKey === publicKey) {
+                    taskSession.initiator.shrtId = shrtId;
+                    taskSession.initiator.Username = profileRes.Profile.Username;
+                }
+            }
+            taskSession.zords = resZords;
+            try {
+                var resp = await axios.post(signingEndpoint + '/ts/create', {data:{taskId, taskSession}});
+            } catch (e) {
+                res.send({data:{error: 'signing connection error.'}});
+                return
+            }
+            if (resp.data.error) {
+                res.send({data:{error: resp.data.error}});
+                return;
+            }
+            res.send({data:{taskLink: signingEndpoint + `/ts/get?tid=${taskId}&zid=${taskSession.initiator.shrtId}`}})
             break;
     }
 });
@@ -475,183 +460,3 @@ exports.shortener = functions.https.onRequest(async (req, res) => {
     });
     res.end();
 })
-
-exports.getTaskSession = functions.https.onRequest(async (req, res) => {
-    var taskShrtId = req.path.split('/').pop().split('&')[0];
-    const taskSessionRef = await db.ref('taskSessions/' + taskShrtId).get();
-    if (taskSessionRef.exists()) {
-        var taskSession = taskSessionRef.val();
-    } else {
-        res.write('Task Session not exists or expired');
-        res.end();
-    }
-    try {
-        var template = await readFile("./templates/taskSession/task-template.html");
-        var bip39_lib = await readFile("./templates/taskSession/bip39.browser.js");
-        var crypto_lib = await readFile("./templates/taskSession/crypto.browser.js");
-        template = template.toString();
-        bip39_lib = bip39_lib.toString();
-        crypto_lib = crypto_lib.toString();
-    } catch (e) {
-        res.write('Template reading error.');
-        res.end();
-    }
-    template = template.replace('"%bip39.browser.js%"', bip39_lib);
-    template = template.replace('"%crypto.browser.js%"', crypto_lib);
-    template = template.replace('"%taskSession%"', JSON.stringify(taskSession,  null, 2));
-    res.writeHeader(200, {"Content-Type": "text/html; charset=utf-8"});
-    res.write(template);
-    res.end();
-});
-
-//Protected functionality.
-const nestedApp = express();
-nestedApp.use(helmet());
-nestedApp.use(cors({ origin: true }));
-nestedApp.use(express.json({limit:'100kb'}))
-
-async function finishTask(zords, megazordId, task, error) {
-    if (!error) {
-        await db.ref('megazords/' + megazordId + '/tasks').child(task.id).remove();
-    }
-    var notificationType = error ? 'taskFailed' : 'taskDone'
-    for (let zord of zords) {
-        await db.ref('users/' + zord).child('notifications').push(notifications(notificationType, {
-            taskType: task.type,
-            error: error
-        }))
-    }
-}
-
-nestedApp.post('/readyCheck', async (req, res, next) => {
-    var {taskShrtId, zordShrtId} = req.body.data;
-    const taskSessionRef = await db.ref('taskSessions/' + taskShrtId).get();
-    if (!taskSessionRef.exists()) {
-        res.send({data: { error: 'Taks not exists or expired.'}})
-        return
-    }
-    var taskSession = taskSessionRef.val()
-    taskSession.readyZordsShrtIds = taskSession.readyZordsShrtIds || [];
-    if (taskSession.readyZordsShrtIds.length == taskSession.zords.length) {
-        res.send({data: { ok: true }})
-        return
-    }
-    taskSession.readyZordsShrtIds.push(zordShrtId)
-    db.ref('taskSessions/' + taskShrtId).child('readyZordsShrtIds').set(taskSession.readyZordsShrtIds);
-    res.send({data: {readyZordsShrtIds: taskSession.readyZordsShrtIds}});
-});
-
-function zordsToMegazord(encryptedZordsEntropy, encryptionKey) {
-    let length = 0;
-    var zordsEntropy = [];
-
-    for (let zordEntropy of encryptedZordsEntropy) {
-        const decipher = crypto.createDecipher('aes-256-gcm', encryptionKey);
-        zordEntropy = decipher.update(Buffer.from(zordEntropy, 'hex')).toString();
-        if (!entropyService.isValidCustomEntropyHex(zordEntropy)) {
-            throw new Error('Invalid mnemonic');
-        }
-        zordEntropy = Buffer.from(zordEntropy, 'hex')
-        length += zordEntropy.length;
-        zordsEntropy.push(zordEntropy);
-    }
-    let megazordEntropy = new Uint8Array(length);
-    let offset = 0;
-    for (let zordEntropy of zordsEntropy) {
-        megazordEntropy.set(zordEntropy, offset);
-        offset += zordEntropy.length;
-    }
-    const megazordMnemonic = bip39.entropyToMnemonic(megazordEntropy);
-    try {
-        if (!entropyService.isValidCustomEntropyHex(Buffer.from(megazordEntropy).toString('hex'))) {
-            throw new Error('Invalid mnemonic');
-        }
-    } catch {
-        throw new Error('Invalid mnemonic');
-    }
-    const keychain = cryptoService.mnemonicToKeychain(megazordMnemonic, '');
-    const seedHex = cryptoService.keychainToSeedHex(keychain);
-    const privateKey = cryptoService.seedHexToPrivateKey(seedHex);
-    const publicKey = cryptoService.privateKeyToBitcloutPublicKey(privateKey, 'mainnet');
-
-    return [seedHex, publicKey]
-}
-// Create a new array with total length and merge all source arrays.
-
-nestedApp.post('/power', async (req, res, next) => {
-    const {taskShrtId, zordShrtId, encryptedEntropy, encryptionKey} = req.body.data;
-    const taskSessionRef = await db.ref('taskSessions/' + taskShrtId).get();
-    const encryptedSeedsRef = await db.ref('protected/encryptedSeeds/' + taskShrtId).get();
-    var encryptedSeeds = null;
-    if (!taskSessionRef.exists()) {
-        res.send({data: { error: 'Taks not exists or expired.'}})
-        return
-    }
-    const taskSession = taskSessionRef.val();
-    const zordsCount = taskSession.zords.length;
-    if (encryptedSeedsRef.exists()) {
-        encryptedSeeds = encryptedSeedsRef.val();
-    } else {
-        encryptedSeeds = {
-            expire: taskSession.expire,
-            zordsEntropy: []
-        }
-    }
-    encryptedSeeds.zordsEntropy = encryptedSeeds.zordsEntropy || [];
-    if (encryptedSeeds.zordsEntropy.length === zordsCount) {
-        res.send({data: { ok: true }});
-        return
-    }
-    for (let zord of taskSession.zords) {
-        if (zord.shrtId === zordShrtId) {
-            encryptedSeeds.zordsEntropy.push({
-                PublicKeyBase58Check: zord.PublicKeyBase58Check,
-                encryptedEntropy: encryptedEntropy
-            })
-        }
-    }
-
-    res.send({data: { ok: true }});
-    if (encryptedSeeds.zordsEntropy.length !== zordsCount) {
-        await db.ref('protected/encryptedSeeds').child(taskShrtId).set(encryptedSeeds);
-        return
-    }
-
-    var task = {id: taskSession.taskId, type: taskSession.task.type};
-    var zordsIds = taskSession.zords.map(it => it.PublicKeyBase58Check).sort();
-    var zordsEntropySignature = new Array(zordsCount);
-    for (let zord of encryptedSeeds.zordsEntropy) {
-        let position = zordsIds.indexOf(zord.PublicKeyBase58Check)
-        zordsEntropySignature[position] = zord.encryptedEntropy
-    }
-
-    var taksError = ''
-    try {
-        var [megazordSeedHex, megazordPublicKey] = zordsToMegazord(zordsEntropySignature, encryptionKey);
-    } catch(e) {
-        taksError = 'Zord Seeds is Uncorrect';
-        finishTask(zordsIds, taskSession.megazordId, task, taksError);
-        return
-    }
-    if (task.type === 'getPublicKey') {
-        await db.ref('megazords/' + taskSession.megazordId).child('PublicKeyBase58Check').set(megazordPublicKey);
-    } else {
-        taksError = 'Task Not Implemented yet.';
-    }
-    finishTask(zordsIds, taskSession.megazordId, task, taksError);
-    //clear seed phrases
-    encryptedSeeds = {};
-    zordsEntropySignature = [];
-    megazordSeedHex = '';
-    await db.ref('protected/encryptedSeeds').child(taskShrtId).remove();
-    await db.ref('taskSessions').child(taskShrtId).remove();
-})
-
-exports.powerTask = functions.https.onRequest(nestedApp);
-// exports.signUp = functions.https.onRequest((request, response) => {
-//     return cors()(request, response, () => {
-//         userName = request.data.userName
-//         console.log(userName)
-//         response.send({"data":`Hello ${userName} from Firebase!`});
-//     });
-// });

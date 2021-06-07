@@ -1,16 +1,26 @@
-import { Injectable } from '@angular/core';
-import KeyEncoder from 'key-encoder';
-import * as jsonwebtoken from 'jsonwebtoken';
-import * as ecies from '../lib/ecies';
-import {CryptoService} from './crypto.service';
-import * as sha256 from 'sha256';
-import { uvarint64ToBuf } from '../lib/bindata/util';
+// import { Injectable } from '@angular/core';
+// import KeyEncoder from 'key-encoder';
+// import * as jsonwebtoken from 'jsonwebtoken';
+// import * as ecies from '../lib/ecies';
+// import {CryptoService} from './crypto.service';
+const sha256 = require('sha256');
 
-export class SigningService {
+const uvarint64ToBuf = (uint) => {
+  const result = [];
 
-  constructor(
-    cryptoService,
-  ) { }
+  while (uint >= 0x80) {
+    result.push((uint & 0xFF) | 0x80);
+    uint >>>= 7;
+  }
+
+  result.push(uint | 0);
+
+  return new Buffer(result);
+};
+
+class SigningService {
+
+  constructor() { }
 
   signJWT(seedHex) {
     const keyEncoder = new KeyEncoder('secp256k1');
@@ -35,9 +45,7 @@ export class SigningService {
     return decryptedHexes;
   }
 
-  signTransaction(seedHex, transactionHex) {
-    const privateKey = this.cryptoService.seedHexToPrivateKey(seedHex);
-
+  signTransaction(privateKey, transactionHex) {
     const transactionBytes = new Buffer(transactionHex, 'hex');
     const transactionHash = new Buffer(sha256.x2(transactionBytes), 'hex');
     const signature = privateKey.sign(transactionHash);
@@ -68,3 +76,5 @@ export class SigningService {
     return signedHashes;
   }
 }
+
+module.exports = SigningService;

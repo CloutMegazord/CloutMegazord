@@ -120,7 +120,7 @@ export default function Tasks(props) {
                   </IconButton>
                 </Tooltip>
               }
-              {value.addedBy.id === user.id ? (
+              {/* {value.addedBy.id === user.id ? (
                   <Tooltip
                     id="tooltip-top"
                     title="Edit Task"
@@ -152,7 +152,7 @@ export default function Tasks(props) {
                     <Icon style={{'color': grayColor[0]}}>info</Icon>
                   </IconButton>
                 </Tooltip>
-              )}
+              )} */}
               <Tooltip
                   id="tooltip-top"
                   title='Power On'

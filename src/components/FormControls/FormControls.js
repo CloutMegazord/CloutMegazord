@@ -221,14 +221,15 @@ export function InputBitcloutAccount(
 
 export function InputAmount(props) {
   const classes = useStyles();
-  const {htmlIds, exchRate, feesMap, currencyTypes} = props;
+  const {htmlIds, exchRate, feesMap, wallet} = props;
+  const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a] - wallet[b]});
   const [USDAmount, setUSDAmount] = React.useState(0);
   const [BTCLTAmount, setBTCLTAmount] = React.useState(0);
   const [amountNanos, setAmountNanos] = React.useState(0);
   const [MGZDfee, setMGZDFee] = React.useState(0);
   const [currency, setCurrency] = React.useState(currencyTypes[0]);
 
-  var feesMapTable = '<table style="width:100%"><thead><td>Amount</td><td>Fee</td></thead>';
+  var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';
   var fees = Object.keys(feesMap).sort().reverse();
   for (let i = 0; i < fees.length; i += 1) {
     let fee = fees[i];
@@ -242,9 +243,10 @@ export function InputAmount(props) {
     feesMapTable += '<tr><td>'+rangeContent+'</td><td>'+fee+'%</td></tr>'
   }
   feesMapTable += '</table>'
-  const handleChange = (event) => {
-    var _BTCLTAmount = parseInt(event.target.value);
+
+  const handleChange = (_BTCLTAmount) => {
     setBTCLTAmount(_BTCLTAmount);
+    _BTCLTAmount = parseFloat(_BTCLTAmount || 0);
     if (exchRate.USDbyBTCLT) {
       var USDAmount = _BTCLTAmount * exchRate.USDbyBTCLT;
       setUSDAmount(USDAmount);
@@ -260,6 +262,11 @@ export function InputAmount(props) {
       }
       setMGZDFee(trgFee);
     }
+  }
+
+  const maxHandler = (event) => {
+    event.preventDefault();
+    handleChange(wallet[currency] / 1e9);
   }
 
   const handleCurrencyChange = (event) => {
@@ -291,12 +298,12 @@ export function InputAmount(props) {
       <Input
         id={'interact_interact_amount'}
         type="number"
-        // endAdornment={<InputAdornment position="end">$BitClout</InputAdornment>}
+        endAdornment={<Button onClick={maxHandler} size="sm">MAX</Button>}
         aria-describedby={'interact_amount_helper_text'}
         inputProps={{
           'aria-label': 'amount',
         }}
-        onChange={handleChange}
+        onChange={e => handleChange(e.target.value)}
         required
         placeholder={BTCLTAmount.toLocaleString()}
         value={BTCLTAmount ? BTCLTAmount : ''}
@@ -317,12 +324,12 @@ export function InputAmount(props) {
           </Tooltip>
           </div>
           <div>
-            Will receive: {BTCLTAmount - BTCLTAmount * (MGZDfee / 100).toLocaleString()} (≈ ${USDAmount.toLocaleString()} USD)
+            Will receive: {BTCLTAmount - BTCLTAmount * (MGZDfee / 100).toFixed(4).toLocaleString()} (≈ ${USDAmount.toFixed(2).toLocaleString()} USD)
           </div>
         </div>
       </FormHelperText>
     </FormControl>
-    <input type="hidden" value={amountNanos} id={htmlIds.AmountNanos}></input>
+    <input type="hidden" value={amountNanos} id={htmlIds.AmountNanos || 0}></input>
     <input type="hidden" value={currency} id={htmlIds.Currency}></input>
   </div>)
 }

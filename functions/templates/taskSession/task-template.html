@@ -64,13 +64,17 @@
         #zords_links{
             display:flex;
             list-style: none;
-            max-width: 350px;
+            /* max-width: 350px; */
+            padding: 0px;
             justify-content: space-around;
             text-align: center;
         }
         #zords_links li{
             margin:20px;
             min-width: 200px;
+        }
+        #current_username{
+            font-weight: bold;
         }
         #successMessage {
             position: fixed;
@@ -111,13 +115,16 @@
     </style>
     <body>
         <div class="wrapper">
-            <h1>Task type: "<span id="taskType"></span>"</h1>
-            <h2>ID: "<span id="taskId"></span>"</h2>
-            <h2>Zord username: <span id="current_username"></span> </h2>
-            <h3>Recommended to disable all browser extentions</h3>
+            <h3 class="center_text">Task type: "<span id="taskType"></span>"</h3>
+            <p class="center_text">ID: "<span id="taskId"></span>"</p>
+
+            <p class="center_text">Description:</br><i id='description'></i></p>
+            <hr style="width:30%">
+            <p class="center_text">Target Zord: <b>@</b><span id="current_username"></span></p>
+            <p class="center_text">Recommended to disable all browser extentions</p>
             <!-- <h4>Your Pub Key: <span id="yourPubKey"></span></h4> -->
             <div class="links_section">
-                <p class="center_text">Provide personal links (except your) to other zords for signing task.</p>
+                <p class="center_text">Provide personal links (except yours) to other zords for signing task.</p>
                 <p class="center_text">Zords:</p>
                 <ul id='zords_links'></ul>
             </div>
@@ -161,8 +168,10 @@
 
         query = window.location.pathname.split('/').pop();
         const [taskShrtId, shrtId, encryptionKey]  = query.split('&');
-        document.getElementById('taskType').innerText = taskSession.task.type
+        document.getElementById('taskType').innerText = taskSession.task.type;
         document.getElementById('taskId').innerText = taskSession.taskId;
+        document.getElementById('description').innerText = taskSession.task.description;
+
         // document.getElementById('yourPubKey').innerText = pubKey.slice(0, 14) + '...';
         taskSession.initiator
         var zordsUl = document.getElementById('zords_links');

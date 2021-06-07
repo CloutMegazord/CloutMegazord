@@ -247,13 +247,16 @@ export default function TableList(props) {
 
   const powerOnHandler = (e, taskId) => {
     e.preventDefault();
+    props.setOpenBackdrop(true);
     api_functions.task({
       action: 'powerOn',
       task: {id:taskId},
       megazordId: megazordId
-    }).then((resp) => {
-      window.location.href = resp.data.taskLink
-      // window.powerOnWindow = window.open(resp.data.taskLink, null);
+    }).then((data) => {
+      props.setOpenBackdrop(false);
+      // window.location.href = data.taskLink
+    }).catch(e => {
+      props.setOpenBackdrop(false);
     })
   }
 
@@ -263,7 +266,7 @@ export default function TableList(props) {
       task: taskResult,
       megazordId: megazordId
     })
-    // setOpenCT(false)
+    setOpenCT(false)
   }
 
   const deleteHandler = (e, taskId) => {

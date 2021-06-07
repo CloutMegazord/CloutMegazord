@@ -165,8 +165,9 @@ const send = (data) => {
         name: 'Amount',
         component:  <InputAmount
           placeholder={ "Input amount in BitClout"}
-          currencyTypes={['$BitClouts', 'Coins']}
+          // currencyTypes={['$BitClouts', 'Coins']}
           exchRate={exchangeRate}
+          wallet={{'$ClOUT': megazord.BalanceNanos}}
           feesMap={api_functions.getFeesMap()}
           user={user}
           htmlIds={{AmountNanos: "send_Amount_value", Currency: "send_Currency_value"}}
