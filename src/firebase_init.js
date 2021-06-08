@@ -1,11 +1,10 @@
 import firebase from 'firebase';
 import axios from 'axios';
-import { getFunctions, httpsCallable } from "firebase/functions";
 
 var config = {
   apiKey: "AIzaSyBG6Uo9bwEnxrVhDvxCnnGM88MfBgBm4EY",
   authDomain: "cloutmegazord.firebaseapp.com",
-  // databaseURL: "https://cloutmegazord-default-rtdb.europe-west1.firebasedatabase.app",
+  databaseURL: "https://cloutmegazord-default-rtdb.europe-west1.firebasedatabase.app",
   databaseURL: "http://localhost:9000/?ns=cloutmegazord-default-rtdb",
   projectId: "cloutmegazord",
   storageBucket: "cloutmegazord.appspot.com",
@@ -13,10 +12,9 @@ var config = {
   appId: "1:493989806019:web:05c697b2bfeb2f88a84776",
   measurementId: "G-NJHY4QC4FJ"
 };
+
 if (window.location.hostname === "localhost") {
   config.databaseURL = "http://localhost:9000/?ns=cloutmegazord-default-rtdb";
-} else {
-  config.databaseURL = "https://cloutmegazord-default-rtdb.europe-west1.firebasedatabase.app";
 }
 export default firebase;
 export const firebaseApp = firebase.initializeApp(config);
@@ -24,10 +22,13 @@ export const db = firebase.database();
 export const auth = firebase.auth();
 export const storage = firebase.storage();
 // export const messaging = firebase.messaging();
-export const functions = firebase.functions()
+export const functions = firebase.functions();
+
+var apiEndpoint = 'https://cloutmegazord.web.app/api';
 if (window.location.hostname === "localhost") {
-  functions.useEmulator("localhost", 5001);
+  apiEndpoint = 'http://localhost:5000/api';
   db.useEmulator("localhost", 9000)
+  // functions.useEmulator("localhost", 5001);
 }
 export const onErrorSubscribers = [];
 const fireError = (e) => {
@@ -62,11 +63,11 @@ function getFromStorage(namespace, key) {
 
 function getUserStateless(publicKey) {
   return new Promise(function (resolve, reject) {
-    functions.httpsCallable('api/bitclout-proxy')({
+    axios.post(apiEndpoint + '/bitclout-proxy', {data:{
       action: 'get-users-stateless',
       PublicKeysBase58Check: [publicKey],
       SkipHodlings: true
-    }).then(resp => {
+    }}).then(resp => {
       if (resp.data.error) {
         reject(resp.data.error);
         return;
@@ -85,11 +86,11 @@ function getBitcloutAcc(publicKey='', Username='') {
       resolve(user)
       return;
     }
-    functions.httpsCallable('api/bitclout-proxy')({
+    axios.post(apiEndpoint + '/bitclout-proxy', {data:{
       action: 'get-single-profile',
       PublicKeyBase58Check: publicKey,
       Username: Username
-    }).then(resp => {
+    }}).then(resp => {
       if (resp.data.error) {
         reject(resp.data.error);
         return;
@@ -119,7 +120,7 @@ function getExchangeRate() {
       return;
     }
     try {
-      var exRateResp = await functions.httpsCallable('api/getExchangeRate')({});
+      var exRateResp = await axios.post(apiEndpoint + '/getExchangeRate', {data:{}})//functions.httpsCallable('api/getExchangeRate')({});
     } catch (e) {
       reject(e);
       return
@@ -215,13 +216,11 @@ export const api_functions = {
   'getTaskSession': () => {
     var path = window.location.href.split('/').pop();
     var task = path.split('&')[0].split('=')[1];
-    return functions.httpsCallable('api/getTaskSession')({
-      task: task
-    });
+    return axios.post(apiEndpoint + '/getTaskSession', {data:{task}});
   },
   'task': data => {
     return new Promise(async (resolve, reject) => {
-      var resp = await functions.httpsCallable('api/task')(data);
+      var resp = await axios.post(apiEndpoint + '/task', data);
       if (resp.data.error) {
         fireError('Task error: ' + resp.data.error);
         reject(resp.data.error);
@@ -230,7 +229,7 @@ export const api_functions = {
       resolve(resp.data);
     })
   },
-  'login': functions.httpsCallable('api/login'),
+  'login': data => axios.post(apiEndpoint + '/login', data),
   'logout': () => {
     localStorage.setItem('users', null);
     auth.signOut();
@@ -238,12 +237,12 @@ export const api_functions = {
   'createMegazord': zords => {
     ///* forceRefresh */ true
     return new Promise((resolve, reject) => {
-      functions.httpsCallable('api/createMegazord')({zords}).then(resolve).catch(reject);
+      axios.post(apiEndpoint + '/createMegazord', {data:{zords}}).then(resolve).catch(reject);
     })
   },
   'confirmMegazord': megazordId => {
     return new Promise((resolve, reject) => {
-      functions.httpsCallable('api/confirmMegazord')({megazordId}).then(resolve).catch(reject);
+      axios.post(apiEndpoint + '/confirmMegazord', {data:{megazordId}}).then(resolve).catch(reject);
     })
   },
   'signInWithCustomToken': auth.signInWithCustomToken.bind(auth),
@@ -265,8 +264,8 @@ export const api_functions = {
   },
   'getAppState': () => {
     return new Promise((resolve, reject) => {
-      functions.httpsCallable('api/bitclout-proxy')({
-        action: 'get-app-state'
+      axios.post(
+        apiEndpoint + '/bitclout-proxy', {data:{action: 'get-app-state'}
       }).then(resp => {
         if (resp.data.error) {
           throw new Error(resp.data.error);
