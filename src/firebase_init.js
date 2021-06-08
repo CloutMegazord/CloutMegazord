@@ -220,7 +220,7 @@ export const api_functions = {
   },
   'task': data => {
     return new Promise(async (resolve, reject) => {
-      var resp = await axios.post(apiEndpoint + '/task', data);
+      var resp = await axios.post(apiEndpoint + '/task', {data});
       if (resp.data.error) {
         fireError('Task error: ' + resp.data.error);
         reject(resp.data.error);
@@ -229,7 +229,7 @@ export const api_functions = {
       resolve(resp.data);
     })
   },
-  'login': data => axios.post(apiEndpoint + '/login', data),
+  'login': data => axios.post(apiEndpoint + '/login', {data}),
   'logout': () => {
     localStorage.setItem('users', null);
     auth.signOut();
