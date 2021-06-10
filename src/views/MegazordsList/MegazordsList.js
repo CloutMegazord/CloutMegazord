@@ -507,9 +507,14 @@ export default function MegazordsList(props) {
                     </h4>
                     <div style={{visibility: item.PubKeyShort ? 'visible' : 'hidden'}}>
                       <div>$ClOUT Balance:</div>
-                      <MuiTypography style={{color: grayColor[2]}}>
-                        {parseFloat((item.BalanceNanos / 1e9).toFixed(4)).toLocaleString()} ≈ ${(USDbyBTCLT ? item.BalanceNanos / 1e9 * USDbyBTCLT : 0).toFixed(2).toLocaleString()}
-                      </MuiTypography>
+                      {item.taskSessions ? (
+                          <CircularProgress style={{color: primaryColor[0], verticalAlign: 'middle'}} size={25}></CircularProgress>
+                        ) : (
+                          <MuiTypography style={{color: grayColor[2]}}>
+                            {parseFloat((item.BalanceNanos / 1e9).toFixed(4)).toLocaleString()} ≈ ${(USDbyBTCLT ? item.BalanceNanos / 1e9 * USDbyBTCLT : 0).toFixed(2).toLocaleString()}
+                          </MuiTypography>
+                        )
+                      }
                     </div>
                     <h5 className={classes.cardCategory}><b>Zords:</b></h5>
                     <GridContainer justify="center" style={{minHeight: '4rem', padding: '0.5rem 0 0 0'}}>

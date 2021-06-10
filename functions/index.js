@@ -17,9 +17,9 @@ const notifications = require('./notifications');
 var signingEndpoint, CMEndpoint;
 const CloutMegazordPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
 const bitcloutCahceExpire = {
-    'get-exchange-rate': 2 * 60 * 1000,
-    'ticker': 2 * 60 * 1000,
-    'get-single-profile': 24 * 60 * 60 * 1000,
+    'get-exchange-rate': 10 * 60 * 1000,
+    'ticker': 10 * 60 * 1000,
+    'get-single-profile': 48 * 60 * 60 * 1000,
     'get-app-state':  24 * 60 * 60 * 1000
 }
 
@@ -72,7 +72,7 @@ function expireCleaner(ref) {
 
 setInterval(() => {
     expireCleaner(db.ref('bitcloutCache'));
-}, 2 * 60 * 1000)
+}, 10 * 60 * 1000)
 
 function getReqData(req, field) {
     let data = req.body.data[field];
@@ -110,7 +110,7 @@ async function bitcloutProxy(data) {
         delete data['action']
         delete data['method']
         if (bitcloutCahceExpire[action]) {
-            const cachedDataRef = await db.ref('bitcloutCache').child(JSON.stringify(data)).get();
+            const cachedDataRef = await db.ref('bitcloutCache').child(JSON.stringify({[method]:data})).get();
             if (cachedDataRef.exists()) {
                 console.log('Cache Hit')
                 cachedData = cachedDataRef.val();
@@ -122,7 +122,7 @@ async function bitcloutProxy(data) {
             {headers: {'Content-Type': 'application/json'}
         }).then(resp => {
             if (bitcloutCahceExpire[action]) {
-                db.ref('bitcloutCache').child(JSON.stringify({method:data})).set({
+                db.ref('bitcloutCache').child(JSON.stringify({[method]:data})).set({
                     data: resp.data, expire: Date.now() + bitcloutCahceExpire[action]
                 })
             }
@@ -258,6 +258,7 @@ app.post('/api/login', async (req, res, next) => {
         const customToken = await auth.createCustomToken(publicKey);
         res.status(200).send({data: {"token": customToken}});
     } catch(err) {
+        console.error(err)
         res.send({data:{error: 'Firebase Error.'}})
         return;
     }
@@ -344,6 +345,7 @@ app.post('/api/createMegazord', async (req, res, next) => {
 app.post('/api/finishTask', async (req, res, next) => {
     const {task, taskData, taskError} = req.body.data;
     const megazordRef = db.ref('megazords/' + taskData.megazordId);
+    await megazordRef.child('taskSessions/' + task.id).remove();
     if (!taskError) {
         await megazordRef.child('tasks').child(task.id).remove();
     }
@@ -449,6 +451,7 @@ app.post('/api/task', async (req, res, next) => {
                 res.send({data:{error: resp.data.error}});
                 return;
             }
+            await megazordRef.child('taskSessions/' + taskId).set(true);
             res.send({data:{taskLink: signingEndpoint + `/ts/get?tid=${taskId}&zid=${taskSession.initiator.shrtId}`}})
             break;
     }

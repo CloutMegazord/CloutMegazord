@@ -108,7 +108,7 @@ export default function AdminNavbarLinks(props) {
         >
           <Notifications className={classes.icons} />
           {(notifications_count !== 0) &&
-            <span className={classes.notifications}>{notifications_count}</span>
+            <span className={classes.notifications}>{notifications_count <= 10 ? notifications_count : 10}</span>
           }
           <Hidden mdUp implementation="css">
             <p onClick={handleCloseNotification} className={classes.linkText}>
@@ -139,7 +139,7 @@ export default function AdminNavbarLinks(props) {
               <Paper>
                 <ClickAwayListener onClickAway={handleCloseNotification}>
                   <MenuList role="menu">
-                    {notifications && Object.keys(notifications).map(key => {
+                    {notifications && Object.keys(notifications).slice(-10).map(key => {
                       return (
                         <MenuItem
                           key={key}

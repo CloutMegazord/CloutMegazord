@@ -254,7 +254,7 @@ export default function TableList(props) {
       megazordId: megazordId
     }).then((data) => {
       props.setOpenBackdrop(false);
-      // window.location.href = data.taskLink
+      window.location.href = data.taskLink
     }).catch(e => {
       props.setOpenBackdrop(false);
     })

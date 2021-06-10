@@ -99,6 +99,11 @@ const hist = createBrowserHistory();
       }, 3000)
     });
     this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
+      if (userAuth) {
+        userAuth.getIdToken().then(function(idToken) {
+          api_functions.authToken = idToken;
+        });
+      }
       const isSignedIn = !!userAuth;
       this.setState({isSignedIn})
       api_functions.getBitcloutData().then(bitcloutData => {

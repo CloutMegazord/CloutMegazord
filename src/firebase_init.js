@@ -5,7 +5,6 @@ var config = {
   apiKey: "AIzaSyBG6Uo9bwEnxrVhDvxCnnGM88MfBgBm4EY",
   authDomain: "cloutmegazord.firebaseapp.com",
   databaseURL: "https://cloutmegazord-default-rtdb.europe-west1.firebasedatabase.app",
-  databaseURL: "http://localhost:9000/?ns=cloutmegazord-default-rtdb",
   projectId: "cloutmegazord",
   storageBucket: "cloutmegazord.appspot.com",
   messagingSenderId: "493989806019",
@@ -28,7 +27,7 @@ var apiEndpoint = 'https://cloutmegazord.web.app/api';
 if (window.location.hostname === "localhost") {
   apiEndpoint = 'http://localhost:5000/api';
   db.useEmulator("localhost", 9000)
-  // functions.useEmulator("localhost", 5001);
+  functions.useEmulator("localhost", 5001);
 }
 export const onErrorSubscribers = [];
 const fireError = (e) => {
@@ -67,7 +66,7 @@ function getUserStateless(publicKey) {
       action: 'get-users-stateless',
       PublicKeysBase58Check: [publicKey],
       SkipHodlings: true
-    }}).then(resp => {
+    }}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resp => {
       if (resp.data.error) {
         reject(resp.data.error);
         return;
@@ -90,7 +89,7 @@ function getBitcloutAcc(publicKey='', Username='') {
       action: 'get-single-profile',
       PublicKeyBase58Check: publicKey,
       Username: Username
-    }}).then(resp => {
+    }}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resp => {
       if (resp.data.error) {
         reject(resp.data.error);
         return;
@@ -120,7 +119,7 @@ function getExchangeRate() {
       return;
     }
     try {
-      var exRateResp = await axios.post(apiEndpoint + '/getExchangeRate', {data:{}})//functions.httpsCallable('api/getExchangeRate')({});
+      var exRateResp = await axios.post(apiEndpoint + '/getExchangeRate', {data:{}}, api_functions.getReqConfigs()).then(resp=>resp.data)
     } catch (e) {
       reject(e);
       return
@@ -147,6 +146,7 @@ async function handleMegazord(megazordInfo, user) {
     zords: [],
     id: megazordInfo.id,
     canConfirm: false,
+    taskSessions: megazordInfo.taskSessions,
     tasks: [],
     PublicKeyBase58Check: megazordInfo.PublicKeyBase58Check
   };
@@ -216,11 +216,11 @@ export const api_functions = {
   'getTaskSession': () => {
     var path = window.location.href.split('/').pop();
     var task = path.split('&')[0].split('=')[1];
-    return axios.post(apiEndpoint + '/getTaskSession', {data:{task}});
+    return axios.post(apiEndpoint + '/getTaskSession', {data:{task}}, api_functions.getReqConfigs()).then(resp=>resp.data);
   },
   'task': data => {
     return new Promise(async (resolve, reject) => {
-      var resp = await axios.post(apiEndpoint + '/task', {data});
+      var resp = await axios.post(apiEndpoint + '/task', {data}, api_functions.getReqConfigs()).then(resp=>resp.data);
       if (resp.data.error) {
         fireError('Task error: ' + resp.data.error);
         reject(resp.data.error);
@@ -229,7 +229,7 @@ export const api_functions = {
       resolve(resp.data);
     })
   },
-  'login': data => axios.post(apiEndpoint + '/login', {data}),
+  'login': data => axios.post(apiEndpoint + '/login', {data}, api_functions.getReqConfigs()).then(resp=>resp.data),
   'logout': () => {
     localStorage.setItem('users', null);
     auth.signOut();
@@ -237,12 +237,12 @@ export const api_functions = {
   'createMegazord': zords => {
     ///* forceRefresh */ true
     return new Promise((resolve, reject) => {
-      axios.post(apiEndpoint + '/createMegazord', {data:{zords}}).then(resolve).catch(reject);
+      axios.post(apiEndpoint + '/createMegazord', {data:{zords}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
     })
   },
   'confirmMegazord': megazordId => {
     return new Promise((resolve, reject) => {
-      axios.post(apiEndpoint + '/confirmMegazord', {data:{megazordId}}).then(resolve).catch(reject);
+      axios.post(apiEndpoint + '/confirmMegazord', {data:{megazordId}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
     })
   },
   'signInWithCustomToken': auth.signInWithCustomToken.bind(auth),
@@ -266,7 +266,7 @@ export const api_functions = {
     return new Promise((resolve, reject) => {
       axios.post(
         apiEndpoint + '/bitclout-proxy', {data:{action: 'get-app-state'}
-      }).then(resp => {
+      }, api_functions.getReqConfigs()).then(resp=>resp.data).then(resp => {
         if (resp.data.error) {
           throw new Error(resp.data.error);
         }
@@ -346,6 +346,14 @@ export const api_functions = {
   'offUserData': () => {},
   'onError': (subscriber) => {
     onErrorSubscribers.push(subscriber);
+  },
+  'authToken': null,
+  'getReqConfigs': () => {
+    var configs = {}
+    if (api_functions.authToken) {
+      configs.headers = { Authorization: `Bearer ${api_functions.authToken}` };
+    }
+    return configs;
   }
   // 'helloWorld': functions.httpsCallable('signIn')
 }

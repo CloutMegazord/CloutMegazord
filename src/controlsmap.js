@@ -231,8 +231,8 @@ const sell = (user) => {
 
 export default {
   getPublicKey,
-  updateProfile,
+  // updateProfile,
   send: send,
-  buy,
-  sell
+  // buy,
+  // sell
 }
