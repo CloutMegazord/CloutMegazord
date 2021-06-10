@@ -98,11 +98,15 @@ const hist = createBrowserHistory();
         });
       }, 3000)
     });
+    const updateIdToken = (userAuth) => {
+      userAuth.getIdToken(true).then(function(idToken) {
+        api_functions.authToken = idToken;
+      });
+    }
     this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
       if (userAuth) {
-        userAuth.getIdToken().then(function(idToken) {
-          api_functions.authToken = idToken;
-        });
+        updateIdToken(userAuth);
+        setInterval(() => updateIdToken(userAuth), 60*1000)
       }
       const isSignedIn = !!userAuth;
       this.setState({isSignedIn})

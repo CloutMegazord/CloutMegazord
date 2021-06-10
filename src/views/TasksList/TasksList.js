@@ -294,9 +294,9 @@ export default function TableList(props) {
           <Card>
             <CardHeader color="primary">
               <h4 className={classes.cardTitleWhite}>{megazord.name || megazord.status}</h4>
-              <p className={classes.cardCategoryWhite}>
+              {/* <p className={classes.cardCategoryWhite}>
                 Here is a subtitle for this table
-              </p>
+              </p> */}
               <Button
                 color="secondary"
                 edge="end"

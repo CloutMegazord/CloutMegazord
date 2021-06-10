@@ -68,7 +68,7 @@ function ProductHero(props) {
         First distributed account management tool for Bitclout
       </Typography>
       <Typography color="inherit" align="center" variant="h5" className={classes.h5}>
-        Create a distributed account by splitting high entropy seed phrase between several owners without storing it on server.
+        Create a distributed account by splitting high entropy seed phrase between several owners.
       </Typography>
       <Typography color="inherit" align="center" variant="body1" className={classes.heroInfo} align="left">
           For building <b>trustless</b> Bitclout based:

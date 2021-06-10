@@ -60,21 +60,42 @@ function getFromStorage(namespace, key) {
   return res;
 }
 
-function getUserStateless(publicKey) {
+var pubKeysBuffer = []
+var intervalId = null;
+function registerBuffer(publicKey, callback) {
+  pubKeysBuffer.push({publicKey,callback})
+  if (!intervalId) {
+    intervalId = setTimeout(() => {
+      axios.post(apiEndpoint + '/bitclout-proxy', {data:{
+        action: 'get-users-stateless',
+        PublicKeysBase58Check: pubKeysBuffer.map(it=>it.publicKey),
+        SkipHodlings: true
+      }}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resp => {
+        if (resp.data.error) {
+          pubKeysBuffer.forEach((item) => {item.callback(null, resp.data.error)});
+          return;
+        }
+        pubKeysBuffer.forEach((item, index) => {item.callback(resp.data.UserList[index])});
+        pubKeysBuffer = [];
+        intervalId = null;
+      }).catch(err => {
+        pubKeysBuffer.forEach((item) => {item.callback(null, err)});
+        pubKeysBuffer = [];
+        intervalId = null;
+      })
+    }, 1000)
+  }
+}
+
+async function getUserStateless(publicKey) {
   return new Promise(function (resolve, reject) {
-    axios.post(apiEndpoint + '/bitclout-proxy', {data:{
-      action: 'get-users-stateless',
-      PublicKeysBase58Check: [publicKey],
-      SkipHodlings: true
-    }}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resp => {
-      if (resp.data.error) {
-        reject(resp.data.error);
-        return;
-      }
-      resolve(resp.data.UserList[0]);
-    }).catch(err => {
-      reject(err);
-    })
+    registerBuffer(publicKey, function(data, error) {
+       if(error) {
+        reject(error);
+       } else {
+        resolve(data);
+       }
+    });
   })
 }
 
@@ -150,13 +171,6 @@ async function handleMegazord(megazordInfo, user) {
     tasks: [],
     PublicKeyBase58Check: megazordInfo.PublicKeyBase58Check
   };
-
-  for (let k in megazordInfo.tasks || {}) {
-    let task =  megazordInfo.tasks[k];
-    task.id = k;
-    task.addedBy = await api_functions.getBitcloutAcc(task.addedBy);
-    resultMegazord.tasks.push(task);
-  }
   if (Object.keys(megazordInfo.pendingZords).length > 0) {
     resultMegazord.status_id = 1;
     resultMegazord.status_text = 'Pending zords confirmation';
@@ -166,13 +180,15 @@ async function handleMegazord(megazordInfo, user) {
     resultMegazord.status_text = 'Active';
     resultMegazord = Object.assign(resultMegazord, megazordStateless.ProfileEntryResponse || {});
     resultMegazord.BalanceNanos = megazordStateless.BalanceNanos;
-    // } else {
-    //   resultMegazord.status_id = 2;
-    //   resultMegazord.status_text = 'Pending Update Profile';
-    // }
   } else {
     resultMegazord.status_id = 3;
     resultMegazord.status_text = 'Pending Public Key';
+  }
+  for (let k in megazordInfo.tasks || {}) {
+    let task =  megazordInfo.tasks[k];
+    task.id = k;
+    task.addedBy = await api_functions.getBitcloutAcc(task.addedBy);
+    resultMegazord.tasks.push(task);
   }
   for (let k in megazordInfo.pendingZords) {
     let cloutAccount = await api_functions.getBitcloutAcc(k);

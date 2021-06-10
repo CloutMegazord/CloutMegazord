@@ -240,8 +240,8 @@ app.post('/api/login', async (req, res, next) => {
     }
     var allowlist = await db.ref('allowlist').get();
     if (allowlist.exists()) {
-        if (!allowlist.val().includes(publicKey)) {
-            res.send({data: { error: "You don't allowlisted to particepaite on closed beta. Send message to @CloutMegazord"}});
+        if (!Object.keys(allowlist.val()).includes(publicKey)) {
+            res.send({data: { error: "You don't allowlisted to participate in closed beta. Send message to @CloutMegazord"}});
             return
         }
     }
@@ -382,7 +382,7 @@ app.post('/api/task', async (req, res, next) => {
     if (megazorSnap.exists()) {
         var megazord = megazorSnap.val();
     } else {
-        res.send({data:{error: 'Task not Found'}});
+        res.send({data:{error: 'Megazord not Found'}});
     }
     switch (data.action) {
         case 'create':
