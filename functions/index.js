@@ -22,6 +22,7 @@ const bitcloutCahceExpire = {
     'get-single-profile': 48 * 60 * 60 * 1000,
     'get-app-state':  24 * 60 * 60 * 1000
 }
+var taskSessionsExpire = (10 * 60 * 1000);//10 mins
 
 admin.initializeApp();
 const db = admin.database();
@@ -32,7 +33,7 @@ if (process.env.NODE_ENV === 'development') {
     signingEndpoint = 'http://localhost:7000';
 } else {
     signingEndpoint = 'https://signing-cloutmegazord.web.app';
-    CMEndpoint = 'https://cloutmegazord.web.app'
+    CMEndpoint = 'https://cloutmegazord.com'
 }
 
 const app = express();
@@ -72,7 +73,24 @@ function expireCleaner(ref) {
 
 setInterval(() => {
     expireCleaner(db.ref('bitcloutCache'));
+
 }, 10 * 60 * 1000)
+
+setInterval(async () => {
+    const megazordsSnap = await db.ref('megazords').get();
+    if (megazordsSnap.exists()) {
+        var megazords = megazordsSnap.val();
+    }
+    for (let megazordId in megazords) {
+        let megazord = megazords[megazordId];
+        for (let taskid in (megazord.tasks || {})) {
+            let task = megazord.tasks[taskid];
+            if (task.taskSessionRun && (task.taskSessionRun + taskSessionsExpire) < Date.now()) {
+                db.ref('megazords/' + megazordId + '/tasks/' + taskid + '/taskSessionRun').remove();
+            }
+        }
+    }
+},  60 * 10 * 1000)
 
 function getReqData(req, field) {
     let data = req.body.data[field];
@@ -121,6 +139,9 @@ async function bitcloutProxy(data) {
             data,
             {headers: {'Content-Type': 'application/json'}
         }).then(resp => {
+            if (action === 'get-single-profile') {
+                resp.data.Profile.ProfilePic = 'https://bitclout.com/api/v0/get-single-profile-picture/' + resp.data.Profile.PublicKeyBase58Check;
+            }
             if (bitcloutCahceExpire[action]) {
                 db.ref('bitcloutCache').child(JSON.stringify({[method]:data})).set({
                     data: resp.data, expire: Date.now() + bitcloutCahceExpire[action]
@@ -169,8 +190,17 @@ async function addUser(userId) {
 }
 
 async function addMegazord(zords, owner) {
+    function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+    }
     const megazordsRef = db.ref('megazords');
     var newMegazordRef = await megazordsRef.push({
+        color: getRandomColor(),
         confirmedZords: {[owner]: true},
         pendingZords: zords.reduce((prev, curr, i) => {
             prev[curr] = true;
@@ -192,21 +222,32 @@ async function getExchangeRate() {
     try {
         var exchangeRate = await bitcloutProxy({method: 'get', action: 'get-exchange-rate'});
         var tickerResp = await axios.get('https://blockchain.info/ticker');
-      } catch (e) {
+    } catch (e) {
         throw new Error(e);
-      }
+    }
 
-      if (tickerResp.data.error) {
+    if (tickerResp.data.error) {
         reject(tickerResp.data.error);
-      }
-      var ticker = tickerResp.data;
-      // var exchangeRate =  (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
-      var exchangeRate =  {
+    }
+    var ticker = tickerResp.data;
+    // var exchangeRate =  (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
+    var exchangeRate =  {
         SatoshisPerBitCloutExchangeRate: exchangeRate.SatoshisPerBitCloutExchangeRate,
         USDCentsPerBitcoinExchangeRate: ticker.USD.last,
         USDbyBTCLT: ticker.USD.last * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
-      }
-      return exchangeRate;
+    }
+    return exchangeRate;
+}
+
+async function getSingleProfile(data) {
+    var data = req.body.data;
+    try {
+        let result = await bitcloutProxy(data);
+        result
+        res.send({data: result})
+    } catch(error) {
+        res.send({data: { error: error.toString()}})
+    }
 }
 
 app.post('/api/bitclout-proxy', async (req, res, next) => {
@@ -222,6 +263,16 @@ app.post('/api/bitclout-proxy', async (req, res, next) => {
 app.post('/api/getExchangeRate', async (req, res, next) => {
     try {
         var exchangeRate = await getExchangeRate();
+      } catch (e) {
+        res.send({data:{ error: e.toString()}});
+        return
+      }
+      res.send({data:exchangeRate});
+});
+
+app.post('/api/getSingleProfile', async (req, res, next) => {
+    try {
+        var exchangeRate = await getSingleProfile();
       } catch (e) {
         res.send({data:{ error: e.toString()}});
         return
@@ -264,6 +315,25 @@ app.post('/api/login', async (req, res, next) => {
     }
 })
 
+app.post('/api/hideMegazord', async (req, res, next) => {
+    var data = req.body.data;
+    const megazordId = data.megazordId;
+    const hide = data.hide;
+    var customToken = req.headers.authorization.replace('Bearer ', '');
+    var publicKey;
+    try {
+        let verif = await auth.verifyIdToken(customToken);
+        publicKey = verif.uid;
+    } catch(error) {
+        res.send({data:{error: error.message}})
+        return
+    }
+
+    await db.ref('users/' + publicKey + '/hiddenMegazords/' + megazordId).set(true);
+    // await megazordRef.update({hidden: hide})
+    res.send({data:{ok: true}})
+});
+
 app.post('/api/confirmMegazord', async (req, res, next) => {
     var data = req.body.data;
     const megazordId = data.megazordId;
@@ -288,10 +358,15 @@ app.post('/api/confirmMegazord', async (req, res, next) => {
         delete megazord.pendingZords[publicKey];
     } else {
         res.send({data:{error: 'You already confirmerd this task.'}})
+        return
     }
     megazord.confirmedZords[publicKey] = true;
-
-    await megazordRef.update(megazord)
+    try {
+        await megazordRef.update(megazord)
+    } catch (e) {
+        res.send({data:{error: e.toString()}})
+        return
+    }
     const task = Tasks.createTask({
         type: 'getPublicKey',
         addedBy: CloutMegazordPubKey,
@@ -345,7 +420,7 @@ app.post('/api/createMegazord', async (req, res, next) => {
 app.post('/api/finishTask', async (req, res, next) => {
     const {task, taskData, taskError} = req.body.data;
     const megazordRef = db.ref('megazords/' + taskData.megazordId);
-    await megazordRef.child('taskSessions/' + task.id).remove();
+    await megazordRef.child('tasks/' + task.id + '/taskSessionRun').remove();
     if (!taskError) {
         await megazordRef.child('tasks').child(task.id).remove();
     }
@@ -378,7 +453,6 @@ app.post('/api/task', async (req, res, next) => {
     }
     const megazordRef = db.ref('megazords/' + data.megazordId);
     var megazorSnap = await megazordRef.get();
-    // var megazorSnap = await megazordRef.get()
     if (megazorSnap.exists()) {
         var megazord = megazorSnap.val();
     } else {
@@ -402,6 +476,12 @@ app.post('/api/task', async (req, res, next) => {
         case 'powerOn':
             var taskId = data.task.id;
             var dbTask = megazord.tasks[data.task.id];
+            if (dbTask.taskSessionRun) {
+                res.send({data:{error: `Task Session already running. Ask task initiator for personal link.`}});
+                return
+            }
+            dbTask.taskSessionRun = Date.now();
+            await megazordRef.child('tasks/' + taskId).update(dbTask);
             var taskSession = {
                 initiator: {publicKey},
                 megazordId: data.megazordId,
@@ -444,14 +524,15 @@ app.post('/api/task', async (req, res, next) => {
             try {
                 var resp = await axios.post(signingEndpoint + '/ts/create', {data:{taskId, taskSession}});
             } catch (e) {
+                await megazordRef.child('tasks/' + taskId + '/taskSessionRun').remove();
                 res.send({data:{error: 'signing connection error.'}});
                 return
             }
             if (resp.data.error) {
                 res.send({data:{error: resp.data.error}});
+                await megazordRef.child('tasks/' + taskId + '/taskSessionRun').remove();
                 return;
             }
-            await megazordRef.child('taskSessions/' + taskId).set(true);
             res.send({data:{taskLink: signingEndpoint + `/ts/get?tid=${taskId}&zid=${taskSession.initiator.shrtId}`}})
             break;
     }

@@ -13,16 +13,6 @@ import Tooltip from "@material-ui/core/Tooltip";
 // @material-ui/icons
 import Store from "@material-ui/icons/Store";
 import Warning from "@material-ui/icons/Warning";
-import Info from "components/Typography/Info";
-import DateRange from "@material-ui/icons/DateRange";
-import LocalOffer from "@material-ui/icons/LocalOffer";
-import Update from "@material-ui/icons/Update";
-import ArrowUpward from "@material-ui/icons/ArrowUpward";
-import AccessTime from "@material-ui/icons/AccessTime";
-import Accessibility from "@material-ui/icons/Accessibility";
-import BugReport from "@material-ui/icons/BugReport";
-import Code from "@material-ui/icons/Code";
-import Cloud from "@material-ui/icons/Cloud";
 import CircularProgress from '@material-ui/core/CircularProgress'
 import PropTypes from 'prop-types';
 import List from '@material-ui/core/List';
@@ -47,6 +37,8 @@ import Input from "components/CustomInput/CustomInput.js"
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Table from "components/Table/Table.js";
+import TableRow from "@material-ui/core/TableRow";
+import TableCell from "@material-ui/core/TableCell";
 import {InputBitcloutAccount} from "components/FormControls/FormControls";
 // import FormControls from "components/FormControls/FormControls.js";
 import CustomTabs from "components/CustomTabs/CustomTabs.js";
@@ -87,6 +79,8 @@ import {
 import styles from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 import avatar from "assets/img/faces/marc.jpg";
 
+
+var nameThisColor = require('name-this-color');
 const useStyles = makeStyles(styles);
 
 function makeid(length) {
@@ -356,8 +350,50 @@ const useStyles2 = makeStyles(theme => ({
       fontSize: "14px",
       marginRight: "8px"
     }
+  },
+  colorId: {
+    position: 'absolute',
+    left:'5%',
+    top: '25px',
+    borderRadius: "100%",
+    // backgroundColor: 'red',
+    border: '2px solid #f4f4f4',
+    boxShadow: '0px 0px 0px 1px #d5d5d5',
+    width: '25px',
+    height: '25px'
+  },
+  hideMegazord: {
+    color: grayColor[0],
+    position: 'absolute',
+    right:'5%',
+    top: '25px',
+    cursor: 'pointer',
+    '&:hover': {
+      color: primaryColor[0]
+    }
   }
 }));
+
+function getCoinsTable(UsersYouHODL) {
+  return (<div>No Creator Coins yet.</div>)
+  //   <div>
+  //     {UsersYouHODL ? (
+  //     <Table>
+  //       {UsersYouHODL.map(hodl => {
+  //         <TableRow>
+  //           <TableCell>{hodl.ProfileEntryResponse.Username}</TableCell>
+  //           <TableCell>{parseFloat((hodl.BalanceNanos / 1e9).toFixed(4)).toLocaleString()}</TableCell>
+  //         </TableRow>
+  //       })}
+  //     </Table>):
+  //     (<div>No Creator Coins yet.</div>)}
+  //   </div>
+  // )
+}
+
+function adjust(color, amount) {
+  return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+}
 
 export default function MegazordsList(props) {
   const classes = Object.assign(useStyles(), useStyles2());
@@ -366,18 +402,18 @@ export default function MegazordsList(props) {
   const [value, setValue] = React.useState('');
   const [zords, setZords] = React.useState([]);
   const [zordId, setZordId] = React.useState(null);
+  const [apiLock, setApiLock] = React.useState(false);
   // const [megazords, setMegazords] = React.useState([]);
   const api_functions = props.api_functions;
   const bitcloutData = props.bitcloutData;
   var USDbyBTCLT, createFeeBCLT, createFeeUSD;
+  const user = props.user || {};
+  const megazords = user.megazords || {};
   if (bitcloutData) {
     USDbyBTCLT = bitcloutData.exchangeRate.USDbyBTCLT;
     createFeeBCLT = bitcloutData.appState.CreateProfileFeeNanos / 1e9;
     createFeeUSD = (createFeeBCLT * USDbyBTCLT).toFixed(2);
   }
-
-  const user = props.user || {};
-  const megazords = user.megazords || {};
 
   const handleClickListItem = () => {
     setOpen(true);
@@ -408,6 +444,15 @@ export default function MegazordsList(props) {
       api_functions.confirmMegazord(megazordId);
     }
   };
+
+  const handleHideMegazord = (e, megazordId) => {
+    e.preventDefault();
+    if(apiLock) {return}
+    setApiLock(true)
+    api_functions.hideMegazord(megazordId).then(res=>{
+      setApiLock(false)
+    }).catch(e=> {setApiLock(false)})
+  }
 
   const handleConfirmZord = (megazordId) => {
     setZordId(megazordId)
@@ -449,6 +494,27 @@ export default function MegazordsList(props) {
               <GridItem xs={12} sm={12} md={4} key={item.id}>
                 <Card profile>
                   <CardHeader>
+                    {item.color && (
+                      <Tooltip
+                        placement="top"
+                        interactive
+                        title={<span style={{fontSize:'12px'}}>{nameThisColor(item.color)[0].title + " Megazord"}</span>} >
+                        <div className={classes.colorId} style={{
+                          background:"linear-gradient(to bottom," +
+                            `${adjust(item.color, 40)} 0%,${item.color} 50%,` +
+                            `${adjust(item.color, -3)} 51%,${adjust(item.color, -20)} 100%)`
+                        }}></div>
+                      </Tooltip>
+                    )}
+                    <div className={classes.removeMegazord}>
+                      <Tooltip title="Hide Megazord">
+                         <IconButton aria-label="hide" className={classes.hideMegazord} onClick={
+                           (e) => handleHideMegazord(e, item.id)
+                           }>
+                           <Icon>visibility_off</Icon>
+                         </IconButton>
+                      </Tooltip>
+                    </div>
                     <CardAvatar profile>
                       <a href={item.link ? item.link : '#'} target='_blank'>
                         <img src={item.ProfilePic}
@@ -506,21 +572,33 @@ export default function MegazordsList(props) {
                       }
                     </h4>
                     <div style={{visibility: item.PubKeyShort ? 'visible' : 'hidden'}}>
-                      <div>$ClOUT Balance:</div>
-                      {item.taskSessions ? (
+                      <div>Wallet Balance:</div>
+                      {item.tasks.some(task => !!task.taskSessionRun) ? (
                           <CircularProgress style={{color: primaryColor[0], verticalAlign: 'middle'}} size={25}></CircularProgress>
                         ) : (
-                          <MuiTypography style={{color: grayColor[2]}}>
-                            {parseFloat((item.BalanceNanos / 1e9).toFixed(4)).toLocaleString()} ≈ ${(USDbyBTCLT ? item.BalanceNanos / 1e9 * USDbyBTCLT : 0).toFixed(2).toLocaleString()}
-                          </MuiTypography>
-                        )
+                          <div>
+                            <MuiTypography style={{color: grayColor[2]}}>
+                              $CLOUT {parseFloat((item.BalanceNanos / 1e9).toFixed(4)).toLocaleString()} ≈ ${(USDbyBTCLT ? item.BalanceNanos / 1e9 * USDbyBTCLT : 0).toFixed(2).toLocaleString()}
+                            </MuiTypography>
+                            <MuiTypography style={{color: grayColor[2]}}>
+                              Coins
+                              <Tooltip
+                                id="tooltip-top"
+                                title={getCoinsTable(item.UsersYouHODL)}
+                                placement="top"
+                              >
+                                <Icon style={{verticalAlign: '-6px',cursor: 'pointer', margin:'0px 3px'}}>toll</Icon>
+                              </Tooltip>
+                            </MuiTypography>
+                          </div>
+                      )
                       }
                     </div>
                     <h5 className={classes.cardCategory}><b>Zords:</b></h5>
                     <GridContainer justify="center" style={{minHeight: '4rem', padding: '0.5rem 0 0 0'}}>
                       {item.zords.map(owner => {
                         return (
-                          <GridItem xs={3} sm={3} key={owner.name}>
+                          <GridItem xs={3} sm={3} key={owner.name} style={{display: 'flex', justifyContent: 'center'}}>
                             <Tooltip
                               id="tooltip-top"
                               title={'@'+owner.name + ': ' +  owner.status}

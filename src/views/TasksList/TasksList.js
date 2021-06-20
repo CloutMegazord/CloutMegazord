@@ -109,7 +109,7 @@ const useCreateTaskStyles = makeStyles((theme) => ({
 }));
 
 function CreateTask(props) {
-  const { onCreate, onClose, open, user, megazord, api_functions, exchangeRate, ...other } = props;
+  const { onCreate, onClose, open, user, megazord, api_functions, exchangeRate, indexFunctons, ...other } = props;
   const classes = useCreateTaskStyles();
   const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
   const [inputState, setInputState] = React.useState(0);
@@ -120,7 +120,7 @@ function CreateTask(props) {
   var tasksTypes = new Array(Object.keys(TasksMap).length);
   var tasksMap = {}
   for (let key in TasksMap) {
-    tasksMap[key] = TasksMap[key]({user, megazord, api_functions, exchangeRate});
+    tasksMap[key] = TasksMap[key]({user, megazord, api_functions, exchangeRate, indexFunctons});
     tasksTypes[tasksMap[key].order] = {key, disabled: tasksMap[key].disabled}
   }
   if (taskType) {
@@ -143,7 +143,10 @@ function CreateTask(props) {
     for (let control of taskForm.controls) {
       for (let valueName in control.values) {
         taskResult[valueName] = document.getElementById(control.values[valueName].id).value
-        if (!taskResult[valueName]) {
+        if (control.values[valueName].type === 'integer') {
+          taskResult[valueName] = parseInt(taskResult[valueName])
+        }
+        if (!taskResult[valueName] && control.values[valueName].required) {
           alert(`fill in ${control.name} field`)
           return
         }
@@ -235,6 +238,7 @@ export default function TableList(props) {
   const classes = useStyles();
   const user = props.user || {};
   const api_functions = props.api_functions;
+  const indexFunctons = props.indexFunctons;
 
   if (props.bitcloutData) {
     var exchangeRate = props.bitcloutData.exchangeRate;
@@ -269,6 +273,14 @@ export default function TableList(props) {
     setOpenCT(false)
   }
 
+  const addNewTaskbtnHandler = (e) => {
+    e.preventDefault();
+    if (megazord.PublicKeyBase58Check) {
+      setOpenCT(true)
+    } else {
+      indexFunctons.notifSnak('open', 'info', 'Waiting for Megazord Public Key', 3000)
+    }
+  }
   const deleteHandler = (e, taskId) => {
     e.preventDefault();
     api_functions.task({
@@ -283,10 +295,10 @@ export default function TableList(props) {
   }
   return (
     <div>
-      {user.id &&
+      {(user.id && megazord.id) &&
         <CreateTask
           open={openCT} user={user} megazord={megazord} api_functions={api_functions}
-          exchangeRate={exchangeRate} onCreate={createHandler} onClose={closeHandler}
+          exchangeRate={exchangeRate} onCreate={createHandler} onClose={closeHandler} indexFunctons={indexFunctons}
         />
       }
       <GridContainer>
@@ -294,13 +306,11 @@ export default function TableList(props) {
           <Card>
             <CardHeader color="primary">
               <h4 className={classes.cardTitleWhite}>{megazord.name || megazord.status}</h4>
-              {/* <p className={classes.cardCategoryWhite}>
-                Here is a subtitle for this table
-              </p> */}
               <Button
+                style={{backgroundColor: megazord.PublicKeyBase58Check ? secondaryColor[0]: grayColor[9]}}
                 color="secondary"
                 edge="end"
-                onClick={() => setOpenCT(true)}>
+                onClick={addNewTaskbtnHandler}>
                   Add new Task</Button>
             </CardHeader>
             <CardBody>

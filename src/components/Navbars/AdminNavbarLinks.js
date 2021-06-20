@@ -38,6 +38,24 @@ const useStyles2 = makeStyles(theme => ({
   },
 }));
 
+const getDateStringServ = timestamp => {
+
+  const plus0 = num => `0${num.toString()}`.slice(-2)
+
+  const d = new Date(timestamp)
+
+  const year = d.getFullYear()
+  const monthTmp = d.getMonth() + 1
+  const month = plus0(monthTmp)
+  const date = plus0(d.getDate())
+  const hour = plus0(d.getHours())
+  const minute = plus0(d.getMinutes())
+  const second = plus0(d.getSeconds())
+  const rest = timestamp.toString().slice(-5)
+
+  return `(${hour}:${minute}:${second} ${month}/${date}/${year.toString().slice(2)})`
+}
+
 export default function AdminNavbarLinks(props) {
   const user = props.user || {};
   const api_functions = props.api_functions;
@@ -139,14 +157,14 @@ export default function AdminNavbarLinks(props) {
               <Paper>
                 <ClickAwayListener onClickAway={handleCloseNotification}>
                   <MenuList role="menu">
-                    {notifications && Object.keys(notifications).slice(-10).map(key => {
+                    {notifications && Object.keys(notifications).slice(-10).reverse().map(key => {
                       return (
                         <MenuItem
                           key={key}
                           onClick={handleCloseNotification}
                           className={classes.dropdownItem}
                         >
-                          {notifications[key].message.replace('%username%', user.Username)}
+                          {notifications[key].message.replace('%username%', user.Username) + ' ' + getDateStringServ(notifications[key].ts)}
                         </MenuItem>
                       )
                     })}

@@ -21,6 +21,8 @@ import { createBrowserHistory } from "history";
 import { Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
 import Snackbar from "components/Snackbar/Snackbar.js";
 import AddAlert from "@material-ui/icons/AddAlert";
+import Icon from "@material-ui/core/Icon";
+import InfoIcon from '@material-ui/icons/Info';
 
 // Firebase.
 import firebase from 'firebase/app';
@@ -75,9 +77,12 @@ const hist = createBrowserHistory();
     isSignedIn: undefined,
     user: undefined,
     redirect: window.location.pathname,
-    errorOpen: false,
+    notifSnak: {
+      infoOpen: false,
+      errorOpen: false,
+      message: ''
+    },
     bitcloutData: null,
-    errorText: ''
   };
 
   /**
@@ -86,17 +91,7 @@ const hist = createBrowserHistory();
   componentDidMount() {
     var timer;
     api_functions.onError((e)=>{
-      this.setState({
-        errorText: e.toString(),
-        errorOpen: true
-      });
-      clearTimeout(timer);
-      timer = setTimeout(()=>{
-        this.setState({
-          errorText: '',
-          errorOpen: false
-        });
-      }, 3000)
+      this.notifSnak('open', 'error', e.toString(), 3000);
     });
     const updateIdToken = (userAuth) => {
       userAuth.getIdToken(true).then(function(idToken) {
@@ -135,22 +130,35 @@ const hist = createBrowserHistory();
     api_functions.onErrorSubscribers = [];
   }
 
+  notifSnak(action, type, message, duration) {
+    let isOpen = (action === 'open') ? true : false;
+    let notifSnak = this.state.notifSnak;
+    for (let k in notifSnak) {
+      if (notifSnak[k] === true) {
+        notifSnak[k] = false;
+      }
+    }
+    notifSnak[type + 'Open'] = isOpen;
+    notifSnak.message = message || '';
+    this.setState({notifSnak: notifSnak});
+    if (action === 'open' && duration) {
+      const self = this;
+      setTimeout(() =>{
+        for (let k in notifSnak) {
+          if (notifSnak[k] === true) {
+            notifSnak[k] = false;
+          }
+        }
+        notifSnak.message = ''
+        self.setState({notifSnak: notifSnak});
+      }, duration)
+    }
+  }
+
   validatePath() {
     var targ = window.location.href.split('/').map(it => '/' + it);
     return targ.includes('/admin');
   }
-
-  handleErrorClose(event, reason) {
-    // debugger
-    // if (reason === 'clickaway') {
-    //   return;
-    // }
-    this.setState({
-      errorText: '',
-      errorOpen: false
-    });
-  }
-
 
   /**
    * @inheritDoc
@@ -169,7 +177,7 @@ const hist = createBrowserHistory();
             {this.state.isSignedIn === true &&
               <Route path="/admin">
                 <Admin api_functions={api_functions} user={this.state.user}
-                  bitcloutData={this.state.bitcloutData}></Admin>
+                  bitcloutData={this.state.bitcloutData} indexFunctons={{notifSnak:this.notifSnak.bind(this)}} ></Admin>
               </Route>
             }
           </Switch>
@@ -181,11 +189,20 @@ const hist = createBrowserHistory();
           place="tc"
           color="danger"
           icon={AddAlert}
-          message={this.state.errorText}
-          open={this.state.errorOpen}
+          message={this.state.notifSnak.message}
+          open={this.state.notifSnak.errorOpen}
           autoHideDuration={1000}
-          onClose={(event, reason)=>this.handleErrorClose(event, reason)}
-          closeNotification={() =>  this.setState({errorText: '', errorOpen: false})}
+          closeNotification={()=>this.notifSnak('close', 'error')}
+          close
+        />
+        <Snackbar
+          place="tc"
+          color="info"
+          icon={InfoIcon}
+          message={this.state.notifSnak.message}
+          open={this.state.notifSnak.infoOpen}
+          autoHideDuration={1000}
+          closeNotification={()=>this.notifSnak('close', 'info')}
           close
         />
         {/* <Snackbar open={this.state.errorOpen} autoHideDuration={4000} onClose={(event, reason)=>this.handleErrorClose(event, reason)}>

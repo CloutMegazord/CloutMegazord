@@ -23,7 +23,7 @@ export const storage = firebase.storage();
 // export const messaging = firebase.messaging();
 export const functions = firebase.functions();
 
-var apiEndpoint = 'https://cloutmegazord.web.app/api';
+var apiEndpoint = 'https://cloutmegazord.com/api';
 if (window.location.hostname === "localhost") {
   apiEndpoint = 'http://localhost:5000/api';
   db.useEmulator("localhost", 9000)
@@ -83,7 +83,7 @@ function registerBuffer(publicKey, callback) {
         pubKeysBuffer = [];
         intervalId = null;
       })
-    }, 1000)
+    }, 100)
   }
 }
 
@@ -99,37 +99,29 @@ async function getUserStateless(publicKey) {
   })
 }
 
-function getBitcloutAcc(publicKey='', Username='') {
-  return new Promise(function (resolve, reject) {
-    var user = getFromStorage('users', publicKey) || getFromStorage('users', Username);
-    if (user) {
-      resolve(user)
-      return;
-    }
-    axios.post(apiEndpoint + '/bitclout-proxy', {data:{
+async function getBitcloutAcc(publicKey='', Username='') {
+  var user = getFromStorage('users', publicKey) || getFromStorage('users', Username);
+  if (user) {
+    return user;
+  }
+  var respData = await axios.post(apiEndpoint + '/bitclout-proxy', {data:{
       action: 'get-single-profile',
       PublicKeyBase58Check: publicKey,
       Username: Username
-    }}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resp => {
-      if (resp.data.error) {
-        reject(resp.data.error);
-        return;
-      }
-      var Profile =  resp.data.Profile;
-      Profile.id = Profile.PublicKeyBase58Check;
-      Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 12) + '...'
-      Profile.ProfilePic = Profile.ProfilePic || defaultAvatar;
+    }},
+    api_functions.getReqConfigs()
+  ).then(resp=>resp.data)
+  var Profile = respData.data.Profile;
+  Profile.id = Profile.PublicKeyBase58Check;
+  Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 12) + '...'
+  Profile.ProfilePic = Profile.ProfilePic || defaultAvatar;
 
-      var users = JSON.parse(localStorage.getItem('users'))
-      users[Profile.id] = Profile;
-      users[Profile.id].expired = Date.now() + (48 * 60 * 60 * 1000)
-      users[Profile.Username] = users[Profile.id];
-      localStorage.setItem('users', JSON.stringify(users))
-      resolve(Profile);
-    }).catch(data => {
-      reject(data);
-    })
-  })
+  var users = JSON.parse(localStorage.getItem('users'))
+  users[Profile.id] = Profile;
+  users[Profile.id].expired = Date.now() + (48 * 60 * 60 * 1000)
+  users[Profile.Username] = users[Profile.id];
+  localStorage.setItem('users', JSON.stringify(users));
+  return Profile
 }
 
 function getExchangeRate() {
@@ -167,8 +159,10 @@ async function handleMegazord(megazordInfo, user) {
     zords: [],
     id: megazordInfo.id,
     canConfirm: false,
+    color: megazordInfo.color,
     taskSessions: megazordInfo.taskSessions,
     tasks: [],
+    UsersYouHODL: [],
     PublicKeyBase58Check: megazordInfo.PublicKeyBase58Check
   };
   if (Object.keys(megazordInfo.pendingZords).length > 0) {
@@ -178,8 +172,10 @@ async function handleMegazord(megazordInfo, user) {
     var megazordStateless = await api_functions.getUserStateless(resultMegazord.PublicKeyBase58Check);
     resultMegazord.status_id = 0;
     resultMegazord.status_text = 'Active';
+
     resultMegazord = Object.assign(resultMegazord, megazordStateless.ProfileEntryResponse || {});
     resultMegazord.BalanceNanos = megazordStateless.BalanceNanos;
+    resultMegazord.UsersYouHODL = megazordStateless.UsersYouHODL;
   } else {
     resultMegazord.status_id = 3;
     resultMegazord.status_text = 'Pending Public Key';
@@ -259,6 +255,11 @@ export const api_functions = {
   'confirmMegazord': megazordId => {
     return new Promise((resolve, reject) => {
       axios.post(apiEndpoint + '/confirmMegazord', {data:{megazordId}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
+    })
+  },
+  'hideMegazord': megazordId => {
+    return new Promise((resolve, reject) => {
+      axios.post(apiEndpoint + '/hideMegazord', {data:{megazordId, hide: true}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
     })
   },
   'signInWithCustomToken': auth.signInWithCustomToken.bind(auth),
@@ -348,8 +349,12 @@ export const api_functions = {
             db.ref("megazords/" + id).off('value');
             return;
           };
-          megazordData.id = id;
-          resUser.megazords[id] = await handleMegazord(megazordData, resUser);
+          if (Object.keys(resUser.hiddenMegazords || {}).includes(id)) {
+            delete resUser.megazords[id]
+          } else {
+            megazordData.id = id;
+            resUser.megazords[id] = await handleMegazord(megazordData, resUser);
+          }
           callback(resUser);
         }, error=>{
           errorCallback(error)

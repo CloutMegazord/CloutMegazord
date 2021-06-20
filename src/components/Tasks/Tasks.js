@@ -11,6 +11,7 @@ import MuiTypography from '@material-ui/core/Typography';
 import Table from "@material-ui/core/Table";
 import TableRow from "@material-ui/core/TableRow";
 import TableBody from "@material-ui/core/TableBody";
+import CircularProgress from '@material-ui/core/CircularProgress'
 import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 // @material-ui/icons
@@ -102,73 +103,53 @@ export default function Tasks(props) {
                 }}>{value.description}</MuiTypography>
             </TableCell>
             <TableCell className={tableCellClasses}>
-            {value.addedBy.id === user.id &&
+            {!!value.taskSessionRun ? (
                 <Tooltip
-                id="tooltip-top"
-                title="Delete Task"
-                placement="top"
-                classes={{ tooltip: classes.tooltip }}
+                  id="tooltip-top"
+                  title='Task Session already running. Ask task initiator for personal link.'
+                  placement="top"
+                  classes={{ tooltip: classes.tooltip }}
                 >
-                  <IconButton
-                    color="primary"
-                    href={"task/" + value.id}
-                    aria-label={tableHead[3]}
-                    onClick={(e) => {deleteHandler(e, value.id)}}
-                    className={classes.tableActionButton}
-                    >
-                      <Icon style={{'color': dangerColor[0]}}>delete</Icon>
-                  </IconButton>
+                  <CircularProgress style={{color: primaryColor[0], verticalAlign: 'middle'}} size={25}></CircularProgress>
                 </Tooltip>
-              }
-              {/* {value.addedBy.id === user.id ? (
-                  <Tooltip
+              ):(
+                <div>
+                {value.addedBy.id === user.id &&
+                    <Tooltip
                     id="tooltip-top"
-                    title="Edit Task"
+                    title="Delete Task"
+                    placement="top"
+                    classes={{ tooltip: classes.tooltip }}
+                    >
+                      <IconButton
+                        color="primary"
+                        href={"task/" + value.id}
+                        aria-label={tableHead[3]}
+                        onClick={(e) => {deleteHandler(e, value.id)}}
+                        className={classes.tableActionButton}
+                        >
+                          <Icon style={{'color': dangerColor[0]}}>delete</Icon>
+                      </IconButton>
+                    </Tooltip>
+                  }
+                <Tooltip
+                    id="tooltip-top"
+                    title='Power On'
                     placement="top"
                     classes={{ tooltip: classes.tooltip }}
                   >
-                    <IconButton
-                      color="primary"
-                      href={"task/" + value.id}
-                      aria-label={tableHead[3]}
-                      className={classes.tableActionButton}
-                      >
-                        <Icon style={{'color': secondaryColor[0]}}>edit</Icon>
-                      </IconButton>
-                  </Tooltip>
-              ) : (
-                <Tooltip
-                  id="tooltip-top"
-                  title="Task Info"
-                  placement="top"
-                  classes={{ tooltip: classes.tooltip }}
-                >
                   <IconButton
-                    color="primary"
                     href={"task/" + value.id}
-                    aria-label={tableHead[3]}
+                    aria-label={tableHead[4]}
+                    style={{color:'#fff'}}
+                    onClick={(e) => {powerOnHandler(e, value.id)}}
                     className={classes.tableActionButton}
-                  >
-                    <Icon style={{'color': grayColor[0]}}>info</Icon>
+                    >
+                      <Icon style={{'color': primaryColor[0]}}>play_circle</Icon>)
                   </IconButton>
                 </Tooltip>
-              )} */}
-              <Tooltip
-                  id="tooltip-top"
-                  title='Power On'
-                  placement="top"
-                  classes={{ tooltip: classes.tooltip }}
-                >
-                <IconButton
-                  href={"task/" + value.id}
-                  aria-label={tableHead[4]}
-                  style={{color:'#fff'}}
-                  onClick={(e) => {powerOnHandler(e, value.id)}}
-                  className={classes.tableActionButton}
-                  >
-                    <Icon style={{'color': primaryColor[0]}}>play_circle</Icon>)
-                </IconButton>
-              </Tooltip>
+                </div>
+              )}
             </TableCell>
           </TableRow>
         ))}
@@ -182,3 +163,38 @@ Tasks.propTypes = {
   tasks: PropTypes.array,
   rtlActive: PropTypes.bool
 };
+
+
+              // {/* {value.addedBy.id === user.id ? (
+              //     <Tooltip
+              //       id="tooltip-top"
+              //       title="Edit Task"
+              //       placement="top"
+              //       classes={{ tooltip: classes.tooltip }}
+              //     >
+              //       <IconButton
+              //         color="primary"
+              //         href={"task/" + value.id}
+              //         aria-label={tableHead[3]}
+              //         className={classes.tableActionButton}
+              //         >
+              //           <Icon style={{'color': secondaryColor[0]}}>edit</Icon>
+              //         </IconButton>
+              //     </Tooltip>
+              // ) : (
+              //   <Tooltip
+              //     id="tooltip-top"
+              //     title="Task Info"
+              //     placement="top"
+              //     classes={{ tooltip: classes.tooltip }}
+              //   >
+              //     <IconButton
+              //       color="primary"
+              //       href={"task/" + value.id}
+              //       aria-label={tableHead[3]}
+              //       className={classes.tableActionButton}
+              //     >
+              //       <Icon style={{'color': grayColor[0]}}>info</Icon>
+              //     </IconButton>
+              //   </Tooltip>
+              // )} */}

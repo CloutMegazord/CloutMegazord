@@ -139,6 +139,9 @@ export function InputBitcloutAccount(
       var [accName, PubKey] = ['', ''];
       if (inputAccount.startsWith('BC1') && inputAccount.length > 30) {
         PubKey = inputAccount;
+        setBitcloutAccount({id:PubKey});
+        setInputState(2);
+        return
       } else {
         accName = inputAccount;
       }
@@ -214,20 +217,20 @@ export function InputBitcloutAccount(
         </Button>
       )}
       <input type="hidden" id={htmlIds.Recipient} value={bitcloutAccount ? bitcloutAccount.id : ''}></input>
+      <input type="hidden" id={htmlIds.RecipientUsername} value={bitcloutAccount ? bitcloutAccount.Username : ''}></input>
     </FormControl>
   )
-
 }
 
 export function InputAmount(props) {
   const classes = useStyles();
-  const {htmlIds, exchRate, feesMap, wallet} = props;
-  const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a] - wallet[b]});
+  const {htmlIds, exchRate, feesMap, wallet, validate} = props;
+  const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a].BalanceNanos - wallet[b].BalanceNanos}).reverse();
   const [USDAmount, setUSDAmount] = React.useState(0);
   const [BTCLTAmount, setBTCLTAmount] = React.useState(0);
   const [amountNanos, setAmountNanos] = React.useState(0);
   const [MGZDfee, setMGZDFee] = React.useState(0);
-  const [currency, setCurrency] = React.useState(currencyTypes[0]);
+  const [currency, setCurrency] = React.useState('$ClOUT');
 
   var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';
   var fees = Object.keys(feesMap).sort().reverse();
@@ -244,13 +247,13 @@ export function InputAmount(props) {
   }
   feesMapTable += '</table>'
 
-  const handleChange = (_BTCLTAmount) => {
-    setBTCLTAmount(_BTCLTAmount);
-    _BTCLTAmount = parseFloat(_BTCLTAmount || 0);
+  const handleChange = (_Amount) => {
+    setBTCLTAmount(_Amount);
+    _Amount = parseFloat(_Amount || 0);
     if (exchRate.USDbyBTCLT) {
-      var USDAmount = _BTCLTAmount * exchRate.USDbyBTCLT;
+      var USDAmount = _Amount * exchRate.USDbyBTCLT;
       setUSDAmount(USDAmount);
-      var amountNanos = _BTCLTAmount * 1e9;
+      var amountNanos = _Amount * 1e9;
       setAmountNanos(amountNanos);
       var trgFee = fees[0];
       for (let fee of fees) {
@@ -266,12 +269,14 @@ export function InputAmount(props) {
 
   const maxHandler = (event) => {
     event.preventDefault();
-    handleChange(wallet[currency] / 1e9);
+    handleChange(wallet[currency].BalanceNanos / 1e9);
   }
 
   const handleCurrencyChange = (event) => {
     event.preventDefault();
-    setCurrency(event.target.value);
+    if (validate(event.target.value)) {
+      setCurrency(event.target.value);
+    }
   }
 
   return (
@@ -331,6 +336,7 @@ export function InputAmount(props) {
     </FormControl>
     <input type="hidden" value={amountNanos} id={htmlIds.AmountNanos || 0}></input>
     <input type="hidden" value={currency} id={htmlIds.Currency}></input>
+    <input type="hidden" value={wallet[currency].CreatorPublicKeyBase58Check} id={htmlIds.CreatorPublicKeyBase58Check}></input>
   </div>)
 }
 

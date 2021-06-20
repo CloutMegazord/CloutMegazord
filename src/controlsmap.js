@@ -26,7 +26,7 @@ const getPublicKey = (data) => {
           values={{Recipient: megazord.Username || megazord.PubKeyShort || "TargetMegazord"}}/>,
         // possibleInputType: ['Current Account'],
         values: {
-          Recipient: {id: 'getPublicKey_Recipient_value', type: '*'}
+          Recipient: {id: 'getPublicKey_Recipient_value', required: true}
         },
         disabled: true
       }
@@ -136,7 +136,7 @@ const updateProfile = (data) => {
 }
 
 const send = (data) => {
-  const {megazord, user, api_functions, exchangeRate} = data;
+  const {megazord, user, api_functions, exchangeRate, indexFunctons} = data;
   megazord.Username = 'Traget Megazrod'
   const validateRecipient = (account) => {
     if (account.id === megazord.PublicKeyBase58Check) {
@@ -144,6 +144,23 @@ const send = (data) => {
     }
     return true
   }
+  const validateCurrencies = (currency) => {
+    if (currency !== "$ClOUT" && wallet['$ClOUT'].BalanceNanos < 100000) {
+      indexFunctons.notifSnak('open', 'error', 'Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)', 7000);
+      return false;
+    }
+    return true;
+  }
+  const wallet = Object.assign(
+    {'$ClOUT': {BalanceNanos: megazord.BalanceNanos, CreatorPublicKeyBase58Check: ''}},
+    megazord.UsersYouHODL.reduce((reducer, it)=>{
+      reducer[it.ProfileEntryResponse.Username] = {
+        BalanceNanos: it.BalanceNanos,
+        CreatorPublicKeyBase58Check: it.CreatorPublicKeyBase58Check
+      }
+      return reducer
+    }, {})
+  )
   return {
     controls: [
       {
@@ -152,11 +169,12 @@ const send = (data) => {
           placeholder={ "Username or Public Key"}
           validate={validateRecipient}
           user={user}
-          htmlIds={{Recipient: "send_Recipient_value"}}
+          htmlIds={{Recipient: "send_Recipient_value", RecipientUsername: "send_RecipientUsername_value"}}
           valueProp=''
         />,
         values: {
-          Recipient: {id: 'send_Recipient_value', type: '*'}
+          Recipient: {id: 'send_Recipient_value', required: true, type:'string'},
+          RecipientUsername: {id: 'send_RecipientUsername_value', required: true, type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
@@ -167,15 +185,20 @@ const send = (data) => {
           placeholder={ "Input amount in BitClout"}
           // currencyTypes={['$BitClouts', 'Coins']}
           exchRate={exchangeRate}
-          wallet={{'$ClOUT': megazord.BalanceNanos}}
+          wallet={wallet}
+          validate={validateCurrencies}
           feesMap={api_functions.getFeesMap()}
           user={user}
-          htmlIds={{AmountNanos: "send_Amount_value", Currency: "send_Currency_value"}}
+          htmlIds={{
+            AmountNanos: "send_Amount_value",
+            Currency: "send_Currency_value",
+            CreatorPublicKeyBase58Check: "send_CreatorPublicKeyBase58Check"}}
           valueProp=''
         />,
         values: {
-          AmountNanos: {id: 'send_Amount_value', type: '*'},
-          Currency: {id: 'send_Currency_value', type: '*'}
+          AmountNanos: {id: 'send_Amount_value', required: true, type: 'integer'},
+          Currency: {id: 'send_Currency_value', required: true, type:'string'},
+          CreatorPublicKeyBase58Check: {id: 'send_CreatorPublicKeyBase58Check', required: false, type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false

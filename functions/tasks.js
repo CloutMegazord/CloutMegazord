@@ -7,6 +7,7 @@ class Task {
         this.description = data.description || data.defaultDescription;
         this.addedBy = data.addedBy;
         this.Recipient = data.Recipient;
+        this.RecipientUsername = data.RecipientUsername;
         this.status = data.status || 0; //Status 0 - active
         this.date = Date.now();
     }
@@ -51,17 +52,20 @@ class GetPublicKey extends Task {
 class Send extends Task {
     constructor(data) {
         var AmountNanos = parseFloat(data.AmountNanos) || 0;
+        var currencyPostfix = (data.Currency === '$ClOUT') ? '' : ' coin';
         data.defaultDescription =
-        `Send ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} ${data.Currency} to ${data.Recipient}`;
+        `Send ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} ${data.Currency + currencyPostfix} to @${data.RecipientUsername}`;
         super(data);
         this.AmountNanos = AmountNanos;
         this.Currency = data.Currency;
+        this.CreatorPublicKeyBase58Check = data.CreatorPublicKeyBase58Check;
     }
 
     toDBRecord() {
         var record = super.toDBRecord();
         record.AmountNanos = this.AmountNanos;
         record.Currency = this.Currency;
+        record.CreatorPublicKeyBase58Check = this.CreatorPublicKeyBase58Check;
         return record;
     }
 }
@@ -84,7 +88,6 @@ class SendBitclouts extends Send {
                 MinFeeRateNanosPerKB
             );
         } catch (e) {
-            debugger
             throw e;
         }
         this.transactions.push(preview);
@@ -96,12 +99,6 @@ class SendBitclouts extends Send {
         //     MinFeeRateNanosPerKB
         // );
         // this.transactions.push(feePreview);
-    }
-}
-
-class SendKey extends Task {
-    constructor() {
-        super();
     }
 }
 
