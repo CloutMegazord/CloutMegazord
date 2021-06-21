@@ -376,7 +376,6 @@ const useStyles2 = makeStyles(theme => ({
 }));
 
 function getCoinsTable(UsersYouHODL) {
-  console.log(UsersYouHODL)
   return (<div>
       {UsersYouHODL.length ? (
       <Table>
@@ -384,7 +383,7 @@ function getCoinsTable(UsersYouHODL) {
         {UsersYouHODL.map(hodl => (
             <TableRow key={hodl.ProfileEntryResponse.Username}>
               <TableCell style={{color:'#fff'}}>{hodl.ProfileEntryResponse.Username}</TableCell>
-              <TableCell style={{color:'#fff'}}>{parseFloat((hodl.BalanceNanos / 1e9).toFixed(4)).toLocaleString()}</TableCell>
+              <TableCell style={{color:'#fff'}}>{parseFloat((hodl.BalanceNanos / 1e9))}</TableCell>
             </TableRow>
           )
         )}
@@ -595,7 +594,7 @@ export default function MegazordsList(props) {
                                 id="tooltip-top"
                                 interactive
                                 title={getCoinsTable(item.UsersYouHODL)}
-                                placement="top"
+                                placement="bottom"
                               >
                                 <Icon style={{verticalAlign: '-6px',cursor: 'pointer', margin:'0px 3px'}}>toll</Icon>
                               </Tooltip>

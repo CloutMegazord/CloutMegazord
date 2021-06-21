@@ -130,11 +130,11 @@ const hist = createBrowserHistory();
               }
             }
             this.setState({user: userData});
-            var targ = window.location.href.split('/').map(it => '/' + it)
-            if (targ.includes('/admin') === false && targ.includes('/taskSessions') === false ) {
-              this.setState({redirect: '/admin/megazordslist'});
-            }
           })
+        }
+        var targ = window.location.href.split('/').map(it => '/' + it)
+        if (targ.includes('/admin') === false) {
+          this.setState({redirect: '/admin/megazordslist'});
         }
       } else {
         this.setState({redirect: '/landing/home'});
