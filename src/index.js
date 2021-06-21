@@ -76,6 +76,7 @@ const hist = createBrowserHistory();
   state = {
     isSignedIn: undefined,
     user: undefined,
+    megazords: {},
     redirect: window.location.pathname,
     notifSnak: {
       infoOpen: false,
@@ -99,6 +100,7 @@ const hist = createBrowserHistory();
       });
     }
     this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
+      var self = this;
       if (userAuth) {
         updateIdToken(userAuth);
         setInterval(() => updateIdToken(userAuth), 60*1000)
@@ -109,13 +111,31 @@ const hist = createBrowserHistory();
         this.setState({bitcloutData: bitcloutData});
       }).catch(err => {})
       if (isSignedIn) {
-        api_functions.onUserData(userAuth.uid, (user) => {
-          this.setState({user: user});
-          var targ = window.location.href.split('/').map(it => '/' + it)
-          if (targ.includes('/admin') === false && targ.includes('/taskSessions') === false ) {
-            this.setState({redirect: '/admin/megazordslist'});
-          }
-        })
+        if (!this.state.user) {
+          api_functions.onUserData(userAuth.uid, (userData) => {
+            for (let megazordId in userData.megazordsIds) {
+              userData.megazords = userData.megazords || {};
+              if(self.state.megazords[megazordId]) {
+                userData.megazords[megazordId] = self.state.megazords[megazordId];
+              } else {
+                api_functions.onMegazordData(megazordId, userData, (megazordData) => {
+                  let megazordsState = self.state.megazords;
+                  megazordsState[megazordData.id] = megazordData;
+                  self.setState({megazords: megazordsState});
+                  let userState = self.state.user;
+                  userState.megazords = userState.megazords || {};
+                  userState.megazords[megazordData.id] = megazordData;
+                  self.setState({user: userState});
+                })
+              }
+            }
+            this.setState({user: userData});
+            var targ = window.location.href.split('/').map(it => '/' + it)
+            if (targ.includes('/admin') === false && targ.includes('/taskSessions') === false ) {
+              this.setState({redirect: '/admin/megazordslist'});
+            }
+          })
+        }
       } else {
         this.setState({redirect: '/landing/home'});
       }

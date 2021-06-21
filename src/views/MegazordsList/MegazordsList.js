@@ -36,9 +36,10 @@ import Fab from "components/CustomFab/Fab.js"
 import Input from "components/CustomInput/CustomInput.js"
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
-import Table from "components/Table/Table.js";
+import Table from "@material-ui/core/Table";
 import TableRow from "@material-ui/core/TableRow";
 import TableCell from "@material-ui/core/TableCell";
+import TableBody from "@material-ui/core/TableBody";
 import {InputBitcloutAccount} from "components/FormControls/FormControls";
 // import FormControls from "components/FormControls/FormControls.js";
 import CustomTabs from "components/CustomTabs/CustomTabs.js";
@@ -375,20 +376,22 @@ const useStyles2 = makeStyles(theme => ({
 }));
 
 function getCoinsTable(UsersYouHODL) {
-  return (<div>No Creator Coins yet.</div>)
-  //   <div>
-  //     {UsersYouHODL ? (
-  //     <Table>
-  //       {UsersYouHODL.map(hodl => {
-  //         <TableRow>
-  //           <TableCell>{hodl.ProfileEntryResponse.Username}</TableCell>
-  //           <TableCell>{parseFloat((hodl.BalanceNanos / 1e9).toFixed(4)).toLocaleString()}</TableCell>
-  //         </TableRow>
-  //       })}
-  //     </Table>):
-  //     (<div>No Creator Coins yet.</div>)}
-  //   </div>
-  // )
+  console.log(UsersYouHODL)
+  return (<div>
+      {UsersYouHODL.length ? (
+      <Table>
+        <TableBody>
+        {UsersYouHODL.map(hodl => (
+            <TableRow key={hodl.ProfileEntryResponse.Username}>
+              <TableCell style={{color:'#fff'}}>{hodl.ProfileEntryResponse.Username}</TableCell>
+              <TableCell style={{color:'#fff'}}>{parseFloat((hodl.BalanceNanos / 1e9).toFixed(4)).toLocaleString()}</TableCell>
+            </TableRow>
+          )
+        )}
+        </TableBody>
+      </Table>):
+      (<div>No Creator Coins yet.</div>)}
+    </div>)
 }
 
 function adjust(color, amount) {
@@ -409,6 +412,12 @@ export default function MegazordsList(props) {
   var USDbyBTCLT, createFeeBCLT, createFeeUSD;
   const user = props.user || {};
   const megazords = user.megazords || {};
+  const megazordsOrdered = Object.keys(megazords).sort().reduce(
+    (obj, key) => {
+      obj[key] = megazords[key];
+      return obj;
+    }, {}
+  );
   if (bitcloutData) {
     USDbyBTCLT = bitcloutData.exchangeRate.USDbyBTCLT;
     createFeeBCLT = bitcloutData.appState.CreateProfileFeeNanos / 1e9;
@@ -489,7 +498,7 @@ export default function MegazordsList(props) {
       </Fab>
       <GridContainer>
         {Object.values(megazords).length ? (
-          Object.values(megazords).map(item => {
+          Object.values(megazordsOrdered).reverse().map(item => {
             return (
               <GridItem xs={12} sm={12} md={4} key={item.id}>
                 <Card profile>
@@ -571,7 +580,7 @@ export default function MegazordsList(props) {
                         ) : (<span>...</span>)
                       }
                     </h4>
-                    <div style={{visibility: item.PubKeyShort ? 'visible' : 'hidden'}}>
+                    <div style={{visibility: item.PubKeyShort ? 'visible' : 'hidden', minHeight: '75px'}}>
                       <div>Wallet Balance:</div>
                       {item.tasks.some(task => !!task.taskSessionRun) ? (
                           <CircularProgress style={{color: primaryColor[0], verticalAlign: 'middle'}} size={25}></CircularProgress>
@@ -584,6 +593,7 @@ export default function MegazordsList(props) {
                               Coins
                               <Tooltip
                                 id="tooltip-top"
+                                interactive
                                 title={getCoinsTable(item.UsersYouHODL)}
                                 placement="top"
                               >

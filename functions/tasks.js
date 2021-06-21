@@ -44,7 +44,7 @@ class Task {
 class GetPublicKey extends Task {
     constructor(data) {
         data.type = 'getPublicKey'
-        data.defaultDescription = 'Lounch this task for activate account and get public key';
+        data.defaultDescription = 'Launch this task for activate account and get public key';
         super(data);
     }
 }

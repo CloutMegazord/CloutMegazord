@@ -83,7 +83,7 @@ function registerBuffer(publicKey, callback) {
         pubKeysBuffer = [];
         intervalId = null;
       })
-    }, 100)
+    }, 200)
   }
 }
 
@@ -220,7 +220,7 @@ async function handleMegazord(megazordInfo, user) {
   if (resultMegazord.PublicKeyBase58Check) {
     resultMegazord.PubKeyShort = resultMegazord.PublicKeyBase58Check.slice(0, 12) + '...'
   }
-  resultMegazord.Username = resultMegazord.Username || 'Anonymus';
+  resultMegazord.Username = resultMegazord.Username || 'Anonymous';
   return resultMegazord;
 }
 
@@ -334,35 +334,34 @@ export const api_functions = {
       var userCloutData = await api_functions.getBitcloutAcc(publicKey);
       let resUser = Object.assign(userDBData, userCloutData);
       resUser.id = publicKey;
-      const megazordsIds = resUser.megazords;
-      if (!megazordsIds) {
-        callback(resUser);
-        return
+      resUser.megazordsIds = {};
+      for (let k in resUser.megazords) {
+        if (!Object.keys(resUser.hiddenMegazords || {}).includes(k)) {
+          resUser.megazordsIds[k] = true;
+        }
       }
-      resUser.megazords = {}
-      for (let k in megazordsIds) {
-        db.ref("megazords/" + k).off('value');
-        db.ref("megazords/" + k).on('value', async snapshot=> {
-          const megazordData = snapshot.val();
-          var id = snapshot.getRef().key;
-          if (!megazordData) {
-            db.ref("megazords/" + id).off('value');
-            return;
-          };
-          if (Object.keys(resUser.hiddenMegazords || {}).includes(id)) {
-            delete resUser.megazords[id]
-          } else {
-            megazordData.id = id;
-            resUser.megazords[id] = await handleMegazord(megazordData, resUser);
-          }
-          callback(resUser);
-        }, error=>{
-          errorCallback(error)
-        });
-      }
+      delete resUser['megazords'];
+      callback(resUser);
     }, async e=>{
+      errorCallback(e);
       console.log('EEE', e)
     })
+  },
+  'onMegazordData': async (megazordId, user, callback, errorCallback = () => {}) => {
+    db.ref("megazords/" + megazordId).on('value', async snapshot=> {
+      const megazordData = snapshot.val();
+      var resMegazord;
+      var id = snapshot.getRef().key;
+      if (!megazordData) {
+        db.ref("megazords/" + id).off('value');
+        return;
+      };
+      megazordData.id = id;
+      resMegazord = await handleMegazord(megazordData, user);
+      callback(resMegazord);
+    }, error=>{
+      errorCallback(error)
+    });
   },
   'offUserData': () => {},
   'onError': (subscriber) => {

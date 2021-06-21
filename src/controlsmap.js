@@ -38,7 +38,7 @@ const getPublicKey = (data) => {
 
 const updateProfile = (data) => {
   const {megazord, user, api_functions} = data;
-  megazord.Username = 'Traget Megazrod'
+  megazord.Username = 'Target Megazord'
   const postfix = '\n@mgzd'
   const validateRecipient = (account) => {
     if (account.id === user.id) {
@@ -137,7 +137,7 @@ const updateProfile = (data) => {
 
 const send = (data) => {
   const {megazord, user, api_functions, exchangeRate, indexFunctons} = data;
-  megazord.Username = 'Traget Megazrod'
+  megazord.Username = 'Target Megazord'
   const validateRecipient = (account) => {
     if (account.id === megazord.PublicKeyBase58Check) {
       throw Error('Cant send to self Megazord.');
