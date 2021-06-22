@@ -334,6 +334,24 @@ app.post('/api/hideMegazord', async (req, res, next) => {
     res.send({data:{ok: true}})
 });
 
+app.post('/api/saveSettings', async (req, res, next) => {
+    var data = req.body.data;
+    const megazordId = data.megazordId;
+    var customToken = req.headers.authorization.replace('Bearer ', '');
+    var publicKey;
+    try {
+        let verif = await auth.verifyIdToken(customToken);
+        publicKey = verif.uid;
+    } catch(error) {
+        res.send({data:{error: error.message}})
+        return
+    }
+    await db.ref('users/' + publicKey + '/settings').set({
+        showHidden: !!data.settings.showHidden
+    });
+    res.send({data:{ok: true}})
+});
+
 app.post('/api/confirmMegazord', async (req, res, next) => {
     var data = req.body.data;
     const megazordId = data.megazordId;

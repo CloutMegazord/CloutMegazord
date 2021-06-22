@@ -17,6 +17,7 @@
 */
 // @material-ui/icons
 import Dashboard from "@material-ui/icons/Dashboard";
+import SettingsIcon from '@material-ui/icons/Settings';
 import Person from "@material-ui/icons/Person";
 import LibraryBooks from "@material-ui/icons/LibraryBooks";
 import BubbleChart from "@material-ui/icons/BubbleChart";
@@ -28,6 +29,7 @@ import Language from "@material-ui/icons/Language";
 // core components/views for Admin layout
 import MegazordsList from "views/MegazordsList/MegazordsList.js";
 import UserProfile from "views/UserProfile/UserProfile.js";
+
 import TasksList from "views/TasksList/TasksList.js";
 import Typography from "views/Typography/Typography.js";
 import Icons from "views/Icons/Icons.js";
@@ -53,6 +55,14 @@ const routes = [
       rtlName: "لوحة القيادة",
       icon: Dashboard,
       component: MegazordsList,
+      layout: "/admin"
+    },
+    {
+      path: "/settings",
+      name: "User Settings",
+      rtlName: "لوحة القيادة",
+      icon: SettingsIcon,
+      component: UserProfile,
       layout: "/admin"
     },
     {

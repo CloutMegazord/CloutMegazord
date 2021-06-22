@@ -26,7 +26,7 @@ export default function Sidebar(props) {
     return window.location.href.indexOf(routeName) > -1 ? true : false;
   }
   const { color, logo, image, logoText, routes } = props;
-  const avlable_routes = ['/megazordslist']
+  const avlable_routes = ['/megazordslist', '/settings']//,
   var links = (
     <List className={classes.list}>
       {routes.filter((prop, key) => avlable_routes.includes(prop.path)).map((prop, key) => {

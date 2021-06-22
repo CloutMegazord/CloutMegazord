@@ -336,7 +336,9 @@ export const api_functions = {
       resUser.id = publicKey;
       resUser.megazordsIds = {};
       for (let k in resUser.megazords) {
-        if (!Object.keys(resUser.hiddenMegazords || {}).includes(k)) {
+        if ((resUser.settings || {}).showHidden) {
+          resUser.megazordsIds[k] = true;
+        } else if (!Object.keys(resUser.hiddenMegazords || {}).includes(k)) {
           resUser.megazordsIds[k] = true;
         }
       }
@@ -374,6 +376,11 @@ export const api_functions = {
       configs.headers = { Authorization: `Bearer ${api_functions.authToken}` };
     }
     return configs;
+  },
+  'saveSettings' : settings => {
+    return new Promise((resolve, reject) => {
+      axios.post(apiEndpoint + '/saveSettings', {data:{settings}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
+    })
   }
   // 'helloWorld': functions.httpsCallable('signIn')
 }

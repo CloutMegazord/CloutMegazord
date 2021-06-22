@@ -453,6 +453,9 @@ export default function MegazordsList(props) {
     }
   };
 
+  const handleDetachMegazord = (e, megazordId) => {
+
+  }
   const handleHideMegazord = (e, megazordId) => {
     e.preventDefault();
     if(apiLock) {return}
@@ -516,6 +519,7 @@ export default function MegazordsList(props) {
                     )}
                     <div className={classes.removeMegazord}>
                       <Tooltip title="Hide Megazord">
+
                          <IconButton aria-label="hide" className={classes.hideMegazord} onClick={
                            (e) => handleHideMegazord(e, item.id)
                            }>
