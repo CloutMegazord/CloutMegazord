@@ -92,7 +92,7 @@ const hist = createBrowserHistory();
   componentDidMount() {
     var timer;
     api_functions.onError((e)=>{
-      this.notifSnak('open', 'error', e.toString(), 3000);
+      this.notifSnak('open', 'error', e.toString(), 7000);
     });
     const updateIdToken = (userAuth) => {
       userAuth.getIdToken(true).then(function(idToken) {

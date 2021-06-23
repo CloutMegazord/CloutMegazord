@@ -248,13 +248,25 @@ export const api_functions = {
   },
   'createMegazord': zords => {
     ///* forceRefresh */ true
-    return new Promise((resolve, reject) => {
-      axios.post(apiEndpoint + '/createMegazord', {data:{zords}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
+    return new Promise(async (resolve, reject) => {
+      var resp = await axios.post(apiEndpoint + '/createMegazord', {data:{zords}}, api_functions.getReqConfigs()).then(resp=>resp.data);
+      if (resp.data.error) {
+        fireError('Task error: ' + resp.data.error);
+        reject(resp.data.error);
+        return
+      }
+      resolve(resp.data);
     })
   },
   'confirmMegazord': megazordId => {
-    return new Promise((resolve, reject) => {
-      axios.post(apiEndpoint + '/confirmMegazord', {data:{megazordId}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
+    return new Promise(async (resolve, reject) => {
+      var resp = await axios.post(apiEndpoint + '/confirmMegazord', {data:{megazordId}}, api_functions.getReqConfigs()).then(resp=>resp.data);
+      if (resp.data.error) {
+        fireError('Task error: ' + resp.data.error);
+        reject(resp.data.error);
+        return
+      }
+      resolve(resp.data);
     })
   },
   'detachMegazord':  megazordId => {

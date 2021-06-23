@@ -250,6 +250,31 @@ async function getSingleProfile(data) {
     }
 }
 
+const Validation = {
+    async checkOnMegazordsCountError(publicKey) {
+        var allowlist = await db.ref('allowlist').get();
+        if (allowlist.exists()) {
+            if (Object.keys(allowlist.val()).includes(publicKey)) {
+                return false
+            }
+        }
+        let currentMegazordsCount = 0;
+        let userMegazordsSnap = await db.ref('users/' + publicKey + '/megazords').get();
+        if (userMegazordsSnap.exists()) {
+            let userMegazords = userMegazordsSnap.val();
+            for (let mID in userMegazords) {
+                let confirmedZordsSnap = await db.ref('megazords/' + mID + '/confirmedZords').get();
+                if (confirmedZordsSnap.val()[publicKey]) {
+                    currentMegazordsCount += 1;
+                }
+            }
+        }
+        if (currentMegazordsCount > 1) {
+            return "You can't create more than 2 Megazords. Detach first.";
+        }
+    }
+}
+
 app.post('/api/bitclout-proxy', async (req, res, next) => {
     var data = req.body.data;
     try {
@@ -289,13 +314,13 @@ app.post('/api/login', async (req, res, next) => {
         res.send({data:{ error: 'BitClout Validation Error.'}});
         return;
     }
-    var allowlist = await db.ref('allowlist').get();
-    if (allowlist.exists()) {
-        if (!Object.keys(allowlist.val()).includes(publicKey)) {
-            res.send({data: { error: "You don't allowlisted to participate in closed beta. Send message to @CloutMegazord"}});
-            return
-        }
-    }
+    // var allowlist = await db.ref('allowlist').get();
+    // if (allowlist.exists()) {
+    //     if (!Object.keys(allowlist.val()).includes(publicKey)) {
+    //         res.send({data: { error: "You don't allowlisted to participate in closed beta. Send message to @CloutMegazord"}});
+    //         return
+    //     }
+    // }
     try {
         user = await getUser(publicKey);
         if (!user) {
@@ -415,6 +440,11 @@ app.post('/api/confirmMegazord', async (req, res, next) => {
         res.send({data:{error: error.message}})
         return
     }
+    let valError = await Validation.checkOnMegazordsCountError(publicKey);
+    if(valError) {
+        res.send({data:{error: valError}});
+        return
+    }
     const megazordRef = db.ref('megazords/' + megazordId);
     var megazorSnap = await megazordRef.get()
     if (megazorSnap.exists()) {
@@ -456,6 +486,11 @@ app.post('/api/createMegazord', async (req, res, next) => {
         publicKey = verif.uid;
     } catch(error) {
         res.send({data:{error: error.message}})
+        return
+    }
+    let valError = await Validation.checkOnMegazordsCountError(publicKey);
+    if(valError) {
+        res.send({data:{error: valError}});
         return
     }
     zordsList = data.zords;
