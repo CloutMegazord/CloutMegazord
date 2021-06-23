@@ -23,6 +23,7 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import Avatar from '@material-ui/core/Avatar';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogActions from '@material-ui/core/DialogActions';
 import Dialog from '@material-ui/core/Dialog';
 import Link from "@material-ui/core/Link";
@@ -134,7 +135,7 @@ const useMegazordStyles = makeStyles((theme) => ({
 }));
 
 function SeedPhraseDialog(props) {
-  const { onConfirm, onClose, open, user, zordId, api_functions, ...other } = props;
+  const { onConfirm, onClose, open, user, megazordId, api_functions, ...other } = props;
   const classes = useMegazordStyles();
   const seedPhrase = CryptoLib.createSeedPhrase();
 
@@ -148,7 +149,7 @@ function SeedPhraseDialog(props) {
   }
 
   const handleOk = () => {
-    onConfirm(zordId);
+    onConfirm(megazordId);
   };
 
   const handleCancel = () => {
@@ -327,6 +328,39 @@ function CreateMegazord(props) {
   );
 }
 
+function DetachPrompt(props) {
+  const {detachOpen, handleClose} = {...props}
+
+  return (
+    <div>
+      <Dialog
+        open={detachOpen}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Want to detach yourself from this megazord?</DialogTitle>
+        <DialogContent>
+          <DialogContentText style={{color:warningColor[0]}} id="alert-dialog-description">
+          If you do this action, the status of the Megazord will change.
+          These changes will be displayed for all Megazord owners.
+          If you have already received a public key, you will have to receive it again.
+          If the Megazord does not have any attached owner, it will be removed.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={()=>handleClose(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={()=>handleClose(true)} color="primary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}
+
 const useStyles2 = makeStyles(theme => ({
   notifications: {
     zIndex: "4",
@@ -363,12 +397,25 @@ const useStyles2 = makeStyles(theme => ({
     width: '25px',
     height: '25px'
   },
-  hideMegazord: {
-    color: grayColor[0],
+  removeMegazord: {
     position: 'absolute',
     right:'5%',
     top: '25px',
     cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  hideMegazord: {
+    color: grayColor[0],
+    '&:hover': {
+      color: primaryColor[0]
+    }
+  },
+  showMegazord: {
+    color: primaryColor[0],
+  },
+  detachMegazord: {
+    color: grayColor[0],
     '&:hover': {
       color: primaryColor[0]
     }
@@ -401,9 +448,10 @@ export default function MegazordsList(props) {
   const classes = Object.assign(useStyles(), useStyles2());
   const [open, setOpen] = React.useState(false);
   const [seedOpen, setSeedOpen] = React.useState(false);
+  const [detachOpen, setDetachOpen] = React.useState(false);
   const [value, setValue] = React.useState('');
   const [zords, setZords] = React.useState([]);
-  const [zordId, setZordId] = React.useState(null);
+  const [megazordId, setMegazordId] = React.useState(null);
   const [apiLock, setApiLock] = React.useState(false);
   // const [megazords, setMegazords] = React.useState([]);
   const api_functions = props.api_functions;
@@ -454,19 +502,32 @@ export default function MegazordsList(props) {
   };
 
   const handleDetachMegazord = (e, megazordId) => {
-
+    setMegazordId(megazordId)
+    setDetachOpen(true);
   }
-  const handleHideMegazord = (e, megazordId) => {
+
+  const handleDetachDialogClose = res => {
+    setDetachOpen(false);
+    if (res) {
+      api_functions.detachMegazord(megazordId);
+    }
+    setMegazordId(null);
+  }
+
+  const handleHideMegazord = (e, megazordId, hide) => {
     e.preventDefault();
     if(apiLock) {return}
     setApiLock(true)
-    api_functions.hideMegazord(megazordId).then(res=>{
+    api_functions.hideMegazord(megazordId, hide).then(res=>{
       setApiLock(false)
-    }).catch(e=> {setApiLock(false)})
+      setMegazordId(null)
+    }).catch(e=> {
+      setApiLock(false);
+      setMegazordId(null)})
   }
 
   const handleConfirmZord = (megazordId) => {
-    setZordId(megazordId)
+    setMegazordId(megazordId)
     setSeedOpen(true)
   }
 
@@ -491,9 +552,13 @@ export default function MegazordsList(props) {
       <SeedPhraseDialog
         id="seed-phrase-dialog"
         open={seedOpen}
-        zordId={zordId}
+        megazordId={megazordId}
         onClose={handleSeedClose}
         onConfirm={handleConfirm}
+      />
+      <DetachPrompt
+        detachOpen={detachOpen}
+        handleClose={handleDetachDialogClose}
       />
       <Fab color="primary" aria-label="add" onClick={handleClickListItem}>
         <Icon>add</Icon>
@@ -503,7 +568,9 @@ export default function MegazordsList(props) {
           Object.values(megazordsOrdered).reverse().map(item => {
             return (
               <GridItem xs={12} sm={12} md={4} key={item.id}>
-                <Card profile>
+                <Card profile style={{
+                  opacity: Object.keys(user.hiddenMegazords || {}).includes(item.id) ? '0.5' : '1'
+                  }}>
                   <CardHeader>
                     {item.color && (
                       <Tooltip
@@ -518,14 +585,30 @@ export default function MegazordsList(props) {
                       </Tooltip>
                     )}
                     <div className={classes.removeMegazord}>
-                      <Tooltip title="Hide Megazord">
-
-                         <IconButton aria-label="hide" className={classes.hideMegazord} onClick={
-                           (e) => handleHideMegazord(e, item.id)
-                           }>
-                           <Icon>visibility_off</Icon>
-                         </IconButton>
+                      <Tooltip title={Object.keys(user.hiddenMegazords || {}).includes(item.id) ? "Show Megazord": "Hide Megazord"}>
+                        {Object.keys(user.hiddenMegazords || {}).includes(item.id) ? (
+                           <IconButton aria-label="hide" className={classes.showMegazord} onClick={
+                            (e) => handleHideMegazord(e, item.id, false)
+                            }>
+                            <Icon>visibility_on</Icon>
+                          </IconButton>
+                         ) : (
+                          <IconButton aria-label="hide" className={classes.hideMegazord} onClick={
+                            (e) => handleHideMegazord(e, item.id, true)
+                            }>
+                            <Icon>visibility_off</Icon>
+                          </IconButton>
+                         )}
                       </Tooltip>
+                      {(item.status_id !== 1 || !item.canConfirm) && (
+                        <Tooltip title="Detach Megazord">
+                           <IconButton aria-label="hide" className={classes.detachMegazord} onClick={
+                            (e) => handleDetachMegazord(e, item.id)
+                            }>
+                            <Icon>link_off</Icon>
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </div>
                     <CardAvatar profile>
                       <a href={item.link ? item.link : '#'} target='_blank'>

@@ -95,14 +95,14 @@ const sidebarStyle = theme => ({
     textAlign: "right"
   },
   logoImage: {
-    width: "30px",
+    width: "100%",
     display: "inline-block",
-    maxHeight: "30px",
+    maxHeight: "100%",
     marginLeft: "10px",
     marginRight: "15px"
   },
   img: {
-    width: "35px",
+    width: "70%",
     top: "22px",
     position: "absolute",
     verticalAlign: "middle",

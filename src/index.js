@@ -194,12 +194,12 @@ const hist = createBrowserHistory();
             </Route>
             {/* <Route path="/admin" component={Admin} />
             <Redirect from="/" to="/admin/dashboard" /> */}
-            {this.state.isSignedIn === true &&
+            {/* {this.state.isSignedIn === true && */}
               <Route path="/admin">
                 <Admin api_functions={api_functions} user={this.state.user}
                   bitcloutData={this.state.bitcloutData} indexFunctons={{notifSnak:this.notifSnak.bind(this)}} ></Admin>
               </Route>
-            }
+            {/* } */}
           </Switch>
           {this.state.isSignedIn !== undefined &&
             <Redirect to={this.state.redirect} />

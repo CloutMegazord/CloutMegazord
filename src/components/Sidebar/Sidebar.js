@@ -2,7 +2,7 @@
 import React from "react";
 import classNames from "classnames";
 import PropTypes from "prop-types";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
 import Drawer from "@material-ui/core/Drawer";
@@ -17,16 +17,18 @@ import RTLNavbarLinks from "components/Navbars/RTLNavbarLinks.js";
 
 import styles from "assets/jss/material-dashboard-react/components/sidebarStyle.js";
 
+
 const useStyles = makeStyles(styles);
 
 export default function Sidebar(props) {
   const classes = useStyles();
+  let location = useLocation();
   // verifies if routeName is the one active (in browser input)
   function activeRoute(routeName) {
-    return window.location.href.indexOf(routeName) > -1 ? true : false;
+    return location.pathname === routeName;
   }
   const { color, logo, image, logoText, routes } = props;
-  const avlable_routes = ['/megazordslist', '/settings']//,
+  const avlable_routes = ['/megazordslist', '/settings']//, '/settings'
   var links = (
     <List className={classes.list}>
       {routes.filter((prop, key) => avlable_routes.includes(prop.path)).map((prop, key) => {
@@ -35,16 +37,16 @@ export default function Sidebar(props) {
         if (prop.path === "/upgrade-to-pro") {
           activePro = classes.activePro + " ";
           listItemClasses = classNames({
-            [" " + classes[color]]: true
+            [" " + classes[color]]: true,
           });
         } else {
           listItemClasses = classNames({
-            [" " + classes[color]]: activeRoute(prop.layout + prop.path)
+            [" " + classes[color]]: activeRoute(prop.layout + prop.path),
           });
         }
-        // const whiteFontClasses = classNames({
-        //   [" " + classes.whiteFont]: activeRoute(prop.layout + prop.path)
-        // });
+        const whiteFontClasses = classNames({
+          [" " + classes.whiteFont]: activeRoute(prop.layout + prop.path),
+        });
         return (
           <NavLink
             to={prop.layout + prop.path}
@@ -56,7 +58,7 @@ export default function Sidebar(props) {
               {typeof prop.icon === "string" ? (
                 <Icon
                   className={classNames(classes.itemIcon, {
-                    [classes.itemIconRTL]: props.rtlActive
+                    [classes.itemIconRTL]: props.rtlActive,
                   })}
                 >
                   {prop.icon}
@@ -64,14 +66,14 @@ export default function Sidebar(props) {
               ) : (
                 <prop.icon
                   className={classNames(classes.itemIcon, {
-                    [classes.itemIconRTL]: props.rtlActive
+                    [classes.itemIconRTL]: props.rtlActive,
                   })}
                 />
               )}
               <ListItemText
                 primary={props.rtlActive ? prop.rtlName : prop.name}
                 className={classNames(classes.itemText, {
-                  [classes.itemTextRTL]: props.rtlActive
+                  [classes.itemTextRTL]: props.rtlActive,
                 })}
                 disableTypography={true}
               />
@@ -84,16 +86,16 @@ export default function Sidebar(props) {
   var brand = (
     <div className={classes.logo}>
       <a
-        href="/admin/megazordslist"
+        href="https://bitclout.com/u/CloutMegazord"
         className={classNames(classes.logoLink, {
-          [classes.logoLinkRTL]: props.rtlActive
+          [classes.logoLinkRTL]: props.rtlActive,
         })}
         target="_blank"
       >
         <div className={classes.logoImage}>
           <img src={logo} alt="logo" className={classes.img} />
         </div>
-        {logoText}
+        {/* {logoText} */}
       </a>
     </div>
   );
@@ -106,19 +108,19 @@ export default function Sidebar(props) {
           open={props.open}
           classes={{
             paper: classNames(classes.drawerPaper, {
-              [classes.drawerPaperRTL]: props.rtlActive
-            })
+              [classes.drawerPaperRTL]: props.rtlActive,
+            }),
           }}
           onClose={props.handleDrawerToggle}
           ModalProps={{
-            keepMounted: true // Better open performance on mobile.
+            keepMounted: true, // Better open performance on mobile.
           }}
         >
           {brand}
-          {/* <div className={classes.sidebarWrapper}>
+          <div className={classes.sidebarWrapper}>
             {props.rtlActive ? <RTLNavbarLinks /> : <AdminNavbarLinks />}
             {links}
-          </div> */}
+          </div>
           {image !== undefined ? (
             <div
               className={classes.background}
@@ -134,8 +136,8 @@ export default function Sidebar(props) {
           open
           classes={{
             paper: classNames(classes.drawerPaper, {
-              [classes.drawerPaperRTL]: props.rtlActive
-            })
+              [classes.drawerPaperRTL]: props.rtlActive,
+            }),
           }}
         >
           {brand}
@@ -160,5 +162,5 @@ Sidebar.propTypes = {
   image: PropTypes.string,
   logoText: PropTypes.string,
   routes: PropTypes.arrayOf(PropTypes.object),
-  open: PropTypes.bool
+  open: PropTypes.bool,
 };

@@ -26,6 +26,7 @@ import {
   hexToRgb,
   defaultFont
 } from "assets/jss/material-dashboard-react.js";
+import classNames from "classnames";
 
 const styles = {
   cardCategoryWhite: {
@@ -51,18 +52,25 @@ const useStyles = makeStyles(styles);
 export default function UserProfile(props) {
   const classes = useStyles();
   const user = props.user || {};
-  if (!user) {
-    props.setOpenBackdrop(true)
+  const [settings, setSettings] = React.useState(user.settings || null);
+  if (settings === null && user.settings) {
+    setSettings(user.settings)
   }
-  const handleSave = (e) => {
-    props.api_functions.saveSettings({showHidden:showHidden});
-  }
-  const handleChange = (e, set) => {
-    set(e.target.checked);
-  }
-  var settings = user.settings || {showHidden: false};
-  const [showHidden, setShowHidden] = React.useState(settings.showHidden);
 
+  const handleSave = (e) => {
+    props.setOpenBackdrop(true)
+    props.api_functions.saveSettings({...settings})
+    .then(res=>{
+      props.setOpenBackdrop(false)
+    }).catch((error=>{
+      props.setOpenBackdrop(false)
+    }));
+  }
+  const handleChange = (name, value) => {
+    let settings = {...settings};
+    settings[name] = value;
+    setSettings(settings)
+  }
   return (
     <div>
       <GridContainer>
@@ -70,8 +78,10 @@ export default function UserProfile(props) {
           <FormControl component="fieldset">
             {/* <FormLabel component="legend">Show hidden Megazords</FormLabel> */}
             <FormControlLabel
-              value={settings.showHidden}
-              control={<Checkbox style={{color:primaryColor[0]}} onChange={e => handleChange(e, setShowHidden)}/>}
+              control={<Checkbox
+                style={{color:primaryColor[0]}}
+                checked={settings ? settings.showHidden : false}
+                onChange={e => handleChange('showHidden', e.target.checked)}/>}
               label="Show hidden Megazords"
               labelPlacement="start"
             />

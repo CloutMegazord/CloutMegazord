@@ -257,9 +257,14 @@ export const api_functions = {
       axios.post(apiEndpoint + '/confirmMegazord', {data:{megazordId}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
     })
   },
-  'hideMegazord': megazordId => {
+  'detachMegazord':  megazordId => {
     return new Promise((resolve, reject) => {
-      axios.post(apiEndpoint + '/hideMegazord', {data:{megazordId, hide: true}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
+      axios.post(apiEndpoint + '/detachMegazord', {data:{megazordId}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
+    })
+  },
+  'hideMegazord': (megazordId, hide) => {
+    return new Promise((resolve, reject) => {
+      axios.post(apiEndpoint + '/hideMegazord', {data:{megazordId, hide}}, api_functions.getReqConfigs()).then(resp=>resp.data).then(resolve).catch(reject);
     })
   },
   'signInWithCustomToken': auth.signInWithCustomToken.bind(auth),
@@ -334,9 +339,10 @@ export const api_functions = {
       var userCloutData = await api_functions.getBitcloutAcc(publicKey);
       let resUser = Object.assign(userDBData, userCloutData);
       resUser.id = publicKey;
+      resUser.settings = resUser.settings || {showHidden: false};
       resUser.megazordsIds = {};
       for (let k in resUser.megazords) {
-        if ((resUser.settings || {}).showHidden) {
+        if (resUser.settings.showHidden) {
           resUser.megazordsIds[k] = true;
         } else if (!Object.keys(resUser.hiddenMegazords || {}).includes(k)) {
           resUser.megazordsIds[k] = true;

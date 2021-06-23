@@ -328,8 +328,11 @@ app.post('/api/hideMegazord', async (req, res, next) => {
         res.send({data:{error: error.message}})
         return
     }
-
-    await db.ref('users/' + publicKey + '/hiddenMegazords/' + megazordId).set(true);
+    if (hide) {
+        await db.ref('users/' + publicKey + '/hiddenMegazords/' + megazordId).set(hide);
+    } else {
+        await db.ref('users/' + publicKey + '/hiddenMegazords/' + megazordId).remove()
+    }
     // await megazordRef.update({hidden: hide})
     res.send({data:{ok: true}})
 });
@@ -350,6 +353,54 @@ app.post('/api/saveSettings', async (req, res, next) => {
         showHidden: !!data.settings.showHidden
     });
     res.send({data:{ok: true}})
+});
+
+app.post('/api/detachMegazord', async (req, res, next) => {
+    var data = req.body.data;
+    const megazordId = data.megazordId;
+    var customToken = req.headers.authorization.replace('Bearer ', '');
+    var publicKey;
+    try {
+        let verif = await auth.verifyIdToken(customToken);
+        publicKey = verif.uid;
+    } catch(error) {
+        res.send({data:{error: error.message}})
+        return
+    }
+    const megazordRef = db.ref('megazords/' + megazordId);
+    var megazorSnap = await megazordRef.get()
+    if (megazorSnap.exists()) {
+        var megazord = megazorSnap.val();
+    } else {
+        res.send({data:{error: "Megazord not found."}})
+        return
+    }
+    if (megazord.confirmedZords[publicKey]) {
+        delete megazord.confirmedZords[publicKey];
+    } else {
+        res.send({data:{error: "You can't detach this Megazord."}})
+        return
+    }
+    if (!megazord.pendingZords) {
+        megazord.pendingZords = {};
+        megazord.tasks = [];
+        megazord.PublicKeyBase58Check = '';
+    }
+    megazord.pendingZords[publicKey] = true;
+    try {
+        if (Object.keys(megazord.confirmedZords).length) {
+            await megazordRef.update(megazord)
+        } else {
+            for (let zordK in megazord.pendingZords) {
+                await db.ref('users/' + zordK + '/megazords').child(megazordId).remove();
+            }
+            await megazordRef.remove();
+        }
+    } catch (e) {
+        res.send({data:{error: e.toString()}})
+        return
+    }
+    res.send({data:{success: true}})
 });
 
 app.post('/api/confirmMegazord', async (req, res, next) => {
