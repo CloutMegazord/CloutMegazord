@@ -1,5 +1,5 @@
 'use strict'
-var KeyEncoder = require('key-encoder').default;
+const KeyEncoder = require('key-encoder').default;
 const EC = require('elliptic').ec;
 const crypto = require('crypto');
 const axios = require('axios');
@@ -13,16 +13,21 @@ const admin = require("firebase-admin");
 const jwt = require('jsonwebtoken');
 const bs58check = require('bs58check');
 const notifications = require('./notifications');
+const config = require('./config');
 
-var signingEndpoint, CMEndpoint;
-const CloutMegazordPubKey = 'BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE';
+let signingEndpoint, CMEndpoint;
+
+const CloutMegazordPubKey = config.get('mgzPubKey');
 const bitcloutCahceExpire = {
-    'get-exchange-rate': 10 * 60 * 1000,
-    'ticker': 10 * 60 * 1000,
-    'get-single-profile': 48 * 60 * 60 * 1000,
-    'get-app-state':  24 * 60 * 60 * 1000
-}
-var taskSessionsExpire = (10 * 60 * 1000);//10 mins
+  'get-exchange-rate': 10 * 60 * 1000,
+  'ticker': 10 * 60 * 1000,
+  'get-single-profile': 48 * 60 * 60 * 1000,
+'get-app-state':  24 * 60 * 60 * 1000
+};
+const taskSessionsExpire = (10 * 60 * 1000);
+
+process.env.NODE_ENV = config.get('env');
+process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get('firebase');
 
 admin.initializeApp();
 const db = admin.database();
