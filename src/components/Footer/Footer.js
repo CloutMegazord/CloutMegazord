@@ -28,7 +28,7 @@ const useStyles = makeStyles({
     fontSize: "12px"
   },
   left: {
-    float: "left!important",
+    // float: "left!important",
     display: "block"
   },
   right: {
@@ -37,18 +37,20 @@ const useStyles = makeStyles({
     margin: "0",
     fontSize: "14px",
     color: '#fff',
-    float: "right!important"
+    // float: "right!important"
   },
   footer: {
-    position: "fixed",
+    // position: "fixed",
     bottom: "0",
     width: "100%",
-    height: "9vh",
-    backgroundColor: '#22222266',
+    // height: "10vh",
+    backgroundColor: '#222222',
     padding: "5px 0",
     ...defaultFont
   },
-  container,
+  container: {
+    display: 'flex',
+  },
   a: {
     color: primaryColor,
     textDecoration: "none",

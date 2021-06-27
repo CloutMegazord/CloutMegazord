@@ -28,8 +28,13 @@ const rawTheme = createMuiTheme({
     // },
     secondary: {
       light: secondaryColor[0],
-      main: secondaryColor[1],
+      main: secondaryColor[0],
       dark: secondaryColor[3],
+    },
+    blueWhite: {
+      light: '#fafafa',
+      main: '#e3f2fd',
+      dark: '#90caf9'
     },
     warning: {
       main: warningColor[0],

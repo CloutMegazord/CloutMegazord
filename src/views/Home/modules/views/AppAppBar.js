@@ -5,8 +5,15 @@ import { withStyles } from '@material-ui/core/styles';
 import Link from '@material-ui/core/Link';
 import AppBar from '../components/AppBar';
 import SignIn from '../../../../components/SignIn/SignIn';
+import Button from '../../../../components/CustomButtons/Button';
 import Toolbar, { styles as toolbarStyles } from '../components/Toolbar';
+import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
+import Box from '@material-ui/core/Box';
+import logo from "assets/img/text-logo-2.svg";
+import MenuItem from '@material-ui/core/MenuItem';
+import MenuList from '@material-ui/core/MenuList';
 import {
+  primaryColor,
   secondaryColor,
 } from "../../../../assets/jss/material-dashboard-react.js";
 
@@ -21,9 +28,17 @@ const styles = (theme) => ({
       color: secondaryColor[0]
     }
   },
+  logoLink: {
+    height: '100%',
+    display: 'flex',
+    [theme.breakpoints.down('md')]: {
+      display: 'none'
+    }
+  },
   placeholder: toolbarStyles(theme).root,
   toolbar: {
     justifyContent: 'space-between',
+    position: 'relative'
   },
   left: {
     flex: 1,
@@ -44,6 +59,22 @@ const styles = (theme) => ({
   linkSecondary: {
     color: theme.palette.secondary.main,
   },
+  menu: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    overflow: 'hidden',
+    color: '#000',
+    [theme.breakpoints.down('md')]: {
+      display: 'none'
+    }
+  },
+  buttonWrapper: {
+    position: 'absolute',
+    left: '50%',
+    padding: '0',
+    transform: 'translate(-50%, 0)'
+  }
 });
 
 function AppAppBar(props) {
@@ -52,37 +83,30 @@ function AppAppBar(props) {
     <div>
       <AppBar position="fixed">
         <Toolbar className={classes.toolbar}>
-          <div className={classes.left} />
           <Link
-            variant="h6"
-            underline="none"
-            color="inherit"
-            target="_blank"
-            rel="noopener"
-            className={classes.title}
+            className={classes.logoLink}
             href="https://bitclout.com/u/CloutMegazord"
           >
-            {'CloutMegazord'}
+             <img src={logo} style={{
+              //  filter: 'brightness(0) invert(1)'
+              }}alt="logo" className={classes.img} />
           </Link>
-          <div className={classes.right}>
-          <SignIn api_functions={api_functions}/>
-            {/* <Link
-              color="inherit"
-              variant="h6"
-              underline="none"
-              className={classes.rightLink}
-              href="/premium-themes/onepirate/sign-in/"
-            >
-              {'Sign In'}
-            </Link>
-            <Link
-              variant="h6"
-              underline="none"
-              className={clsx(classes.rightLink, classes.linkSecondary)}
-              href="/premium-themes/onepirate/sign-up/"
-            >
-              {'Sign Up'}
-            </Link> */}
+          {/* <div className={classes.left} /> */}
+          <Box className={classes.buttonWrapper}>
+            <Button size='lg' color='primary' endIcon={<PowerSettingsNewIcon/>}>
+              Power On
+            </Button>
+          </Box>
+          {/* className={classes.right} */}
+          <div>
+          <MenuList className={classes.menu}>
+            <MenuItem>About</MenuItem>
+            <MenuItem>Guid</MenuItem>
+            {/* <MenuItem>Security</MenuItem> */}
+            {/* <MenuItem>Partnership</MenuItem> */}
+            {/* <MenuItem>Contacts</MenuItem> */}
+          </MenuList>
+          {/* <SignIn api_functions={api_functions}/> */}
           </div>
         </Toolbar>
       </AppBar>

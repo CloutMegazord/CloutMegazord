@@ -16,11 +16,11 @@ function Index(props) {
     <React.Fragment>
       <AppAppBar {...props} />
       <ProductHero {...props} />
-      {/* <ProductValues {...props} />
-      <ProductCategories {...props} />
-      <ProductHowItWorks {...props} />
-      <ProductCTA {...props} />
-      <ProductSmokingHero {...props} /> */}
+      <ProductValues {...props} />
+      {/* <ProductCategories {...props} /> */}
+      {/* <ProductHowItWorks {...props} /> */}
+      {/* <ProductCTA {...props} /> */}
+      {/* <ProductSmokingHero {...props} /> */}
       <Footer {...props} />
     </React.Fragment>
   );

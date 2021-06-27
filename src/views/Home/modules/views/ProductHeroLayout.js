@@ -14,14 +14,17 @@ const styles = (theme) => ({
       height: '94vh',
       minHeight: 500,
       maxHeight: 1300,
+      paddingTop: 70
     },
   },
   container: {
     marginTop: theme.spacing(3),
     marginBottom: theme.spacing(14),
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+
+    // alignItems: "flex-start",
+    // flexDirection: 'column',
+    alignItems: 'center'
   },
   backdrop: {
     position: 'absolute',
@@ -29,8 +32,7 @@ const styles = (theme) => ({
     right: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: theme.palette.common.black,
-    opacity: 0.5,
+    // opacity: 0.5,
     zIndex: -1,
   },
   background: {
@@ -55,12 +57,6 @@ function ProductHeroLayout(props) {
   return (
     <section className={classes.root}>
       <Container className={classes.container}>
-        <img
-          src="/static/themes/onepirate/productHeroWonder.png"
-          alt="wonder"
-          width="147"
-          height="80"
-        />
         {children}
         <div className={classes.backdrop} />
         <div className={clsx(classes.background, backgroundClassName)} />
