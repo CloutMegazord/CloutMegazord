@@ -34,14 +34,14 @@ const styles = (theme) => ({
     pointerEvents: 'none',
     position: 'absolute',
     top: -180,
-  },
+  }
 });
 
 function ProductValues(props) {
   const { classes } = props;
 
   return (
-    <section className={classes.root}>
+    <section className={classes.root} id='product'>
       <Container className={classes.container}>
         <img
           src="/static/themes/onepirate/productCurvyLines.png"
@@ -53,15 +53,17 @@ function ProductValues(props) {
             <div className={classes.item}>
               <img
                 className={classes.image}
-                src="/static/themes/onepirate/productValues1.svg"
+                src="/static/themes/onepirate/security_black_24dp.svg"
                 alt="suitcase"
               />
               <Typography variant="h6" className={classes.title}>
-                The best luxury hotels
+                Security
               </Typography>
               <Typography variant="h5">
-                {'From the latest trendy boutique hotel to the iconic palace with XXL pool'}
-                {', go for a mini-vacation just a few subway stops away from your home.'}
+                Separate <a target="_blank" href="https://github.com/CloutMegazord/signing-cloutmegazord">Open source </a>
+                Infrastruction for handling Seed Phrases Parts.
+                Proof of identical between the open source and server code (Transparent backend).
+                Provide your gmail to <a target="_blank" href="https://bitclout.com/u/CloutMegazord">@CloutMegazord</a> for requesting Read Only access to server code.
               </Typography>
             </div>
           </Grid>
@@ -69,31 +71,32 @@ function ProductValues(props) {
             <div className={classes.item}>
               <img
                 className={classes.image}
-                src="/static/themes/onepirate/productValues2.svg"
-                alt="graph"
-              />
-              <Typography variant="h6" className={classes.title}>
-                New experiences
-              </Typography>
-              <Typography variant="h5">
-                {'Privatize a pool, take a Japanese bath or wake up in 900m2 of garden… '}
-                {'your Sundays will not be alike.'}
-              </Typography>
-            </div>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <div className={classes.item}>
-              <img
-                className={classes.image}
-                src="/static/themes/onepirate/productValues3.svg"
+                src="/static/themes/onepirate/call_split_black_24dp.svg"
                 alt="clock"
               />
               <Typography variant="h6" className={classes.title}>
-                Exclusive rates
+                Fault tolerance
               </Typography>
               <Typography variant="h5">
-                {'By registering, you will access specially negotiated rates '}
-                {'that you will not find anywhere else.'}
+                {'Funds will not be lost even if the CloutMegazord service is offline. '}
+                {' The parts of the seed phrase that you generated when creating a new joint account are a full-fledged private key. '}
+                {'They can be contacted by the owners without CloutMegazord.'}
+              </Typography>
+            </div>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <div className={classes.item}>
+              <img
+                className={classes.image}
+                src="/static/themes/onepirate/productValues1.svg"
+                alt="graph"
+              />
+              <Typography variant="h6" className={classes.title}>
+                Simplicity
+              </Typography>
+              <Typography variant="h5">
+                {'Anything extra. '}
+                You don't need to provide an email, name, etc. Just login via BitClout (JWT token) and use it. A simple interface which you will quickly get used to.
               </Typography>
             </div>
           </Grid>

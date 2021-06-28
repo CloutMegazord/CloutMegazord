@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import ListItem from "@material-ui/core/ListItem";
 import List from "@material-ui/core/List";
+import logo from "assets/img/text-logo-1.svg";
 // core components
 // import styles from "assets/jss/material-dashboard-react/components/footerStyle.js";
 import {
@@ -37,6 +38,8 @@ const useStyles = makeStyles({
     margin: "0",
     fontSize: "14px",
     color: '#fff',
+    display: 'flex',
+    alignItems: 'center'
     // float: "right!important"
   },
   footer: {
@@ -45,11 +48,12 @@ const useStyles = makeStyles({
     width: "100%",
     // height: "10vh",
     backgroundColor: '#222222',
-    padding: "5px 0",
+    padding: "10px 24px",
     ...defaultFont
   },
   container: {
     display: 'flex',
+    justifyContent: 'space-between'
   },
   a: {
     color: primaryColor,
@@ -72,66 +76,37 @@ export default function Footer(props) {
   const classes = useStyles();
   const socailItems = [{
     name: 'CloutMegazord',
-    img: '/assets/img/avatars/CloutMegazord.jpeg',
+    img: 'https://bitclout.com/api/v0/get-single-profile-picture/BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE?fallback=https://bitclout.com/assets/img/default_profile_pic.png',
     link: 'https://bitclout.com/u/CloutMegazord'
-  },{
-    name: 'transhumanist',
-    img: '/assets/img/avatars/transhumanist.jpeg',
-    link: 'https://bitclout.com/u/transhumanist'
-  },{
-    name: 'bithunt',
-    img: '/assets/img/avatars/bithunt.jpeg',
-    link: 'https://www.bitclouthunt.com/p/120'
   }]
   return (
     <footer className={classes.footer}>
       <div className={classes.container}>
         <div className={classes.left}>
+          <img src={logo} alt={'Logo'} style={{filter: 'brightness(0) invert(1)'}}/>
+        </div>
+        <div className={classes.right}>
           <List className={classes.list}>
             {socailItems.map((item => {
               return (
                 <ListItem key={item.name} className={classes.inlineBlock}>
                   <a href={item.link} target="_blank" rel="noopener" className={classes.block}>
                     <img src={item.img} alt={item.name} style={{
-                      width: '34px',
-                      height: '34px',
+                      width: '50px',
+                      height: '50px',
                       borderRadius: '100%'
                     }}/>
                   </a>
               </ListItem>
               )
             }))}
-
-            {/* <ListItem className={classes.inlineBlock}>
-              <a href="#company" className={classes.block}>
-                Company
-              </a>
-            </ListItem>
-            <ListItem className={classes.inlineBlock}>
-              <a href="#portfolio" className={classes.block}>
-                Portfolio
-              </a>
-            </ListItem>
-            <ListItem className={classes.inlineBlock}>
-              <a href="#blog" className={classes.block}>
-                Blog
-              </a>
-            </ListItem> */}
           </List>
-        </div>
-        <p className={classes.right}>
           <span>
-            &copy; {1900 + new Date().getYear()}{" "}
-            <a
-              href="https://bitclout.com/u/transhumanist"
-              target="_blank"
-              className={classes.a}
-            >
-              @transhumanist
-            </a>
+            {/* &copy; */}
+            {1900 + new Date().getYear()}{" "}
             <span style={{textTransform: "uppercase"}}> in active development</span>
           </span>
-        </p>
+        </div>
       </div>
     </footer>
   );

@@ -6,7 +6,9 @@ import Button from '../../../../components/CustomButtons/Button';
 import Typography from '../components/Typography';
 import ProductHeroLayout from './ProductHeroLayout';
 import {
+  primaryColor,
   secondaryColor,
+  whiteColor,
 } from "../../../../assets/jss/material-dashboard-react.js";
 import logo from "assets/img/logo_black.png";
 import workflow from "assets/img/workflow.svg";
@@ -57,6 +59,11 @@ const styles = (theme) => ({
     [theme.breakpoints.down('md')]: {
       display: 'none'
     }
+  },
+  shadowWrapper: {
+    borderRadius: "0 30px 0 0",
+    boxShadow: "12px 0 15px -4px rgba(31, 73, 125, 0.8), -12px 0 8px -4px rgba(31, 73, 125, 0.8);",
+    overflow: "hidden"
   }
 });
 
@@ -68,8 +75,10 @@ function ProductHero(props) {
       {/* Increase the network loading priority of the background image. */}
       {/* <img style={{ display: 'none' }} src={backgroundImage} alt="increase priority" /> */}
       <div  className={classes.logoWrapper}>
-        <img src={logo} className={classes.logo} alt="increase priority" />
-        <a target="_blank" style={{color:secondaryColor[0]}}href="https://bitclout.com/u/charliehilton">logo: @charliehilton</a>
+        <div  className={classes.shadowWrapper}>
+          <img src={logo} className={classes.logo} alt="increase priority" />
+        </div>
+        <a target="_blank" style={{color:whiteColor}}href="https://bitclout.com/u/charliehilton">logo: @charliehilton</a>
       </div>
       <div style={{paddingLeft:25}}>
       <Typography color="inherit" align="center" variant="h4" marked="center" className={classes.title}>

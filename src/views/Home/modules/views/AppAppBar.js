@@ -67,6 +67,9 @@ const styles = (theme) => ({
     color: '#000',
     [theme.breakpoints.down('md')]: {
       display: 'none'
+    },
+    '& a': {
+      color: '#000'
     }
   },
   buttonWrapper: {
@@ -93,20 +96,27 @@ function AppAppBar(props) {
           </Link>
           {/* <div className={classes.left} /> */}
           <Box className={classes.buttonWrapper}>
-            <Button size='lg' color='primary' endIcon={<PowerSettingsNewIcon/>}>
+            <SignIn api_functions={api_functions}
+              component={(props) => (
+                <Button size='lg' color='primary' startIcon={<PowerSettingsNewIcon/>} onClick={props.onClick}>
+                  Power On
+                </Button>
+              )}
+            />
+            {/* <Button size='lg' color='primary' endIcon={<PowerSettingsNewIcon/>}>
               Power On
-            </Button>
+            </Button> */}
           </Box>
           {/* className={classes.right} */}
           <div>
           <MenuList className={classes.menu}>
-            <MenuItem>About</MenuItem>
-            <MenuItem>Guid</MenuItem>
-            {/* <MenuItem>Security</MenuItem> */}
-            {/* <MenuItem>Partnership</MenuItem> */}
-            {/* <MenuItem>Contacts</MenuItem> */}
+            <MenuItem>
+              <Link href="#product">Features</Link>
+            </MenuItem>
+            <MenuItem><a target="_blank" href="https://cloutmegazord.medium.com/cloutmegazord-mvp-functionality-overview-4353b3c715c5">Guid</a></MenuItem>
+            <MenuItem><a target="_blank" href="https://bitclout.com/u/CloutMegazord">Invest</a></MenuItem>
           </MenuList>
-          {/* <SignIn api_functions={api_functions}/> */}
+
           </div>
         </Toolbar>
       </AppBar>

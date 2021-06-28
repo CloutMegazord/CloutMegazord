@@ -64,12 +64,19 @@ const LoginIcon = ({ active }) => {
 	)
 }
 
+const CustomLoginWrapper = (component) => (props) => {
+  return (
+    <component {...props}></component>
+  )
+}
+
 const SignIn = (props) => {
   const classes = useStyles();
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [errorOpen, setErrorOpen] = React.useState(false);
 	const [errorText, setErrorText] = React.useState(false);
-	const api_functions = props.api_functions
+	const api_functions = props.api_functions;
+  const component = props.component;
 	const accessLevel = 2;
 	const handleSignIn = (e) => {
 		api_functions.login({
@@ -84,6 +91,7 @@ const SignIn = (props) => {
       api_functions
         .signInWithCustomToken(result.data.token)
         .then((userCredential) => {
+          window.location.pathname = '/admin/megazordslist';
           setSuccessOpen(true)
         })
         .catch((error) => {
@@ -111,12 +119,13 @@ const SignIn = (props) => {
         </Alert>
       </Snackbar>
       <BitcloutLogin
-      accessLevel={accessLevel}
-      onSuccess={handleSignIn}
-      onFailure={handleError}
-      JWT={true}
-      customization={{className: classes.custloginButton}}
-      customIcon={<LoginIcon/>}
+        accessLevel={accessLevel}
+        onSuccess={handleSignIn}
+        onFailure={handleError}
+        JWT={true}
+        CustomComponent={component}
+        customization={{className: classes.custloginButton}}
+        customIcon={<LoginIcon/>}
       />
   	</div>);
 }

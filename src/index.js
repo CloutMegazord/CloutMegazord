@@ -134,7 +134,7 @@ const hist = createBrowserHistory();
         }
         var targ = window.location.href.split('/').map(it => '/' + it)
         if (targ.includes('/admin') === false) {
-          this.setState({redirect: '/admin/megazordslist'});
+          this.setState({redirect: '/landing/home'});
         }
       } else {
         this.setState({redirect: '/landing/home'});
