@@ -5,12 +5,15 @@ import { withStyles } from '@material-ui/core/styles';
 import Button from '../../../../components/CustomButtons/Button';
 import Typography from '../components/Typography';
 import ProductHeroLayout from './ProductHeroLayout';
+import Grid from '@material-ui/core/Grid';
+import GridItem from "components/Grid/GridItem.js";
+import GridContainer from "components/Grid/GridContainer.js";
 import {
   primaryColor,
   secondaryColor,
   whiteColor,
 } from "../../../../assets/jss/material-dashboard-react.js";
-import logo from "assets/img/logo_black.png";
+import logo from "assets/img/logo_black_big.png";
 import workflow from "assets/img/workflow.svg";
 // const backgroundImage =
 //   'https://images.unsplash.com/photo-1534854638093-bada1813ca19?auto=format&fit=crop&w=1400&q=80';
@@ -18,6 +21,10 @@ const backgroundImage =
   '/assets/img/freegifmaker.me_2hcVd.gif';
 
 const styles = (theme) => ({
+  root:{
+    // height: "94vh",
+    // width: "94vh"
+  },
   background: {
     // backgroundImage: `url(${backgroundImage})`,
     backgroundColor: theme.palette.primary.main, // Average color of the background image.
@@ -31,7 +38,6 @@ const styles = (theme) => ({
     backgroundColor: '#22222255',
     padding: '1rem',
     fontWeight: '400',
-    maxWidth: '900px',
     [theme.breakpoints.up('sm')]: {
       marginTop: theme.spacing(1),
     },
@@ -53,7 +59,8 @@ const styles = (theme) => ({
     alignSelf: 'flex-end'
   },
   logo: {
-    width: '100%'
+    width:'100%',
+    height:'100%'
   },
   logoWrapper: {
     [theme.breakpoints.down('md')]: {
@@ -72,25 +79,33 @@ function ProductHero(props) {
 
   return (
     <ProductHeroLayout backgroundClassName={classes.background}>
+      <Grid container className={classes.root} spacing={4} >
+        <GridItem xs={12} sm={6} >
+          <div className={classes.logoWrapper}>
+          <div className={classes.shadowWrapper}>
+            <img src={logo} className={classes.logo} alt="increase priority" />
+          </div>
+          <a target="_blank" style={{color:whiteColor}}href="https://bitclout.com/u/charliehilton">logo: @charliehilton</a>
+          </div>
+        </GridItem>
+        <GridItem xs={12} sm={6}>
+          <Typography color="inherit" align="center" variant="h4" marked="center" className={classes.title}>
+            Revolution in Bitclout cooperation
+          </Typography>
+          {/* <Typography color="inherit" align="center" variant="subtitle1" className={classes.subtitle1}>
+            First distributed account management tool for Bitclout
+          </Typography> */}
+          <Typography color="inherit" align="center" variant="h5" className={classes.h5}>
+            Create a distributed account by splitting high entropy seed phrase between several owners.
+          </Typography>
+          <img src={workflow}  alt="How it's work?" />
+        </GridItem>
+      </Grid>
       {/* Increase the network loading priority of the background image. */}
       {/* <img style={{ display: 'none' }} src={backgroundImage} alt="increase priority" /> */}
-      <div  className={classes.logoWrapper}>
-        <div  className={classes.shadowWrapper}>
-          <img src={logo} className={classes.logo} alt="increase priority" />
-        </div>
-        <a target="_blank" style={{color:whiteColor}}href="https://bitclout.com/u/charliehilton">logo: @charliehilton</a>
-      </div>
-      <div style={{paddingLeft:25}}>
-      <Typography color="inherit" align="center" variant="h4" marked="center" className={classes.title}>
-        Revolution in Bitclout cooperation
-      </Typography>
-      {/* <Typography color="inherit" align="center" variant="subtitle1" className={classes.subtitle1}>
-        First distributed account management tool for Bitclout
-      </Typography> */}
-      <Typography color="inherit" align="center" variant="h5" className={classes.h5}>
-        Create a distributed account by splitting high entropy seed phrase between several owners.
-      </Typography>
-      <img src={workflow}  alt="How it's work?" />
+
+
+
       {/* <Typography color="inherit" align="center" variant="body1" className={classes.heroInfo} align="left">
           For building <b>trustless</b> Bitclout based:
           Foundations, Organizations, Startups, Groups, Incubators or whatever you want.
@@ -114,7 +129,6 @@ function ProductHero(props) {
       {/* <Typography variant="body2" color="inherit" className={classes.more}>
         Discover the experience
       </Typography> */}
-      </div>
     </ProductHeroLayout>
   );
 }

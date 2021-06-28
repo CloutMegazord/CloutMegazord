@@ -6,22 +6,21 @@ import Container from '@material-ui/core/Container';
 
 const styles = (theme) => ({
   root: {
+    // marginTop: '10vh',
     color: theme.palette.common.white,
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
+    height: '94vh',
     [theme.breakpoints.up('sm')]: {
-      height: '94vh',
       minHeight: 500,
-      maxHeight: 1300,
-      paddingTop: 70
+      // maxHeight: 1300,
     },
   },
   container: {
     marginTop: theme.spacing(3),
-    marginBottom: theme.spacing(14),
+    marginBottom: theme.spacing(3),
     display: 'flex',
-
     // alignItems: "flex-start",
     // flexDirection: 'column',
     alignItems: 'center'
@@ -56,7 +55,7 @@ function ProductHeroLayout(props) {
 
   return (
     <section className={classes.root}>
-      <Container className={classes.container}>
+      <Container maxWidth={false} className={classes.container}>
         {children}
         <div className={classes.backdrop} />
         <div className={clsx(classes.background, backgroundClassName)} />

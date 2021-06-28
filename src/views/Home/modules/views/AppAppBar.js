@@ -6,6 +6,7 @@ import Link from '@material-ui/core/Link';
 import AppBar from '../components/AppBar';
 import SignIn from '../../../../components/SignIn/SignIn';
 import Button from '../../../../components/CustomButtons/Button';
+import Typography from '../components/Typography';
 import Toolbar, { styles as toolbarStyles } from '../components/Toolbar';
 import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import Box from '@material-ui/core/Box';
@@ -38,7 +39,8 @@ const styles = (theme) => ({
   placeholder: toolbarStyles(theme).root,
   toolbar: {
     justifyContent: 'space-between',
-    position: 'relative'
+    position: 'relative',
+    height: '7vh'
   },
   left: {
     flex: 1,
@@ -83,7 +85,7 @@ const styles = (theme) => ({
 function AppAppBar(props) {
   const { classes, api_functions } = props;
   return (
-    <div>
+    <div style={{height: '7vh'}}>
       <AppBar position="fixed">
         <Toolbar className={classes.toolbar}>
           <Link
@@ -98,8 +100,8 @@ function AppAppBar(props) {
           <Box className={classes.buttonWrapper}>
             <SignIn api_functions={api_functions}
               component={(props) => (
-                <Button size='lg' color='primary' startIcon={<PowerSettingsNewIcon/>} onClick={props.onClick}>
-                  Power On
+                <Button size='md' color='primary' startIcon={<PowerSettingsNewIcon/>} onClick={props.onClick}>
+                  <Typography variant="body1">Power On</Typography>
                 </Button>
               )}
             />

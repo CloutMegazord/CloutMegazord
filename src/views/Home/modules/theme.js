@@ -100,11 +100,11 @@ const theme = {
     h4: {
       ...rawTheme.typography.h4,
       ...fontHeader,
-      fontSize: 36,
+      fontSize: 'max(3vw, 20px)',//36
     },
     h5: {
       ...rawTheme.typography.h5,
-      fontSize: 20,
+      fontSize: 'max(2vw, 20px)',//20
       fontWeight: rawTheme.typography.fontWeightLight,
     },
     h6: {
@@ -119,12 +119,12 @@ const theme = {
     body1: {
       ...rawTheme.typography.body2,
       fontWeight: rawTheme.typography.fontWeightRegular,
-      fontSize: 16,
+      fontSize: 'max(1vw, 16px)',//,
     },
     body2: {
-      ...rawTheme.typography.body1,
-      fontSize: 14,
-    },
+      ...rawTheme.typography.body2,
+      fontSize: 'max(.7vw, 14px)',//,
+    }
   },
 };
 

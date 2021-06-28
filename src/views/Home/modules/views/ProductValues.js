@@ -42,7 +42,7 @@ function ProductValues(props) {
 
   return (
     <section className={classes.root} id='product'>
-      <Container className={classes.container}>
+      <Container maxWidth={false} className={classes.container}>
         <img
           src="/static/themes/onepirate/productCurvyLines.png"
           className={classes.curvyLines}
