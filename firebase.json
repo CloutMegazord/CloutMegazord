@@ -32,5 +32,12 @@
   },
   "storage": {
     "rules": "storage.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "ignore": [
+      "**/config/firebase.json",
+      "**/node_modules/**"
+    ]
   }
 }

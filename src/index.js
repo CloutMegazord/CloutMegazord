@@ -111,30 +111,31 @@ const hist = createBrowserHistory();
         this.setState({bitcloutData: bitcloutData});
       }).catch(err => {})
       if (isSignedIn) {
-        if (!this.state.user) {
-          api_functions.onUserData(userAuth.uid, (userData) => {
-            for (let megazordId in userData.megazordsIds) {
-              userData.megazords = userData.megazords || {};
-              if(self.state.megazords[megazordId]) {
-                userData.megazords[megazordId] = self.state.megazords[megazordId];
-              } else {
-                api_functions.onMegazordData(megazordId, userData, (megazordData) => {
-                  let megazordsState = self.state.megazords;
-                  megazordsState[megazordData.id] = megazordData;
-                  self.setState({megazords: megazordsState});
-                  let userState = self.state.user;
-                  userState.megazords = userState.megazords || {};
-                  userState.megazords[megazordData.id] = megazordData;
-                  self.setState({user: userState});
-                })
-              }
-            }
-            this.setState({user: userData});
-          })
-        }
         var targ = window.location.href.split('/').map(it => '/' + it)
         if (targ.includes('/admin') === false) {
           this.setState({redirect: '/landing/home'});
+        } else {
+          if (!this.state.user) {
+            api_functions.onUserData(userAuth.uid, (userData) => {
+              for (let megazordId in userData.megazordsIds) {
+                userData.megazords = userData.megazords || {};
+                if(self.state.megazords[megazordId]) {
+                  userData.megazords[megazordId] = self.state.megazords[megazordId];
+                } else {
+                  api_functions.onMegazordData(megazordId, userData, (megazordData) => {
+                    let megazordsState = self.state.megazords;
+                    megazordsState[megazordData.id] = megazordData;
+                    self.setState({megazords: megazordsState});
+                    let userState = self.state.user;
+                    userState.megazords = userState.megazords || {};
+                    userState.megazords[megazordData.id] = megazordData;
+                    self.setState({user: userState});
+                  })
+                }
+              }
+              this.setState({user: userData});
+            })
+          }
         }
       } else {
         this.setState({redirect: '/landing/home'});
