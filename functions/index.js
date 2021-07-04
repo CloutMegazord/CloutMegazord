@@ -25,16 +25,16 @@ const bitcloutCahceExpire = {
   "get-app-state": 24 * 60 * 60 * 1000,
 };
 const taskSessionsExpire = 10 * 60 * 1000;
-
+if (process.env.NODE_ENV === "development") {
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
+}
 admin.initializeApp();
 const db = admin.database();
 const auth = admin.auth();
-
 if (process.env.NODE_ENV === "development") {
   db.useEmulator("localhost", 9000);
   CMEndpoint = "http://localhost:3000";
   signingEndpoint = "http://localhost:7000";
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
 } else {
   signingEndpoint = "https://signing-cloutmegazord.web.app";
   CMEndpoint = "https://cloutmegazord.com";

@@ -4,6 +4,7 @@ import {
   InputAmount,
   BitcloutAccountItem,
   Description,
+  UploadFile,
   FounderReward,
   UploadImage} from "components/FormControls/FormControls";
 
@@ -16,6 +17,7 @@ const getPublicKey = (data) => {
   const megazord = data.megazord;
   const user = data.user;
   return {
+    name: 'Get Public Key',
     controls: [
       {
         name: 'Recipient',
@@ -37,95 +39,91 @@ const getPublicKey = (data) => {
 }
 
 const updateProfile = (data) => {
-  const {megazord, user, api_functions} = data;
-  megazord.Username = 'Target Megazord'
+  const {megazord, user, indexFunctons} = data;
   const postfix = '\n@mgzd'
-  const validateRecipient = (account) => {
-    if (account.id === user.id) {
-      throw Error('Cant send to self Megazord.');
-    }
-    return true
-  }
   const validateUsername = (account) => {
-    if (account.id) {
+    if (account) {
+      indexFunctons.notifSnak('open', 'error', 'Name already used', 2000);
       throw Error('Cant send to self Megazord.');
     }
     return true
   }
 
+  const validateAvatar = (fileToUpload) => {
+    let errorMessage = '';
+    if (!fileToUpload.type || !fileToUpload.type.startsWith("image/")) {
+      errorMessage = "File selected does not have an image file type."
+      indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
+      throw Error(errorMessage);
+    }
+    if (fileToUpload.size > 5 * 1024 * 1024) {
+      errorMessage = "Please upload an image that is smaller than 5MB.";
+      indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
+      throw Error(errorMessage);
+    }
+    return true
+  }
+
   return {
+    name: 'Update Profile',
     controls: [
       {
         name: 'Recipient',
-        component: <BitcloutAccountItem
-          htmlId='updateProfile_Recipient_value'
-          item={megazord}
-          label={'Recipient'}
-          value={megazord.Username || megazord.PubKeyShort || "TargetMegazord"}/>,
-        possibleValue: megazord.Username || megazord.PubKeyShort || "TargetMegazord",
-        // possibleInputType: ['Current Account'],
-        disabled: true
-      },
-      {
-        name: 'Username',
         component:  <InputBitcloutAccount
-          placeholder={ "Input Name or Public Key"}
+          placeholder={"Username"}
           validate={validateUsername}
           user={user}
-          htmlId="update_name_id"
-          valueProp={megazord.Username || ''}
+          htmlIds={{RecipientUsername: "send_RecipientUsername_value"}}
+          valueProp=''
         />,
-        possibleValue: "*",
+        values: {
+          RecipientUsername: {id: 'send_RecipientUsername_value', required: true, type:'string'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
         name: 'Description',
         component:  <Description
-          placeholder={"Bitclout Account Description"}
+          label={"Bitclout Account Description"}
+          htmlIds={{Description: "updateProfile_Description_value"}}
           maxLength={280 - postfix.length}
           postfix={postfix}
           user={user}
           htmlId="update_name_id"
           valueProp={megazord.Description || ''}
         />,
-        possibleValue: "*",
+        values: {
+          RecipientUsername: {id: 'updateProfile_Description_value', required: true, type:'string'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
         name: 'Avatar',
-        component:  <UploadImage
-          maxSize="1mb"
+        component:  <UploadFile
+          maxSize={5 * 1024 * 1024}
           user={user}
-          htmlId="updload_avatar_id"
+          validate={validateAvatar}
+          globalIds={{Avatar: "updateProfile_avatar"}}
           valueProp={megazord.ProfilePic}
         />,
-        possibleValue: "*",
+        //get from window object
+        values: {
+          RecipientUsername: {globalName: 'updateProfile_avatar', required: true, type:'string'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
         name: 'Founder Reward Percentage',
         component:  <FounderReward
-          htmlId="founder_reward_id"
+        htmlIds={{FR: "send_RecipientUsername_value"}}
           valueProp={megazord.ProfilePic}
         />,
-        possibleValue: "*",
-        // possibleInputType: ['Current Account'],
-        disabled: false
-      },
-      {
-        name: 'Task Description',
-        component:  <Description
-          placeholder={"Task  Description"}
-          maxLength={1000}
-          postfix={postfix}
-          user={user}
-          htmlId="update_name_id"
-          valueProp={megazord.Description || ''}
-        />,
-        possibleValue: "*",
+        values: {
+          RecipientUsername: {id: 'updateProfile_FR', required: true, type:'float'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       }
@@ -147,7 +145,7 @@ const send = (data) => {
   const validateCurrencies = (currency) => {
     if (currency !== "$ClOUT" && wallet['$ClOUT'].BalanceNanos < 100000) {
       indexFunctons.notifSnak('open', 'error', 'Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)', 7000);
-      return false;
+      throw Error('Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)');
     }
     return true;
   }
@@ -162,6 +160,7 @@ const send = (data) => {
     }, {})
   )
   return {
+    name: 'Send',
     controls: [
       {
         name: 'Recipient',
@@ -254,7 +253,7 @@ const sell = (user) => {
 
 export default {
   getPublicKey,
-  // updateProfile,
+  updateProfile,
   send: send,
   // buy,
   // sell

@@ -121,7 +121,7 @@ function CreateTask(props) {
   var tasksMap = {}
   for (let key in TasksMap) {
     tasksMap[key] = TasksMap[key]({user, megazord, api_functions, exchangeRate, indexFunctons});
-    tasksTypes[tasksMap[key].order] = {key, disabled: tasksMap[key].disabled}
+    tasksTypes[tasksMap[key].order] = {name: tasksMap[key].name, key, disabled: tasksMap[key].disabled}
   }
   if (taskType) {
     var taskForm = tasksMap[taskType]
@@ -142,9 +142,16 @@ function CreateTask(props) {
     var taskResult = {type: taskType};
     for (let control of taskForm.controls) {
       for (let valueName in control.values) {
-        taskResult[valueName] = document.getElementById(control.values[valueName].id).value
+        if (control.values[valueName].id) {
+          taskResult[valueName] = document.getElementById(control.values[valueName].id).value
+        } else if (control.values[valueName].globalName) {
+          taskResult[valueName] = window[control.values[valueName].globalName];
+        }
         if (control.values[valueName].type === 'integer') {
           taskResult[valueName] = parseInt(taskResult[valueName])
+        }
+        if (control.values[valueName].type === 'float') {
+          taskResult[valueName] = parseFloat(taskResult[valueName])
         }
         if (!taskResult[valueName] && control.values[valueName].required) {
           alert(`fill in ${control.name} field`)
@@ -203,7 +210,7 @@ function CreateTask(props) {
                   <MenuItem
                     key={item.key}
                     id={item.key}
-                    value={item.disabled ? '' : item.key}>{item.key + (item.disabled ? ' (soon)' : '')}</MenuItem>)
+                    value={item.disabled ? '' : item.key}>{item.name + (item.disabled ? ' (soon)' : '')}</MenuItem>)
               })}
             </Select>
           </FormControl>

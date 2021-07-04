@@ -140,6 +140,9 @@ async function getBitcloutAcc(publicKey = "", Username = "") {
     )
     .then((resp) => resp.data);
   var Profile = respData.data.Profile;
+  if (!Profile) {
+    return null
+  }
   Profile.id = Profile.PublicKeyBase58Check;
   Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 12) + "...";
   Profile.ProfilePic = Profile.ProfilePic || defaultAvatar;
