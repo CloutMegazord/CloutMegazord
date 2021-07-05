@@ -26,16 +26,15 @@ const bitcloutCahceExpire = {
 };
 const taskSessionsExpire = 10 * 60 * 1000;
 
-process.env.NODE_ENV = config.get("env");
-process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
-
 admin.initializeApp();
 const db = admin.database();
 const auth = admin.auth();
+
 if (process.env.NODE_ENV === "development") {
   db.useEmulator("localhost", 9000);
   CMEndpoint = "http://localhost:3000";
   signingEndpoint = "http://localhost:7000";
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
 } else {
   signingEndpoint = "https://signing-cloutmegazord.web.app";
   CMEndpoint = "https://cloutmegazord.com";
@@ -47,8 +46,10 @@ const whitelist = [
   "https://us-central1-cloutmegazord.cloudfunctions.net",
   CMEndpoint,
   signingEndpoint,
+  "https://bogdandidenko.github.io",
   "http://localhost:3000",
   "http://localhost:5001",
+  "http://localhost:5000"
 ];
 app.use(
   cors({
@@ -752,23 +753,23 @@ app.post("/api/task", async (req, res, next) => {
 
 exports.api = functions.https.onRequest(app);
 
-exports.shortener = functions.https.onRequest(async (req, res) => {
-  var subNamesMap = { t: "tasks" };
-  var pathSplit = req.path.split("/");
-  var subName = subNamesMap[pathSplit[2]];
-  var shrtLink = pathSplit.pop();
-  var snapshot = await db
-    .ref("shortener/" + subName)
-    .child(shrtLink)
-    .get();
-  if (snapshot.exists()) {
-    var link = snapshot.val().link;
-  } else {
-    res.status(404).send("Page Not Flound");
-  }
-  res.writeHead(302, {
-    Location: link,
-    //add other headers here...
-  });
-  res.end();
-});
+// exports.shortener = functions.https.onRequest(async (req, res) => {
+//   var subNamesMap = { t: "tasks" };
+//   var pathSplit = req.path.split("/");
+//   var subName = subNamesMap[pathSplit[2]];
+//   var shrtLink = pathSplit.pop();
+//   var snapshot = await db
+//     .ref("shortener/" + subName)
+//     .child(shrtLink)
+//     .get();
+//   if (snapshot.exists()) {
+//     var link = snapshot.val().link;
+//   } else {
+//     res.status(404).send("Page Not Flound");
+//   }
+//   res.writeHead(302, {
+//     Location: link,
+//     //add other headers here...
+//   });
+//   res.end();
+// });

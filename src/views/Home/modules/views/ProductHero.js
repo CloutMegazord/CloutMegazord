@@ -68,6 +68,7 @@ const styles = (theme) => ({
     }
   },
   shadowWrapper: {
+    width: '85%',
     borderRadius: "0 30px 0 0",
     boxShadow: "12px 0 15px -4px rgba(31, 73, 125, 0.8), -12px 0 8px -4px rgba(31, 73, 125, 0.8);",
     overflow: "hidden"

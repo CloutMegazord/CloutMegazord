@@ -1,5 +1,4 @@
 {
-    "env": "development", 
     "test_env": true,
     "firebase": "config/firebase.json",
     "mgzPubKey": "BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE"

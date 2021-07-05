@@ -100,56 +100,44 @@ class App extends React.Component {
       userAuth.getIdToken(true).then(function (idToken) {
         api_functions.authToken = idToken;
       });
-    };
-    this.unregisterAuthObserver = firebaseApp
-      .auth()
-      .onAuthStateChanged((userAuth) => {
-        var self = this;
-        if (userAuth) {
-          updateIdToken(userAuth);
-          setInterval(() => updateIdToken(userAuth), 60 * 1000);
-        }
-        const isSignedIn = !!userAuth;
-        this.setState({ isSignedIn });
-        api_functions
-          .getBitcloutData()
-          .then((bitcloutData) => {
-            this.setState({ bitcloutData: bitcloutData });
-          })
-          .catch((err) => {});
-        if (isSignedIn) {
+    }
+    this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
+      var self = this;
+      if (userAuth) {
+        updateIdToken(userAuth);
+        setInterval(() => updateIdToken(userAuth), 60*1000)
+      }
+      const isSignedIn = !!userAuth;
+      this.setState({isSignedIn})
+      api_functions.getBitcloutData().then(bitcloutData => {
+        this.setState({bitcloutData: bitcloutData});
+      }).catch(err => {})
+      if (isSignedIn) {
+        var targ = window.location.href.split('/').map(it => '/' + it)
+        if (targ.includes('/admin') === false) {
+          this.setState({redirect: '/landing/home'});
+        } else {
           if (!this.state.user) {
             api_functions.onUserData(userAuth.uid, (userData) => {
               for (let megazordId in userData.megazordsIds) {
                 userData.megazords = userData.megazords || {};
-                if (self.state.megazords[megazordId]) {
-                  userData.megazords[megazordId] =
-                    self.state.megazords[megazordId];
+                if(self.state.megazords[megazordId]) {
+                  userData.megazords[megazordId] = self.state.megazords[megazordId];
                 } else {
-                  api_functions.onMegazordData(
-                    megazordId,
-                    userData,
-                    (megazordData) => {
-                      let megazordsState = self.state.megazords;
-                      megazordsState[megazordData.id] = megazordData;
-                      self.setState({ megazords: megazordsState });
-                      let userState = self.state.user;
-                      userState.megazords = userState.megazords || {};
-                      userState.megazords[megazordData.id] = megazordData;
-                      self.setState({ user: userState });
-                    }
-                  );
+                  api_functions.onMegazordData(megazordId, userData, (megazordData) => {
+                    let megazordsState = self.state.megazords;
+                    megazordsState[megazordData.id] = megazordData;
+                    self.setState({megazords: megazordsState});
+                    let userState = self.state.user;
+                    userState.megazords = userState.megazords || {};
+                    userState.megazords[megazordData.id] = megazordData;
+                    self.setState({user: userState});
+                  })
                 }
               }
-              this.setState({ user: userData });
-            });
+              this.setState({user: userData});
+            })
           }
-          var targ = window.location.href.split("/").map((it) => "/" + it);
-          if (targ.includes("/admin") === false) {
-            this.setState({ redirect: "/landing/home" });
-          }
-        } else {
-          this.setState({ redirect: "/landing/home" });
         }
       });
   }
