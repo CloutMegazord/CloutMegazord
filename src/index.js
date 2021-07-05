@@ -93,6 +93,7 @@ class App extends React.Component {
    */
   componentDidMount() {
     var timer;
+    var targ = window.location.href.split('/').map(it => '/' + it)
     api_functions.onError((e) => {
       this.notifSnak("open", "error", e.toString(), 7000);
     });
@@ -113,7 +114,6 @@ class App extends React.Component {
         this.setState({bitcloutData: bitcloutData});
       }).catch(err => {})
       if (isSignedIn) {
-        var targ = window.location.href.split('/').map(it => '/' + it)
         if (targ.includes('/admin') === false) {
           this.setState({redirect: '/landing/home'});
         } else {
@@ -139,7 +139,12 @@ class App extends React.Component {
             })
           }
         }
-      });
+      } else {
+        if (targ.includes('/admin')) {
+          this.setState({redirect: '/landing/home'});
+        }
+      }
+    });
   }
 
   /**
