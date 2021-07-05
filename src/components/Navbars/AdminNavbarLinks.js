@@ -5,6 +5,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import MenuItem from "@material-ui/core/MenuItem";
 import MenuList from "@material-ui/core/MenuList";
 import Link from "@material-ui/core/Link";
+import { Typography } from "@material-ui/core";
 
 import Grow from "@material-ui/core/Grow";
 import Paper from "@material-ui/core/Paper";
@@ -105,9 +106,9 @@ export default function AdminNavbarLinks(props) {
       });
     }
   };
-
+  const id = Boolean(openNotification) ? "simple-popover" : undefined;
   return (
-    <div>
+    <div style={{ display: "flex", alignItems: "center" }}>
       {/* <div className={classes.searchWrapper}>
         <CustomInput
           formControlProps={{
@@ -152,63 +153,49 @@ export default function AdminNavbarLinks(props) {
               {notifications_count <= 10 ? notifications_count : 10}
             </span>
           )}
-          <Hidden mdUp implementation="css">
-            <p onClick={handleCloseNotification} className={classes.linkText}>
-              Notification
-            </p>
-          </Hidden>
         </Button>
         <Poppers
           open={Boolean(openNotification)}
           anchorEl={openNotification}
-          transition
-          disablePortal
-          className={
-            classNames({ [classes.popperClose]: !openNotification }) +
-            " " +
-            classes.popperNav
-          }
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "center",
+          }}
+          className={classes.popperNav}
         >
-          {({ TransitionProps, placement }) => (
-            <Grow
-              {...TransitionProps}
-              id="notification-menu-list-grow"
-              style={{
-                transformOrigin:
-                  placement === "bottom" ? "center top" : "center bottom",
-              }}
-            >
-              <Paper>
-                <ClickAwayListener onClickAway={handleCloseNotification}>
-                  <MenuList role="menu">
-                    {Object.keys(notifications)
-                      ?.slice(-10)
-                      ?.reverse()
-                      ?.map((key) => {
-                        return (
-                          <MenuItem
-                            key={key}
-                            onClick={() => handleClickNotificationItem(key)}
-                            className={classNames(classes.dropdownItem, {
-                              [classes.notificationItemDisabled]:
-                                notifications[key].status ===
-                                NOTIFICATION_STATUSES.READ,
-                            })}
-                          >
-                            {notifications[key].message.replace(
-                              "%username%",
-                              Username
-                            ) +
-                              " " +
-                              getDateStringServ(notifications[key].ts)}
-                          </MenuItem>
-                        );
-                      })}
-                  </MenuList>
-                </ClickAwayListener>
-              </Paper>
-            </Grow>
-          )}
+          <Paper>
+            <ClickAwayListener onClickAway={handleCloseNotification}>
+              <MenuList role="menu">
+                {Object.keys(notifications || {})
+                  ?.slice(-10)
+                  ?.reverse()
+                  ?.map((key) => {
+                    return (
+                      <div
+                        style={{
+                          whiteSpace: "normal",
+                          maxWidth: "80vw",
+                        }}
+                        key={key}
+                        onClick={() => handleClickNotificationItem(key)}
+                        className={classNames(classes.dropdownItem, {
+                          [classes.notificationItemDisabled]:
+                            notifications[key].status ===
+                            NOTIFICATION_STATUSES.READ,
+                        })}
+                      >
+                        {notifications[key].message.replace(
+                          "%username%",
+                          Username
+                        ) +
+                          " " +
+                          getDateStringServ(notifications[key].ts)}
+                      </div>
+                    );
+                  })}
+              </MenuList>
+            </ClickAwayListener>
+          </Paper>
         </Poppers>
       </div>
       <div className={classes.manager}>
@@ -228,20 +215,12 @@ export default function AdminNavbarLinks(props) {
           )}
           {/* <SvgIcon /> */}
           {/* <Person className={classes.icons} /> */}
-          <Hidden mdUp implementation="css">
-            <p className={classes.linkText}>Profile</p>
-          </Hidden>
         </Button>
         <Poppers
           open={Boolean(openProfile)}
           anchorEl={openProfile}
           transition
-          disablePortal
-          className={
-            classNames({ [classes.popperClose]: !openProfile }) +
-            " " +
-            classes.popperNav
-          }
+          className={classes.popperNav}
         >
           {({ TransitionProps, placement }) => (
             <Grow

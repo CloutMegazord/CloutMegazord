@@ -10,8 +10,8 @@ import Navbar from "components/Navbars/Navbar.js";
 import Footer from "components/Footer/Footer.js";
 import Sidebar from "components/Sidebar/Sidebar.js";
 import FixedPlugin from "components/FixedPlugin/FixedPlugin.js";
-import Backdrop from '@material-ui/core/Backdrop';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import Backdrop from "@material-ui/core/Backdrop";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 import routes from "routes.js";
 
@@ -22,17 +22,13 @@ import logo from "assets/img/text-logo-2.svg";
 
 let ps;
 function getSwitchRoutes(props) {
-
   return (
     <Switch>
       {routes.map((prop, key) => {
         if (prop.layout === "/admin") {
           return (
-            <Route
-              path={prop.layout + prop.path}
-              key={key}
-            >
-              <prop.component {...props}/>
+            <Route path={prop.layout + prop.path} key={key}>
+              <prop.component {...props} />
             </Route>
           );
         }
@@ -47,7 +43,7 @@ const useStyles = makeStyles(styles);
 const useStyles2 = makeStyles((theme) => ({
   backdrop: {
     zIndex: theme.zIndex.drawer + 1,
-    color: '#fff',
+    color: "#fff",
   },
 }));
 
@@ -63,10 +59,10 @@ export default function Admin({ ...rest }) {
   rest.setOpenBackdrop = setOpenBackdrop;
   const [fixedClasses, setFixedClasses] = React.useState("dropdown show");
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const handleImageClick = image => {
+  const handleImageClick = (image) => {
     setImage(image);
   };
-  const handleColorClick = color => {
+  const handleColorClick = (color) => {
     setColor(color);
   };
   const handleFixedClick = () => {
@@ -92,7 +88,7 @@ export default function Admin({ ...rest }) {
     if (navigator.platform.indexOf("Win") > -1) {
       ps = new PerfectScrollbar(mainPanel.current, {
         suppressScrollX: true,
-        suppressScrollY: false
+        suppressScrollY: false,
       });
       document.body.style.overflow = "hidden";
     }

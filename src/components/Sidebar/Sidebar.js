@@ -17,7 +17,6 @@ import RTLNavbarLinks from "components/Navbars/RTLNavbarLinks.js";
 
 import styles from "assets/jss/material-dashboard-react/components/sidebarStyle.js";
 
-
 const useStyles = makeStyles(styles);
 
 export default function Sidebar(props) {
@@ -27,60 +26,62 @@ export default function Sidebar(props) {
   function activeRoute(routeName) {
     return location.pathname === routeName;
   }
-  const { color, logo, image, logoText, routes } = props;
-  const avlable_routes = ['/megazordslist', '/settings']//, '/settings'
+  const { color, logo, image, logoText, routes, rtlActive } = props;
+  const avlable_routes = ["/megazordslist", "/settings"]; //, '/settings'
   var links = (
     <List className={classes.list}>
-      {routes.filter((prop, key) => avlable_routes.includes(prop.path)).map((prop, key) => {
-        var activePro = " ";
-        var listItemClasses;
-        if (prop.path === "/upgrade-to-pro") {
-          activePro = classes.activePro + " ";
-          listItemClasses = classNames({
-            [" " + classes[color]]: true,
+      {routes
+        .filter((prop, key) => avlable_routes.includes(prop.path))
+        .map((prop, key) => {
+          var activePro = " ";
+          var listItemClasses;
+          if (prop.path === "/upgrade-to-pro") {
+            activePro = classes.activePro + " ";
+            listItemClasses = classNames({
+              [" " + classes[color]]: true,
+            });
+          } else {
+            listItemClasses = classNames({
+              [" " + classes[color]]: activeRoute(prop.layout + prop.path),
+            });
+          }
+          const whiteFontClasses = classNames({
+            [" " + classes.whiteFont]: activeRoute(prop.layout + prop.path),
           });
-        } else {
-          listItemClasses = classNames({
-            [" " + classes[color]]: activeRoute(prop.layout + prop.path),
-          });
-        }
-        const whiteFontClasses = classNames({
-          [" " + classes.whiteFont]: activeRoute(prop.layout + prop.path),
-        });
-        return (
-          <NavLink
-            to={prop.layout + prop.path}
-            className={activePro + classes.item}
-            activeClassName="active"
-            key={key}
-          >
-            <ListItem button className={classes.itemLink + listItemClasses}>
-              {typeof prop.icon === "string" ? (
-                <Icon
-                  className={classNames(classes.itemIcon, {
-                    [classes.itemIconRTL]: props.rtlActive,
+          return (
+            <NavLink
+              to={prop.layout + prop.path}
+              className={activePro + classes.item}
+              activeClassName="active"
+              key={key}
+            >
+              <ListItem button className={classes.itemLink + listItemClasses}>
+                {typeof prop.icon === "string" ? (
+                  <Icon
+                    className={classNames(classes.itemIcon, {
+                      [classes.itemIconRTL]: props.rtlActive,
+                    })}
+                  >
+                    {prop.icon}
+                  </Icon>
+                ) : (
+                  <prop.icon
+                    className={classNames(classes.itemIcon, {
+                      [classes.itemIconRTL]: props.rtlActive,
+                    })}
+                  />
+                )}
+                <ListItemText
+                  primary={props.rtlActive ? prop.rtlName : prop.name}
+                  className={classNames(classes.itemText, {
+                    [classes.itemTextRTL]: props.rtlActive,
                   })}
-                >
-                  {prop.icon}
-                </Icon>
-              ) : (
-                <prop.icon
-                  className={classNames(classes.itemIcon, {
-                    [classes.itemIconRTL]: props.rtlActive,
-                  })}
+                  disableTypography={true}
                 />
-              )}
-              <ListItemText
-                primary={props.rtlActive ? prop.rtlName : prop.name}
-                className={classNames(classes.itemText, {
-                  [classes.itemTextRTL]: props.rtlActive,
-                })}
-                disableTypography={true}
-              />
-            </ListItem>
-          </NavLink>
-        );
-      })}
+              </ListItem>
+            </NavLink>
+          );
+        })}
     </List>
   );
   var brand = (
@@ -104,13 +105,9 @@ export default function Sidebar(props) {
       <Hidden mdUp implementation="css">
         <Drawer
           variant="temporary"
-          anchor={props.rtlActive ? "left" : "right"}
+          anchor={props.rtlActive ? "right" : "left"}
+          open
           open={props.open}
-          classes={{
-            paper: classNames(classes.drawerPaper, {
-              [classes.drawerPaperRTL]: props.rtlActive,
-            }),
-          }}
           onClose={props.handleDrawerToggle}
           ModalProps={{
             keepMounted: true, // Better open performance on mobile.

@@ -22,12 +22,13 @@ import { Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
 import Snackbar from "components/Snackbar/Snackbar.js";
 import AddAlert from "@material-ui/icons/AddAlert";
 import Icon from "@material-ui/core/Icon";
-import InfoIcon from '@material-ui/icons/Info';
+import InfoIcon from "@material-ui/icons/Info";
+import { ThemeProvider, createMuiTheme } from "@material-ui/core/styles";
 
 // Firebase.
-import firebase from 'firebase/app';
-import 'firebase/auth';
-import { firebaseApp, api_functions} from './firebase_init';
+import firebase from "firebase/app";
+import "firebase/auth";
+import { firebaseApp, api_functions } from "./firebase_init";
 
 import Admin from "layouts/Admin.js";
 import Landing from "layouts/Landing.js";
@@ -57,13 +58,14 @@ console.log(mergedArray);
 import "assets/css/material-dashboard-react.css?v=1.9.0";
 
 const hist = createBrowserHistory();
+const theme = createMuiTheme({});
+
 /**
  * The Splash Page containing the login UI.
  */
- class App extends React.Component {
-
+class App extends React.Component {
   uiConfig = {
-    signInFlow: 'popup',
+    signInFlow: "popup",
     signInOptions: [
       firebase.auth.PhoneMultiFactorGenerator.PROVIDER_ID,
       firebase.auth.EmailAuthProvider.PROVIDER_ID,
@@ -81,7 +83,7 @@ const hist = createBrowserHistory();
     notifSnak: {
       infoOpen: false,
       errorOpen: false,
-      message: ''
+      message: "",
     },
     bitcloutData: null,
   };
@@ -91,11 +93,11 @@ const hist = createBrowserHistory();
    */
   componentDidMount() {
     var timer;
-    api_functions.onError((e)=>{
-      this.notifSnak('open', 'error', e.toString(), 7000);
+    api_functions.onError((e) => {
+      this.notifSnak("open", "error", e.toString(), 7000);
     });
     const updateIdToken = (userAuth) => {
-      userAuth.getIdToken(true).then(function(idToken) {
+      userAuth.getIdToken(true).then(function (idToken) {
         api_functions.authToken = idToken;
       });
     }
@@ -137,10 +139,7 @@ const hist = createBrowserHistory();
             })
           }
         }
-      } else {
-        this.setState({redirect: '/landing/home'});
-      }
-    });
+      });
   }
 
   /**
@@ -152,33 +151,33 @@ const hist = createBrowserHistory();
   }
 
   notifSnak(action, type, message, duration) {
-    let isOpen = (action === 'open') ? true : false;
+    let isOpen = action === "open" ? true : false;
     let notifSnak = this.state.notifSnak;
     for (let k in notifSnak) {
       if (notifSnak[k] === true) {
         notifSnak[k] = false;
       }
     }
-    notifSnak[type + 'Open'] = isOpen;
-    notifSnak.message = message || '';
-    this.setState({notifSnak: notifSnak});
-    if (action === 'open' && duration) {
+    notifSnak[type + "Open"] = isOpen;
+    notifSnak.message = message || "";
+    this.setState({ notifSnak: notifSnak });
+    if (action === "open" && duration) {
       const self = this;
-      setTimeout(() =>{
+      setTimeout(() => {
         for (let k in notifSnak) {
           if (notifSnak[k] === true) {
             notifSnak[k] = false;
           }
         }
-        notifSnak.message = ''
-        self.setState({notifSnak: notifSnak});
-      }, duration)
+        notifSnak.message = "";
+        self.setState({ notifSnak: notifSnak });
+      }, duration);
     }
   }
 
   validatePath() {
-    var targ = window.location.href.split('/').map(it => '/' + it);
-    return targ.includes('/admin');
+    var targ = window.location.href.split("/").map((it) => "/" + it);
+    return targ.includes("/admin");
   }
 
   /**
@@ -186,7 +185,7 @@ const hist = createBrowserHistory();
    */
   render() {
     return (
-      <div>
+      <ThemeProvider theme={theme}>
         <Router history={hist}>
           <Switch>
             <Route path="/landing">
@@ -196,15 +195,19 @@ const hist = createBrowserHistory();
             {/* <Route path="/admin" component={Admin} />
             <Redirect from="/" to="/admin/dashboard" /> */}
             {/* {this.state.isSignedIn === true && */}
-              <Route path="/admin">
-                <Admin api_functions={api_functions} user={this.state.user}
-                  bitcloutData={this.state.bitcloutData} indexFunctons={{notifSnak:this.notifSnak.bind(this)}} ></Admin>
-              </Route>
+            <Route path="/admin">
+              <Admin
+                api_functions={api_functions}
+                user={this.state.user}
+                bitcloutData={this.state.bitcloutData}
+                indexFunctons={{ notifSnak: this.notifSnak.bind(this) }}
+              />
+            </Route>
             {/* } */}
           </Switch>
-          {this.state.isSignedIn !== undefined &&
+          {this.state.isSignedIn !== undefined && (
             <Redirect to={this.state.redirect} />
-          }
+          )}
         </Router>
         <Snackbar
           place="tc"
@@ -213,7 +216,7 @@ const hist = createBrowserHistory();
           message={this.state.notifSnak.message}
           open={this.state.notifSnak.errorOpen}
           autoHideDuration={1000}
-          closeNotification={()=>this.notifSnak('close', 'error')}
+          closeNotification={() => this.notifSnak("close", "error")}
           close
         />
         <Snackbar
@@ -223,7 +226,7 @@ const hist = createBrowserHistory();
           message={this.state.notifSnak.message}
           open={this.state.notifSnak.infoOpen}
           autoHideDuration={1000}
-          closeNotification={()=>this.notifSnak('close', 'info')}
+          closeNotification={() => this.notifSnak("close", "info")}
           close
         />
         {/* <Snackbar open={this.state.errorOpen} autoHideDuration={4000} onClose={(event, reason)=>this.handleErrorClose(event, reason)}>
@@ -231,26 +234,26 @@ const hist = createBrowserHistory();
             Error: {errorText}
           </Alert>
         </Snackbar> */}
-      </div>
+      </ThemeProvider>
     );
-      // <div className={styles.container}>
-      //   <div className={styles.logo}>
-      //     <i className={styles.logoIcon + ' material-icons'}>photo</i> My App
-      //   </div>
-      //   <div className={styles.caption}>This is a cool demo app</div>
-      //   {this.state.isSignedIn !== undefined && !this.state.isSignedIn &&
-      //     <div>
-      //       <StyledFirebaseAuth className={styles.firebaseUi} uiConfig={this.uiConfig}
-      //                           firebaseAuth={firebaseApp.auth()}/>
-      //     </div>
-      //   }
-      //   {this.state.isSignedIn &&
-      //     <div className={styles.signedIn}>
-      //       Hello {firebaseApp.auth().currentUser.displayName}. You are now signed In!
-      //       <a className={styles.button} onClick={() => firebaseApp.auth().signOut()}>Sign-out</a>
-      //     </div>
-      //   }
-      // </div>
+    // <div className={styles.container}>
+    //   <div className={styles.logo}>
+    //     <i className={styles.logoIcon + ' material-icons'}>photo</i> My App
+    //   </div>
+    //   <div className={styles.caption}>This is a cool demo app</div>
+    //   {this.state.isSignedIn !== undefined && !this.state.isSignedIn &&
+    //     <div>
+    //       <StyledFirebaseAuth className={styles.firebaseUi} uiConfig={this.uiConfig}
+    //                           firebaseAuth={firebaseApp.auth()}/>
+    //     </div>
+    //   }
+    //   {this.state.isSignedIn &&
+    //     <div className={styles.signedIn}>
+    //       Hello {firebaseApp.auth().currentUser.displayName}. You are now signed In!
+    //       <a className={styles.button} onClick={() => firebaseApp.auth().signOut()}>Sign-out</a>
+    //     </div>
+    //   }
+    // </div>
   }
 }
 ReactDOM.render(<App></App>, document.getElementById("root"));
