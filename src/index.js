@@ -94,6 +94,10 @@ class App extends React.Component {
   componentDidMount() {
     var timer;
     var targ = window.location.href.split('/').map(it => '/' + it)
+    if (window.location.hostname === 'cloutmegazord.web.app') {
+      window.location.hostname = 'cloutmegazord.com';
+      return
+    }
     api_functions.onError((e) => {
       this.notifSnak("open", "error", e.toString(), 7000);
     });
@@ -140,7 +144,7 @@ class App extends React.Component {
           }
         }
       } else {
-        if (targ.includes('/admin')) {
+        if (targ.includes('/admin') || (window.location.pathname === '/')) {
           this.setState({redirect: '/landing/home'});
         }
       }
