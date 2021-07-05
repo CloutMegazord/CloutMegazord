@@ -13,6 +13,8 @@ import Menu from "@material-ui/icons/Menu";
 import AdminNavbarLinks from "./AdminNavbarLinks.js";
 import RTLNavbarLinks from "./RTLNavbarLinks.js";
 import Button from "components/CustomButtons/Button.js";
+import Popover from "@material-ui/core/Popover";
+import Typography from "@material-ui/core/Typography";
 
 import styles from "assets/jss/material-dashboard-react/components/headerStyle.js";
 
@@ -22,8 +24,8 @@ export default function Header(props) {
   const classes = useStyles();
   function makeBrand() {
     var name;
-    var targ = window.location.href.split('/').map(it => '/' + it)
-    props.routes.map(prop => {
+    var targ = window.location.href.split("/").map((it) => "/" + it);
+    props.routes.map((prop) => {
       if (targ.includes(prop.layout) && targ.includes(prop.path)) {
         name = props.rtlActive ? prop.rtlName : prop.name;
       }
@@ -31,22 +33,29 @@ export default function Header(props) {
     });
     return name;
   }
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? "simple-popover" : undefined;
   const { color, user, api_functions } = props;
-  const appBarClasses = classNames({
-    [" " + classes[color]]: color
-  });
+  // const appBarClasses = classNames({
+  //   [" " + classes[color]]: color,
+  // });
   return (
-    <AppBar className={classes.appBar + appBarClasses}>
-      <Toolbar className={classes.container}>
-        <div className={classes.flex}>
-          {/* Here we create navbar brand, based on route name */}
-          <Button color="transparent" href="#" className={classes.title}>
-            {makeBrand()}
-          </Button>
-        </div>
-        {/* <Hidden smDown implementation="css"> */}
-        <AdminNavbarLinks user={user} api_functions={api_functions}/>
-        {/* </Hidden> */}
+    <AppBar className={classes.appBar}>
+      {/* <AppBar className={classes.appBar + appBarClasses}> */}
+      <Toolbar
+        className={classes.container}
+        style={{ display: "flex", justifyContent: "space-between" }}
+      >
         <Hidden mdUp implementation="css">
           <IconButton
             color="inherit"
@@ -56,6 +65,43 @@ export default function Header(props) {
             <Menu />
           </IconButton>
         </Hidden>
+        {/* <Hidden smDown> */}
+        <div className={classes.flex}>
+          {/* Here we create navbar brand, based on route name */}
+          <Button color="transparent" href="#" className={classes.title}>
+            {makeBrand()}
+          </Button>
+        </div>
+        {/* </Hidden> */}
+        {/* <Hidden smDown implementation="css"> */}
+        <AdminNavbarLinks user={user} api_functions={api_functions} />
+        {/* <div style={{ background: "red" }}>
+          <Button
+            aria-describedby={id}
+            variant="contained"
+            color="primary"
+            onClick={handleClick}
+          >
+            Open Popover
+          </Button>
+          <Popover
+            id={id}
+            open={open}
+            anchorEl={anchorEl}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "center",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "center",
+            }}
+          >
+            <Typography>The content of the Popover.</Typography>
+          </Popover>
+        </div> */}
+        {/* </Hidden> */}
       </Toolbar>
     </AppBar>
   );
@@ -65,5 +111,5 @@ Header.propTypes = {
   color: PropTypes.oneOf(["primary", "info", "success", "warning", "danger"]),
   rtlActive: PropTypes.bool,
   handleDrawerToggle: PropTypes.func,
-  routes: PropTypes.arrayOf(PropTypes.object)
+  routes: PropTypes.arrayOf(PropTypes.object),
 };

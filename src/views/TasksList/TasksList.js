@@ -4,47 +4,23 @@ import { makeStyles } from "@material-ui/core/styles";
 // core components
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
-import Table from "components/Table/Table.js";
-import Input from "components/CustomInput/CustomInput.js"
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
-import CircularProgress from '@material-ui/core/CircularProgress'
 import Button from "components/CustomButtons/Button.js";
 import Tasks from "components/Tasks/Tasks.js";
 import TasksMap from "../../controlsmap";
-import CustomTabs from "components/CustomTabs/CustomTabs.js";
-import Icon from "@material-ui/core/Icon";
-import Avatar from '@material-ui/core/Avatar';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogActions from '@material-ui/core/DialogActions';
-import Dialog from '@material-ui/core/Dialog';
-import IconButton from "@material-ui/core/Icon";
-import DeleteIcon from '@material-ui/icons/Delete';
-import Link from "@material-ui/core/Link";
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import { bugs, website, server } from "variables/general.js";
-import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import Dialog from "@material-ui/core/Dialog";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
 import {
   grayColor,
-  primaryColor,
   secondaryColor,
-  infoColor,
-  successColor,
-  warningColor,
-  dangerColor,
-  roseColor,
-  whiteColor,
-  blackColor,
-  hexToRgb
 } from "assets/jss/material-dashboard-react.js";
 
 const styles = {
@@ -54,11 +30,11 @@ const styles = {
       margin: "0",
       fontSize: "14px",
       marginTop: "0",
-      marginBottom: "0"
+      marginBottom: "0",
     },
     "& a,& a:hover,& a:focus": {
-      color: "#FFFFFF"
-    }
+      color: "#FFFFFF",
+    },
   },
   cardTitleWhite: {
     color: "#FFFFFF",
@@ -72,66 +48,83 @@ const styles = {
       color: "#777",
       fontSize: "65%",
       fontWeight: "400",
-      lineHeight: "1"
-    }
-  }
+      lineHeight: "1",
+    },
+  },
 };
 
 function makeid(length) {
-  var result           = [];
-  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var result = [];
+  var characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   var charactersLength = characters.length;
-  for ( var i = 0; i < length; i++ ) {
-    result.push(characters.charAt(Math.floor(Math.random() *
-charactersLength)));
- }
- return result.join('');
+  for (var i = 0; i < length; i++) {
+    result.push(
+      characters.charAt(Math.floor(Math.random() * charactersLength))
+    );
+  }
+  return result.join("");
 }
 
 const useStyles = makeStyles(styles);
 const useCreateTaskStyles = makeStyles((theme) => ({
   paper: {
-   display: 'flex',
-   justifyContent: 'space-evenly'
+    display: "flex",
+    justifyContent: "space-evenly",
   },
   title: {
-    textAlign: 'center'
+    textAlign: "center",
   },
   formControl: {
     minWidth: theme.spacing(15),
-    margin: theme.spacing(1)
+    margin: theme.spacing(1),
   },
   taskForm: {
-    display: 'flex',
-    flexDirection: 'column',
-    minWidth: '30%'
-  }
+    display: "flex",
+    flexDirection: "column",
+    minWidth: "30%",
+  },
 }));
 
 function CreateTask(props) {
-  const { onCreate, onClose, open, user, megazord, api_functions, exchangeRate, indexFunctons, ...other } = props;
+  const {
+    onCreate,
+    onClose,
+    open,
+    user,
+    megazord,
+    api_functions,
+    exchangeRate,
+    indexFunctons,
+    ...other
+  } = props;
   const classes = useCreateTaskStyles();
   const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
   const [inputState, setInputState] = React.useState(0);
-  const [sleepVar, setSleepVar] = React.useState(-1);
   const [accounts, setAccounts] = React.useState([]);
 
-  const [taskType, setTaskType] = React.useState('');
+  const [taskType, setTaskType] = React.useState("");
   var tasksTypes = new Array(Object.keys(TasksMap).length);
-  var tasksMap = {}
+  var tasksMap = {};
   for (let key in TasksMap) {
-    tasksMap[key] = TasksMap[key]({user, megazord, api_functions, exchangeRate, indexFunctons});
-    tasksTypes[tasksMap[key].order] = {key, disabled: tasksMap[key].disabled}
+    tasksMap[key] = TasksMap[key]({
+      user,
+      megazord,
+      api_functions,
+      exchangeRate,
+      indexFunctons,
+    });
+    tasksTypes[tasksMap[key].order] = { key, disabled: tasksMap[key].disabled };
   }
   if (taskType) {
-    var taskForm = tasksMap[taskType]
+    var taskForm = tasksMap[taskType];
   }
 
   const onFinish = () => {
     // setValue('');
-    setTaskType('');
+    setTaskType("");
     // setAccounts([]);
-  }
+  };
 
   const handleCancel = () => {
     onFinish();
@@ -139,16 +132,18 @@ function CreateTask(props) {
   };
 
   const handleOk = () => {
-    var taskResult = {type: taskType};
+    var taskResult = { type: taskType };
     for (let control of taskForm.controls) {
       for (let valueName in control.values) {
-        taskResult[valueName] = document.getElementById(control.values[valueName].id).value
-        if (control.values[valueName].type === 'integer') {
-          taskResult[valueName] = parseInt(taskResult[valueName])
+        taskResult[valueName] = document.getElementById(
+          control.values[valueName].id
+        ).value;
+        if (control.values[valueName].type === "integer") {
+          taskResult[valueName] = parseInt(taskResult[valueName]);
         }
         if (!taskResult[valueName] && control.values[valueName].required) {
-          alert(`fill in ${control.name} field`)
-          return
+          alert(`fill in ${control.name} field`);
+          return;
         }
       }
     }
@@ -158,16 +153,16 @@ function CreateTask(props) {
 
   const addToList = (e) => {
     e.preventDefault();
-    setAccounts([...accounts, {...bitcloutAccount}]);
+    setAccounts([...accounts, { ...bitcloutAccount }]);
     // setValue('');
     // setInputState(0);
-  }
+  };
 
   const removeFromList = (e, id) => {
     e.preventDefault();
-    var _accounts = [...accounts].filter(it => it.id !== id);
+    var _accounts = [...accounts].filter((it) => it.id !== id);
     setAccounts(_accounts);
-  }
+  };
 
   const handleChange = (event) => {
     event.preventDefault();
@@ -181,13 +176,13 @@ function CreateTask(props) {
       disableEscapeKeyDown
       maxWidth="xs"
       aria-labelledby="dialog-title"
-
       open={open}
       {...other}
     >
-      <DialogTitle id="dialog-title" className={classes.title}>Create new Task</DialogTitle>
+      <DialogTitle id="dialog-title" className={classes.title}>
+        Create new Task
+      </DialogTitle>
       <DialogContent dividers className={classes.paper}>
-
         {/*  className={classes.addOwnerWrapper} */}
         <form className={classes.taskForm}>
           <FormControl className={classes.formControl}>
@@ -198,39 +193,40 @@ function CreateTask(props) {
               value={taskType}
               onChange={handleChange}
             >
-              {tasksTypes.map(item => {
+              {tasksTypes.map((item) => {
                 return (
                   <MenuItem
                     key={item.key}
                     id={item.key}
-                    value={item.disabled ? '' : item.key}>{item.key + (item.disabled ? ' (soon)' : '')}</MenuItem>)
+                    value={item.disabled ? "" : item.key}
+                  >
+                    {item.key + (item.disabled ? " (soon)" : "")}
+                  </MenuItem>
+                );
               })}
             </Select>
           </FormControl>
-          {(taskType &&
-            taskForm.controls.map(item => {
+          {taskType &&
+            taskForm.controls.map((item) => {
               return (
                 <div className={classes.formControl} key={item.name}>
                   {/* <InputLabel id={item}>{item.name}</InputLabel> */}
                   {item.component}
                 </div>
-              )
-            })
-          )}
+              );
+            })}
         </form>
       </DialogContent>
       <DialogActions>
         <Button autoFocus onClick={handleCancel} color="secondary">
           Cancel
         </Button>
-        <Button onClick={handleOk} color="secondary"
-          disabled={!taskType}>
+        <Button onClick={handleOk} color="secondary" disabled={!taskType}>
           Create
         </Button>
       </DialogActions>
-    {/* <img style={{width: '2rem', height: '2rem', objectFit: 'contain'}} src={item.avatar}></img> */}
+      {/* <img style={{width: '2rem', height: '2rem', objectFit: 'contain'}} src={item.avatar}></img> */}
     </Dialog>
-
   );
 }
 
@@ -243,7 +239,7 @@ export default function TableList(props) {
   if (props.bitcloutData) {
     var exchangeRate = props.bitcloutData.exchangeRate;
   }
-  const megazordId = window.location.pathname.split('/').pop();
+  const megazordId = window.location.pathname.split("/").pop();
   var megazord = user.megazords ? user.megazords[megazordId] : {};
   megazord = megazord || {};
   const tasks = megazord.tasks || [];
@@ -252,66 +248,88 @@ export default function TableList(props) {
   const powerOnHandler = (e, taskId) => {
     e.preventDefault();
     props.setOpenBackdrop(true);
-    api_functions.task({
-      action: 'powerOn',
-      task: {id:taskId},
-      megazordId: megazordId
-    }).then((data) => {
-      props.setOpenBackdrop(false);
-      window.location.href = data.taskLink
-    }).catch(e => {
-      props.setOpenBackdrop(false);
-    })
-  }
+    api_functions
+      .task({
+        action: "powerOn",
+        task: { id: taskId },
+        megazordId: megazordId,
+      })
+      .then((data) => {
+        props.setOpenBackdrop(false);
+        window.location.href = data.taskLink;
+      })
+      .catch((e) => {
+        props.setOpenBackdrop(false);
+      });
+  };
 
   const createHandler = (taskResult) => {
     api_functions.task({
-      action: 'create',
+      action: "create",
       task: taskResult,
-      megazordId: megazordId
-    })
-    setOpenCT(false)
-  }
+      megazordId: megazordId,
+    });
+    setOpenCT(false);
+  };
 
   const addNewTaskbtnHandler = (e) => {
     e.preventDefault();
     if (megazord.PublicKeyBase58Check) {
-      setOpenCT(true)
+      setOpenCT(true);
     } else {
-      indexFunctons.notifSnak('open', 'info', 'Waiting for Megazord Public Key', 3000)
+      indexFunctons.notifSnak(
+        "open",
+        "info",
+        "Waiting for Megazord Public Key",
+        3000
+      );
     }
-  }
+  };
   const deleteHandler = (e, taskId) => {
     e.preventDefault();
     api_functions.task({
-      action: 'delete',
-      task: {id:taskId},
-      megazordId: megazordId
-    })
-  }
+      action: "delete",
+      task: { id: taskId },
+      megazordId: megazordId,
+    });
+  };
 
   const closeHandler = () => {
-    setOpenCT(false)
-  }
+    setOpenCT(false);
+  };
   return (
     <div>
-      {(user.id && megazord.id) &&
+      {user.id && megazord.id && (
         <CreateTask
-          open={openCT} user={user} megazord={megazord} api_functions={api_functions}
-          exchangeRate={exchangeRate} onCreate={createHandler} onClose={closeHandler} indexFunctons={indexFunctons}
+          open={openCT}
+          user={user}
+          megazord={megazord}
+          api_functions={api_functions}
+          exchangeRate={exchangeRate}
+          onCreate={createHandler}
+          onClose={closeHandler}
+          indexFunctons={indexFunctons}
         />
-      }
+      )}
       <GridContainer>
         <GridItem xs={12} sm={12} md={12}>
           <Card>
             <CardHeader color="primary">
-              <h4 className={classes.cardTitleWhite}>{megazord.name || megazord.status}</h4>
+              <h4 className={classes.cardTitleWhite}>
+                {megazord.name || megazord.status}
+              </h4>
               <Button
-                style={{backgroundColor: megazord.PublicKeyBase58Check ? secondaryColor[0]: grayColor[9]}}
+                style={{
+                  backgroundColor: megazord.PublicKeyBase58Check
+                    ? secondaryColor[0]
+                    : grayColor[9],
+                }}
                 color="secondary"
                 edge="end"
-                onClick={addNewTaskbtnHandler}>
-                  Add new Task</Button>
+                onClick={addNewTaskbtnHandler}
+              >
+                Add new Task
+              </Button>
             </CardHeader>
             <CardBody>
               <Tasks
@@ -324,9 +342,7 @@ export default function TableList(props) {
             </CardBody>
           </Card>
         </GridItem>
-
       </GridContainer>
-
-  </div>
+    </div>
   );
 }

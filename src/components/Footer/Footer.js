@@ -12,10 +12,10 @@ import {
   defaultFont,
   container,
   primaryColor,
-  grayColor
+  grayColor,
 } from "assets/jss/material-dashboard-react.js";
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   block: {
     color: "inherit",
     padding: "15px",
@@ -26,20 +26,20 @@ const useStyles = makeStyles({
     display: "block",
     ...defaultFont,
     fontWeight: "500",
-    fontSize: "12px"
+    fontSize: "12px",
   },
   left: {
     // float: "left!important",
-    display: "block"
+    display: "block",
   },
   right: {
     marginTop: "7px",
     padding: "15px 0",
     margin: "0",
     fontSize: "14px",
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center'
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
     // float: "right!important"
   },
   footer: {
@@ -47,64 +47,86 @@ const useStyles = makeStyles({
     bottom: "0",
     width: "100%",
     // height: "10vh",
-    backgroundColor: '#222222',
+    backgroundColor: "#222222",
     padding: "10px 24px",
-    ...defaultFont
+    ...defaultFont,
   },
   container: {
-    display: 'flex',
-    justifyContent: 'space-between'
+    display: "flex",
+    justifyContent: "space-between",
+    [theme.breakpoints.down("sm")]: {
+      flexDirection: "column",
+    },
   },
   a: {
     color: primaryColor,
     textDecoration: "none",
-    backgroundColor: "transparent"
+    backgroundColor: "transparent",
   },
   list: {
     marginBottom: "0",
     padding: "0",
-    marginTop: "0"
+    marginTop: "0",
   },
   inlineBlock: {
     display: "inline-block",
     padding: "0px",
-    width: "auto"
-  }
-});
+    width: "auto",
+  },
+}));
 
 export default function Footer(props) {
   const classes = useStyles();
-  const socailItems = [{
-    name: 'CloutMegazord',
-    img: 'https://bitclout.com/api/v0/get-single-profile-picture/BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE?fallback=https://bitclout.com/assets/img/default_profile_pic.png',
-    link: 'https://bitclout.com/u/CloutMegazord'
-  }]
+  const socailItems = [
+    {
+      name: "CloutMegazord",
+      img:
+        "https://bitclout.com/api/v0/get-single-profile-picture/BC1YLfkW18ToVc1HD2wQHxY887Zv1iUZMf17QHucd6PaC3ZxZdQ6htE?fallback=https://bitclout.com/assets/img/default_profile_pic.png",
+      link: "https://bitclout.com/u/CloutMegazord",
+    },
+  ];
   return (
     <footer className={classes.footer}>
       <div className={classes.container}>
         <div className={classes.left}>
-          <img src={logo} alt={'Logo'} style={{filter: 'brightness(0) invert(1)'}}/>
+          <img
+            src={logo}
+            alt={"Logo"}
+            style={{ filter: "brightness(0) invert(1)" }}
+          />
         </div>
         <div className={classes.right}>
           <List className={classes.list}>
-            {socailItems.map((item => {
+            {socailItems.map((item) => {
               return (
                 <ListItem key={item.name} className={classes.inlineBlock}>
-                  <a href={item.link} target="_blank" rel="noopener" className={classes.block}>
-                    <img src={item.img} alt={item.name} style={{
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '100%'
-                    }}/>
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener"
+                    className={classes.block}
+                  >
+                    <img
+                      src={item.img}
+                      alt={item.name}
+                      style={{
+                        width: "50px",
+                        height: "50px",
+                        borderRadius: "100%",
+                      }}
+                    />
                   </a>
-              </ListItem>
-              )
-            }))}
+                </ListItem>
+              );
+            })}
           </List>
           <span>
             {/* &copy; */}
             {1900 + new Date().getYear()}{" "}
-            <span style={{textTransform: "uppercase"}}> in active development</span>
+            <span style={{ textTransform: "uppercase" }}>
+              {" "}
+              in active development
+            </span>
           </span>
         </div>
       </div>
