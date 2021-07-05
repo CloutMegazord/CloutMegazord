@@ -100,7 +100,7 @@ function AppAppBar(props) {
           <Box className={classes.buttonWrapper}>
             <SignIn api_functions={api_functions}
               component={(props) => (
-                <Button color='primary' startIcon={<PowerSettingsNewIcon/>} onClick={props.onClick}>
+                <Button color='primary' style={{padding: "12px 30px"}} startIcon={<PowerSettingsNewIcon/>} onClick={props.onClick}>
                   <Typography variant="body1">Power On</Typography>
                 </Button>
               )}
