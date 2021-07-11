@@ -31,6 +31,7 @@ if (process.env.NODE_ENV === "development") {
 admin.initializeApp();
 const db = admin.database();
 const auth = admin.auth();
+
 if (process.env.NODE_ENV === "development") {
   db.useEmulator("localhost", 9000);
   CMEndpoint = "http://localhost:3000";
@@ -640,6 +641,42 @@ app.post("/api/changeNotificationStatus", async (req, res, next) => {
   }
 });
 
+app.post("/api/getFee", async (req, res, next) => {
+  const {AmountNanos, megazordId, CreatorPublicKeyBase58Check} = req.body.data;
+  let publicKey;
+  var customToken = req.headers.authorization.replace("Bearer ", "");
+  try {
+    let verif = await auth.verifyIdToken(customToken);
+    publicKey = verif.uid;
+  } catch (error) {
+    res.send({ data: { error: error.message } });
+    return;
+  }
+  const megazordRef = db.ref("megazords/" + megazordId);
+  var megazorSnap = await megazordRef.get();
+  if (megazorSnap.exists()) {
+    var megazord = megazorSnap.val();
+  } else {
+    res.send({ data: { error: "Megazord not Found" } });
+    return
+  }
+  let zords = Object.keys(megazord.confirmedZords);
+  let resp;
+  try {
+    resp = await axios.post(signingEndpoint + "/ts/getFee", {
+      data: { AmountNanos, zords, CreatorPublicKeyBase58Check },
+    });
+  } catch (e) {
+    res.send({ data: { error: "Megazord not Found" } });
+    return
+  }
+  if (resp.data.error) {
+    res.send({ data: { error: resp.data.error } });
+    return;
+  }
+  res.send({ data: resp.data });
+});
+
 app.post("/api/task", async (req, res, next) => {
   var data = req.body.data;
   var publicKey;
@@ -658,6 +695,7 @@ app.post("/api/task", async (req, res, next) => {
     var megazord = megazorSnap.val();
   } else {
     res.send({ data: { error: "Megazord not Found" } });
+    return
   }
   switch (data.action) {
     case "create":

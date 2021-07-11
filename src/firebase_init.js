@@ -36,6 +36,8 @@ const fireError = (e) => {
 };
 const waitingMegazordAvatar = "/assets/img/waitingMegazord.png";
 const defaultAvatar = "/assets/img/default_profile_pic.png";
+const defaultUsername = "Anonymous";
+
 
 function IsJsonString(str) {
   try {
@@ -263,11 +265,13 @@ async function handleMegazord(megazordInfo, user) {
     resultMegazord.PubKeyShort =
       resultMegazord.PublicKeyBase58Check.slice(0, 12) + "...";
   }
-  resultMegazord.Username = resultMegazord.Username || "Anonymous";
+  resultMegazord.Username = resultMegazord.Username || defaultUsername;
   return resultMegazord;
 }
 
 export const api_functions = {
+  defaultAvatar: defaultAvatar,
+  defaultUsername: defaultUsername,
   getTaskSession: () => {
     var path = window.location.href.split("/").pop();
     var task = path.split("&")[0].split("=")[1];
@@ -307,6 +311,22 @@ export const api_functions = {
   logout: () => {
     localStorage.setItem("users", null);
     auth.signOut();
+  },
+  getFee: (AmountNanos, megazordId, CreatorPublicKeyBase58Check) => {
+    return new Promise(async (resolve, reject) => {
+      var resp = await axios
+        .post(
+          apiEndpoint + "/getFee",
+          { data: {AmountNanos, megazordId, CreatorPublicKeyBase58Check}},
+          api_functions.getReqConfigs()
+        ).then((resp) => resp.data);
+      if (resp.data.error) {
+        fireError("Task error: " + resp.data.error);
+        reject(resp.data.error);
+        return;
+      }
+      resolve(resp.data);
+    });
   },
   createMegazord: (zords) => {
     ///* forceRefresh */ true
@@ -435,10 +455,9 @@ export const api_functions = {
   },
   getFeesMap: () => {
     return {
-      3: 1 * 10 ** 4,
-      2: 1 * 10 ** 5,
-      1: 1 * 10 ** 6,
-      0.5: Infinity,
+      1.5: 1 * 10**4,
+      1: 1 * 10**5,
+      0.5: Infinity
     };
   },
   onUserData: async (publicKey, callback, errorCallback = () => {}) => {

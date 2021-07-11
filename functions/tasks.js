@@ -6,8 +6,6 @@ class Task {
         this.type = data.type;
         this.description = data.description || data.defaultDescription;
         this.addedBy = data.addedBy;
-        this.Recipient = data.Recipient;
-        this.RecipientUsername = data.RecipientUsername;
         this.status = data.status || 0; //Status 0 - active
         this.date = Date.now();
     }
@@ -56,6 +54,8 @@ class Send extends Task {
         data.defaultDescription =
         `Send ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} ${data.Currency + currencyPostfix} to @${data.RecipientUsername}`;
         super(data);
+        this.Recipient = data.Recipient;
+        this.RecipientUsername = data.RecipientUsername;
         this.AmountNanos = AmountNanos;
         this.Currency = data.Currency;
         this.CreatorPublicKeyBase58Check = data.CreatorPublicKeyBase58Check;
@@ -65,40 +65,42 @@ class Send extends Task {
         var record = super.toDBRecord();
         record.AmountNanos = this.AmountNanos;
         record.Currency = this.Currency;
+        record.Recipient = this.Recipient;
         record.CreatorPublicKeyBase58Check = this.CreatorPublicKeyBase58Check;
         return record;
     }
 }
 
-class SendBitclouts extends Send {
+class UpdateProfile extends Task {
     constructor(data) {
-        super(data);
-    }
-    // SatoshisPerBitCloutExchangeRate: exchangeRate.SatoshisPerBitCloutExchangeRate,
-    // USDCentsPerBitcoinExchangeRate: ticker.USD.last,
-    // USDbyBTCLT: ticker.USD.last * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
-    async getTransaction(bitcloutPriceUSD) {
-        const feeNanos = this.getFee(this.AmountNanos, bitcloutPriceUSD);
-        try {
-            var preview = await bitcloutApi.SendBitCloutPreview(
-                endpoint,
-                this.megazord.PublicKeyBase58Check,
-                this.Recipient,
-                this.AmountNanos - feeNanos,
-                MinFeeRateNanosPerKB
-            );
-        } catch (e) {
-            throw e;
+        data.type = 'updateProfile'
+        data.defaultDescription = 'Update Profile.';
+        if (data.NewUsername) {
+            data.defaultDescription += ` NewUsername: ${data.NewUsername};`
         }
-        this.transactions.push(preview);
-        // const feePreview = await bitcloutApi.SendBitCloutPreview(
-        //     endpoint,
-        //     this.megazordRef.key,
-        //     CloutMegazordPubKey,
-        //     feeNanos,
-        //     MinFeeRateNanosPerKB
-        // );
-        // this.transactions.push(feePreview);
+        if (data.NewDescription) {
+            data.defaultDescription += ` NewDescription: ${data.NewUsername};`
+        }
+        if (data.founderRewardInput) {
+            data.defaultDescription += ` FR: ${data.founderRewardInput};`
+        }
+        if (data.NewProfilePic) {
+            data.defaultDescription += ` Update Avatar;`
+        }
+        super(data);
+        this.NewUsername = data.NewUsername;
+        this.NewDescription = data.NewDescription;
+        this.NewProfilePic = data.NewProfilePic;
+        this.NewCreatorBasisPoints =  Math.floor(data.founderRewardInput * 100);
+    }
+
+    toDBRecord() {
+        var record = super.toDBRecord();
+        record.NewUsername = this.NewUsername;
+        record.NewDescription = this.NewDescription;
+        record.NewProfilePic = this.NewProfilePic;
+        record.NewCreatorBasisPoints = this.NewProfilePic;
+        return record;
     }
 }
 
@@ -111,6 +113,10 @@ function createTask(data) {
         }
         case 'send': {
             task = new Send(data);
+            break;
+        }
+        case 'updateProfile': {
+            task = new UpdateProfile(data);
             break;
         }
     }

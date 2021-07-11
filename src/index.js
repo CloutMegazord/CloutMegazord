@@ -138,6 +138,8 @@ const hist = createBrowserHistory();
           }
         }
       } else {
+        api_functions.authToken = null;
+        api_functions.onErrorSubscribers = [];
         this.setState({redirect: '/landing/home'});
       }
     });

@@ -109,7 +109,7 @@ const useCreateTaskStyles = makeStyles((theme) => ({
 }));
 
 function CreateTask(props) {
-  const { onCreate, onClose, open, user, megazord, api_functions, exchangeRate, indexFunctons, ...other } = props;
+  const { onCreate, onClose, open, user, megazord, api_functions, bitcloutData, indexFunctons, ...other } = props;
   const classes = useCreateTaskStyles();
   const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
   const [inputState, setInputState] = React.useState(0);
@@ -120,7 +120,7 @@ function CreateTask(props) {
   var tasksTypes = new Array(Object.keys(TasksMap).length);
   var tasksMap = {}
   for (let key in TasksMap) {
-    tasksMap[key] = TasksMap[key]({user, megazord, api_functions, exchangeRate, indexFunctons});
+    tasksMap[key] = TasksMap[key]({user, megazord, api_functions, bitcloutData, indexFunctons});
     tasksTypes[tasksMap[key].order] = {name: tasksMap[key].name, key, disabled: tasksMap[key].disabled}
   }
   if (taskType) {
@@ -163,21 +163,14 @@ function CreateTask(props) {
     onCreate(taskResult);
   };
 
-  const addToList = (e) => {
-    e.preventDefault();
-    setAccounts([...accounts, {...bitcloutAccount}]);
-    // setValue('');
-    // setInputState(0);
-  }
-
-  const removeFromList = (e, id) => {
-    e.preventDefault();
-    var _accounts = [...accounts].filter(it => it.id !== id);
-    setAccounts(_accounts);
-  }
-
   const handleChange = (event) => {
     event.preventDefault();
+    let taskType = event.target.value;
+    try {
+      tasksMap[taskType].validate && tasksMap[taskType].validate();
+    } catch (e) {
+      return
+    }
     setTaskType(event.target.value);
   };
 
@@ -246,10 +239,6 @@ export default function TableList(props) {
   const user = props.user || {};
   const api_functions = props.api_functions;
   const indexFunctons = props.indexFunctons;
-
-  if (props.bitcloutData) {
-    var exchangeRate = props.bitcloutData.exchangeRate;
-  }
   const megazordId = window.location.pathname.split('/').pop();
   var megazord = user.megazords ? user.megazords[megazordId] : {};
   megazord = megazord || {};
@@ -305,7 +294,7 @@ export default function TableList(props) {
       {(user.id && megazord.id) &&
         <CreateTask
           open={openCT} user={user} megazord={megazord} api_functions={api_functions}
-          exchangeRate={exchangeRate} onCreate={createHandler} onClose={closeHandler} indexFunctons={indexFunctons}
+          bitcloutData={props.bitcloutData} onCreate={createHandler} onClose={closeHandler} indexFunctons={indexFunctons}
         />
       }
       <GridContainer>

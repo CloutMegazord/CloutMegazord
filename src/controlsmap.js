@@ -39,7 +39,7 @@ const getPublicKey = (data) => {
 }
 
 const updateProfile = (data) => {
-  const {megazord, user, indexFunctons} = data;
+  const {megazord, user, indexFunctons, bitcloutData, api_functions} = data;
   const postfix = '\n@mgzd'
   const validateUsername = (account) => {
     if (account) {
@@ -66,9 +66,19 @@ const updateProfile = (data) => {
 
   return {
     name: 'Update Profile',
+    validate() {
+      if ((megazord.BalanceNanos <= bitcloutData.appState.CreateProfileFeeNanos) &&
+          (megazord.Username === api_functions.defaultUsername)) {
+        let errorMessage = 'To create an account, you need to fund your account on $' +
+         (bitcloutData.appState.CreateProfileFeeNanos / 1e9 * bitcloutData.exchangeRate.USDbyBTCLT + 0.1)
+         .toFixed(2).toLocaleString() || true;
+        indexFunctons.notifSnak('open', 'error', errorMessage, 5000);
+        throw new Error(errorMessage)
+      }
+    },
     controls: [
       {
-        name: 'Recipient',
+        name: 'NewUsername',
         component:  <InputBitcloutAccount
           placeholder={"Username"}
           validate={validateUsername}
@@ -83,24 +93,23 @@ const updateProfile = (data) => {
         disabled: false
       },
       {
-        name: 'Description',
+        name: 'NewDescription',
         component:  <Description
           label={"Bitclout Account Description"}
           htmlIds={{Description: "updateProfile_Description_value"}}
           maxLength={280 - postfix.length}
           postfix={postfix}
           user={user}
-          htmlId="update_name_id"
           valueProp={megazord.Description || ''}
         />,
         values: {
-          RecipientUsername: {id: 'updateProfile_Description_value', required: true, type:'string'}
+          RecipientUsername: {id: 'updateProfile_Description_value', required: false, type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
-        name: 'Avatar',
+        name: 'NewProfilePic',
         component:  <UploadFile
           maxSize={5 * 1024 * 1024}
           user={user}
@@ -110,15 +119,17 @@ const updateProfile = (data) => {
         />,
         //get from window object
         values: {
-          RecipientUsername: {globalName: 'updateProfile_avatar', required: true, type:'string'}
+          RecipientUsername: {globalName: 'updateProfile_avatar',
+          required: megazord.ProfilePic === api_functions.defaultAvatar,//required
+          type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
-        name: 'Founder Reward Percentage',
+        name: 'founderRewardInput',
         component:  <FounderReward
-        htmlIds={{FR: "send_RecipientUsername_value"}}
+        htmlIds={{FR: "updateProfile_FR"}}
           valueProp={megazord.ProfilePic}
         />,
         values: {
@@ -134,8 +145,7 @@ const updateProfile = (data) => {
 }
 
 const send = (data) => {
-  const {megazord, user, api_functions, exchangeRate, indexFunctons} = data;
-  megazord.Username = 'Target Megazord'
+  const {megazord, user, api_functions, bitcloutData, indexFunctons} = data;
   const validateRecipient = (account) => {
     if (account.id === megazord.PublicKeyBase58Check) {
       throw Error('Cant send to self Megazord.');
@@ -154,7 +164,8 @@ const send = (data) => {
     megazord.UsersYouHODL.reduce((reducer, it)=>{
       reducer[it.ProfileEntryResponse.Username] = {
         BalanceNanos: it.BalanceNanos,
-        CreatorPublicKeyBase58Check: it.CreatorPublicKeyBase58Check
+        CreatorPublicKeyBase58Check: it.CreatorPublicKeyBase58Check,
+        CoinPriceBitCloutNanos: it.ProfileEntryResponse.CoinPriceBitCloutNanos
       }
       return reducer
     }, {})
@@ -183,10 +194,12 @@ const send = (data) => {
         component:  <InputAmount
           placeholder={ "Input amount in BitClout"}
           // currencyTypes={['$BitClouts', 'Coins']}
-          exchRate={exchangeRate}
+          megazordId={megazord.id}
+          exchRate={bitcloutData.exchangeRate}
           wallet={wallet}
           validate={validateCurrencies}
           feesMap={api_functions.getFeesMap()}
+          getFee={api_functions.getFee}
           user={user}
           htmlIds={{
             AmountNanos: "send_Amount_value",

@@ -252,12 +252,12 @@ export function InputBitcloutAccount(
 
 export function InputAmount(props) {
   const classes = useStyles();
-  const {htmlIds, exchRate, feesMap, wallet, validate} = props;
+  const {htmlIds, exchRate, feesMap, wallet, validate, megazordId, getFee} = props;
   const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a].BalanceNanos - wallet[b].BalanceNanos}).reverse();
   const [USDAmount, setUSDAmount] = React.useState(0);
   const [BTCLTAmount, setBTCLTAmount] = React.useState(0);
   const [amountNanos, setAmountNanos] = React.useState(0);
-  const [MGZDfee, setMGZDFee] = React.useState(0);
+  const [MGZDfee, setMGZDFee] = React.useState(null);
   const [currency, setCurrency] = React.useState('$ClOUT');
 
   var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';
@@ -276,22 +276,27 @@ export function InputAmount(props) {
   feesMapTable += '</table>'
 
   const handleChange = (_Amount) => {
+    setMGZDFee(null);
     setBTCLTAmount(_Amount);
     _Amount = parseFloat(_Amount || 0);
     if (exchRate.USDbyBTCLT) {
-      var USDAmount = _Amount * exchRate.USDbyBTCLT;
-      setUSDAmount(USDAmount);
-      var amountNanos = _Amount * 1e9;
-      setAmountNanos(amountNanos);
-      var trgFee = fees[0];
-      for (let fee of fees) {
-        let range = feesMap[fee];
-        if (USDAmount < range) {
-          trgFee = fee;
-          break
-        }
+      var _amountNanos = _Amount * 1e9;
+      setAmountNanos(_amountNanos);
+      let CreatorPublicKeyBase58Check;
+      if (wallet[currency].CreatorPublicKeyBase58Check) {
+        CreatorPublicKeyBase58Check = wallet[currency].CreatorPublicKeyBase58Check;
       }
-      setMGZDFee(trgFee);
+      getFee(_amountNanos, megazordId, CreatorPublicKeyBase58Check).then(({feePercent}) => {
+        setMGZDFee(feePercent);
+        let _USDAmount
+        if (wallet[currency].CoinPriceBitCloutNanos) {
+          let CoinPriceBitCloutNanos = wallet[currency].CoinPriceBitCloutNanos;
+          _USDAmount = _Amount * (CoinPriceBitCloutNanos / 1e9 ) * exchRate.USDbyBTCLT;
+        } else {
+          _USDAmount = _Amount * exchRate.USDbyBTCLT
+        }
+        setUSDAmount(_USDAmount);
+      });
     }
   }
 
@@ -347,7 +352,7 @@ export function InputAmount(props) {
       <FormHelperText component={'div'} id={'interact_amount_helper_text'} className={classes.helper}>
         <div>
           <div>
-          Platform fee: {MGZDfee}%
+          CloutMegazord fee: {MGZDfee !== null ? MGZDfee + "%" : 'Waiting'}
           <Tooltip
             id="tooltip-top"
             title={<div dangerouslySetInnerHTML={{
@@ -360,7 +365,12 @@ export function InputAmount(props) {
           </Tooltip>
           </div>
           <div>
-            Will receive: {BTCLTAmount - BTCLTAmount * (MGZDfee / 100).toFixed(4).toLocaleString()} (≈ ${USDAmount.toFixed(2).toLocaleString()} USD)
+            Will receive: {(BTCLTAmount - BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
+            (≈ ${(USDAmount - USDAmount  * ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()} USD)
+          </div>
+          <div>
+            Fee: { (BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
+            (≈ ${(USDAmount* ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()} USD)
           </div>
         </div>
       </FormHelperText>
