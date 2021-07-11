@@ -4,6 +4,7 @@ import classnames from "classnames";
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
 import { TableContainer, Paper } from "@material-ui/core";
+// import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Checkbox from "@material-ui/core/Checkbox";
 import Tooltip from "@material-ui/core/Tooltip";
 import IconButton from "@material-ui/core/IconButton";
@@ -21,6 +22,7 @@ import Close from "@material-ui/icons/Close";
 import Check from "@material-ui/icons/Check";
 // core components
 import styles from "assets/jss/material-dashboard-react/components/tasksStyle.js";
+import { useIsMobile } from "../../hooks";
 import {
   defaultFont,
   primaryColor,
@@ -41,7 +43,10 @@ export default function Tasks(props) {
     powerOnHandler,
     deleteHandler,
   } = props;
-  const tableHead = ["Task type", "Added by", "Date", "Desctiption", "Actions"];
+  const isMobile = useIsMobile();
+  const tableHead = isMobile
+    ? ["Task type", "Added by", "Actions"]
+    : ["Task type", "Added by", "Date", "Desctiption", "Actions"];
   const tableCellClasses = classnames(classes.tableCell, {
     [classes.tableCellRTL]: rtlActive,
   });
@@ -66,8 +71,8 @@ export default function Tasks(props) {
           </TableHead>
         ) : null}
         <TableBody>
-          {tasks.map((value) => (
-            <TableRow key={value.id} className={classes.tableRow}>
+          {tasks.map((task) => (
+            <TableRow key={task.id} className={classes.tableRow}>
               {/* <TableCell className={tableCellClasses}>
               <Checkbox
                 checked={checked.indexOf(value) !== -1}
@@ -82,18 +87,18 @@ export default function Tasks(props) {
               />
             </TableCell> */}
               <TableCell className={tableCellClasses}>
-                <span style={{ fontWeight: "bold" }}>{value.type}</span>
+                <span style={{ fontWeight: "bold" }}>{task.type}</span>
               </TableCell>
               <TableCell className={tableCellClasses}>
                 <Tooltip
                   id="tooltip-top"
-                  title={value.addedBy.Username || value.addedBy.id}
+                  title={task.addedBy.Username || task.addedBy.id}
                   placement="top"
                   classes={{ tooltip: classes.tooltip }}
                 >
                   <img
-                    src={value.addedBy.ProfilePic}
-                    alt={value.addedBy.Username || value.addedBy.id}
+                    src={task.addedBy.ProfilePic}
+                    alt={task.addedBy.Username || task.addedBy.id}
                     style={{
                       objectFit: "contain",
                       borderRadius: "100%",
@@ -103,22 +108,26 @@ export default function Tasks(props) {
                   />
                 </Tooltip>
               </TableCell>
+              {!isMobile && (
+                <TableCell className={tableCellClasses}>
+                  {new Date(task.date).toLocaleDateString("en-US")}
+                </TableCell>
+              )}
+              {!isMobile && (
+                <TableCell style={{ maxWidth: "6rem", textAlign: "center" }}>
+                  <MuiTypography
+                    variant="caption"
+                    style={{
+                      color: grayColor[2],
+                      fontSize: "14px",
+                    }}
+                  >
+                    {task.description}
+                  </MuiTypography>
+                </TableCell>
+              )}
               <TableCell className={tableCellClasses}>
-                {new Date(value.date).toLocaleDateString("en-US")}
-              </TableCell>
-              <TableCell style={{ maxWidth: "6rem", textAlign: "center" }}>
-                <MuiTypography
-                  variant="caption"
-                  style={{
-                    color: grayColor[2],
-                    fontSize: "14px",
-                  }}
-                >
-                  {value.description}
-                </MuiTypography>
-              </TableCell>
-              <TableCell className={tableCellClasses}>
-                {!!value.taskSessionRun ? (
+                {!!task.taskSessionRun ? (
                   <Tooltip
                     id="tooltip-top"
                     title="Task Session already running. Ask task initiator for personal link."
@@ -135,7 +144,7 @@ export default function Tasks(props) {
                   </Tooltip>
                 ) : (
                   <div>
-                    {value.addedBy.id === user.id && (
+                    {task.addedBy.id === user.id && (
                       <Tooltip
                         id="tooltip-top"
                         title="Delete Task"
@@ -144,10 +153,10 @@ export default function Tasks(props) {
                       >
                         <IconButton
                           color="primary"
-                          href={"task/" + value.id}
+                          href={"task/" + task.id}
                           aria-label={tableHead[3]}
                           onClick={(e) => {
-                            deleteHandler(e, value.id);
+                            deleteHandler(e, task.id);
                           }}
                           className={classes.tableActionButton}
                         >
@@ -162,11 +171,11 @@ export default function Tasks(props) {
                       classes={{ tooltip: classes.tooltip }}
                     >
                       <IconButton
-                        href={"task/" + value.id}
+                        href={"task/" + task.id}
                         aria-label={tableHead[4]}
                         style={{ color: "#fff" }}
                         onClick={(e) => {
-                          powerOnHandler(e, value.id);
+                          powerOnHandler(e, task.id);
                         }}
                         className={classes.tableActionButton}
                       >
