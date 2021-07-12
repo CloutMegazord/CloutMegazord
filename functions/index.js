@@ -535,8 +535,7 @@ app.post("/api/confirmMegazord", async (req, res, next) => {
   const task = Tasks.createTask({
     type: "getPublicKey",
     addedBy: CloutMegazordPubKey,
-    megazorSnap: megazorSnap,
-    Recipient: "TargetMegazord",
+    Recipient: "TargetMegazord"
   });
   await megazordRef.child("tasks").push(task.toDBRecord());
   res.send({ data: { success: true } });

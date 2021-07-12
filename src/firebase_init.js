@@ -28,6 +28,7 @@ var apiEndpoint = "https://cloutmegazord.com/api";
 if (window.location.hostname === "localhost") {
   apiEndpoint = "http://localhost:5000/api";
   db.useEmulator("localhost", 9000);
+  storage.useEmulator("localhost",  9199);
   functions.useEmulator("localhost", 5001);
 }
 export const onErrorSubscribers = [];
@@ -327,6 +328,15 @@ export const api_functions = {
       }
       resolve(resp.data);
     });
+  },
+  loadFile: (name, file, metadata) => {
+    return new Promise(async (resolve, reject) => {
+      const task = storage.ref().child(name).put(file, metadata);
+      task
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => resolve(url))
+        .catch(reject);
+    })
   },
   createMegazord: (zords) => {
     ///* forceRefresh */ true

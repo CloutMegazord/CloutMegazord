@@ -116,6 +116,7 @@ const updateProfile = (data) => {
           validate={validateAvatar}
           globalIds={{Avatar: "updateProfile_avatar"}}
           valueProp={megazord.ProfilePic}
+          loadFile={api_functions.loadFile}
         />,
         //get from window object
         values: {

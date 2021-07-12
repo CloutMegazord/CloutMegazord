@@ -412,7 +412,7 @@ export function Description(porps) {
 
 
 export function UploadFile(props) {
-  const {valueProp, globalIds, validate} = props;
+  const {valueProp, globalIds, validate, loadFile, user} = props;
   const classes = useStyles();
   const [filePreview, setFilePreview] = React.useState(valueProp);
   const handleUploadClick = (e) => {
@@ -423,13 +423,20 @@ export function UploadFile(props) {
     } catch (e) {
       return
     }
-    const reader = new FileReader();
-    reader.readAsBinaryString(fileToUpload);
-    reader.onload = (event) => {
-      const base64Image = btoa(event.target.result);
-      window[globalIds.Avatar] = `data:${fileToUpload.type};base64,${base64Image}`;
-      setFilePreview(window[globalIds.Avatar]);
-    };
+    loadFile(Date.now + '_' + globalIds.Avatar,
+      fileToUpload, {contentType: fileToUpload.type,}
+    ).then(url=>{
+      window[globalIds.Avatar] = url;
+      setFilePreview(url);
+    });
+    // const reader = new FileReader();
+    // reader.readAsBinaryString(fileToUpload);
+    // reader.onload = (event) => {
+    //   // const base64Image = btoa(event.target.result);
+
+    //   // window[globalIds.Avatar] = `data:${fileToUpload.type};base64,${base64Image}`;
+    //   // setFilePreview(window[globalIds.Avatar]);
+    // };
   }
   return (
     <FormControl className={classes.formControl}>

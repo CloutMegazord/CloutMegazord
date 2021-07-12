@@ -44,6 +44,13 @@ class GetPublicKey extends Task {
         data.type = 'getPublicKey'
         data.defaultDescription = 'Launch this task for activate account and get public key';
         super(data);
+        this.Recipient = data.Recipient;
+    }
+
+    toDBRecord() {
+        var record = super.toDBRecord();
+        record.Recipient = this.Recipient;
+        return record;
     }
 }
 
