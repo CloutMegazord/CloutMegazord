@@ -423,7 +423,7 @@ export function UploadFile(props) {
     } catch (e) {
       return
     }
-    loadFile(Date.now + '_' + globalIds.Avatar,
+    loadFile(user.PublicKeyBase58Check + '_' + globalIds.Avatar,
       fileToUpload, {contentType: fileToUpload.type,}
     ).then(url=>{
       window[globalIds.Avatar] = url;
