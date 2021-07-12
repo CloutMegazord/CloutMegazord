@@ -26,6 +26,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogActions from "@material-ui/core/DialogActions";
 import Dialog from "@material-ui/core/Dialog";
+import { Grid } from "@material-ui/core";
 import Link from "@material-ui/core/Link";
 import MuiTypography from "@material-ui/core/Typography";
 import RadioGroup from "@material-ui/core/RadioGroup";
@@ -650,13 +651,13 @@ export default function MegazordsList(props) {
       <Fab color="primary" aria-label="add" onClick={handleClickListItem}>
         <Icon>add</Icon>
       </Fab>
-      <GridContainer>
+      <Grid container spacing={3} xs={12}>
         {Object.values(megazords)?.length ? (
           Object.values(megazordsOrdered)
             ?.reverse()
             ?.map((item) => {
               return (
-                <GridItem xs={12} sm={12} md={3} key={item.id}>
+                <Grid xs={12} sm={12} md={6} lg={3} item key={item.id}>
                   <Card
                     profile
                     style={{
@@ -979,7 +980,7 @@ export default function MegazordsList(props) {
                         ))}
                     </CardBody>
                   </Card>
-                </GridItem>
+                </Grid>
               );
             })
         ) : (
@@ -987,7 +988,7 @@ export default function MegazordsList(props) {
             No Megazords account yet.
           </GridItem>
         )}
-      </GridContainer>
+      </Grid>
     </div>
   );
 }
