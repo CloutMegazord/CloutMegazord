@@ -4,6 +4,7 @@ import {
   InputAmount,
   BitcloutAccountItem,
   Description,
+  UploadFile,
   FounderReward,
   UploadImage} from "components/FormControls/FormControls";
 
@@ -16,6 +17,7 @@ const getPublicKey = (data) => {
   const megazord = data.megazord;
   const user = data.user;
   return {
+    name: 'Get Public Key',
     controls: [
       {
         name: 'Recipient',
@@ -37,95 +39,103 @@ const getPublicKey = (data) => {
 }
 
 const updateProfile = (data) => {
-  const {megazord, user, api_functions} = data;
-  megazord.Username = 'Target Megazord'
+  const {megazord, user, indexFunctons, bitcloutData, api_functions} = data;
   const postfix = '\n@mgzd'
-  const validateRecipient = (account) => {
-    if (account.id === user.id) {
-      throw Error('Cant send to self Megazord.');
-    }
-    return true
-  }
   const validateUsername = (account) => {
-    if (account.id) {
+    if (account) {
+      indexFunctons.notifSnak('open', 'error', 'Name already used', 2000);
       throw Error('Cant send to self Megazord.');
     }
     return true
   }
 
+  const validateAvatar = (fileToUpload) => {
+    let errorMessage = '';
+    if (!fileToUpload.type || !fileToUpload.type.startsWith("image/")) {
+      errorMessage = "File selected does not have an image file type."
+      indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
+      throw Error(errorMessage);
+    }
+    if (fileToUpload.size > 5 * 1024 * 1024) {
+      errorMessage = "Please upload an image that is smaller than 5MB.";
+      indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
+      throw Error(errorMessage);
+    }
+    return true
+  }
+
   return {
+    name: 'Update Profile',
+    validate() {
+      if ((megazord.BalanceNanos <= bitcloutData.appState.CreateProfileFeeNanos) &&
+          (megazord.Username === api_functions.defaultUsername)) {
+        let errorMessage = 'To create an account, you need to fund your account on $' +
+         (bitcloutData.appState.CreateProfileFeeNanos / 1e9 * bitcloutData.exchangeRate.USDbyBTCLT + 0.1)
+         .toFixed(2).toLocaleString() || true;
+        indexFunctons.notifSnak('open', 'error', errorMessage, 5000);
+        throw new Error(errorMessage)
+      }
+    },
     controls: [
       {
-        name: 'Recipient',
-        component: <BitcloutAccountItem
-          htmlId='updateProfile_Recipient_value'
-          item={megazord}
-          label={'Recipient'}
-          value={megazord.Username || megazord.PubKeyShort || "TargetMegazord"}/>,
-        possibleValue: megazord.Username || megazord.PubKeyShort || "TargetMegazord",
-        // possibleInputType: ['Current Account'],
-        disabled: true
-      },
-      {
-        name: 'Username',
+        name: 'NewUsername',
         component:  <InputBitcloutAccount
-          placeholder={ "Input Name or Public Key"}
+          placeholder={"Username"}
           validate={validateUsername}
           user={user}
-          htmlId="update_name_id"
-          valueProp={megazord.Username || ''}
+          htmlIds={{RecipientUsername: "send_RecipientUsername_value"}}
+          valueProp=''
         />,
-        possibleValue: "*",
+        values: {
+          NewUsername: {id: 'send_RecipientUsername_value', required: true, type:'string'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
-        name: 'Description',
+        name: 'NewDescription',
         component:  <Description
-          placeholder={"Bitclout Account Description"}
+          label={"Bitclout Account Description"}
+          htmlIds={{Description: "updateProfile_Description_value"}}
           maxLength={280 - postfix.length}
           postfix={postfix}
           user={user}
-          htmlId="update_name_id"
           valueProp={megazord.Description || ''}
         />,
-        possibleValue: "*",
+        values: {
+          NewDescription: {id: 'updateProfile_Description_value', required: false, type:'string'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
-        name: 'Avatar',
-        component:  <UploadImage
-          maxSize="1mb"
+        name: 'NewProfilePic',
+        component:  <UploadFile
+          maxSize={5 * 1024 * 1024}
           user={user}
-          htmlId="updload_avatar_id"
+          validate={validateAvatar}
+          globalIds={{Avatar: "updateProfile_avatar"}}
           valueProp={megazord.ProfilePic}
+          loadFile={api_functions.loadFile}
         />,
-        possibleValue: "*",
+        //get from window object
+        values: {
+          NewProfilePic: {globalName: 'updateProfile_avatar',
+          required: megazord.ProfilePic === api_functions.defaultAvatar,//required
+          type:'string'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       },
       {
-        name: 'Founder Reward Percentage',
+        name: 'founderRewardInput',
         component:  <FounderReward
-          htmlId="founder_reward_id"
+        htmlIds={{FR: "updateProfile_FR"}}
           valueProp={megazord.ProfilePic}
         />,
-        possibleValue: "*",
-        // possibleInputType: ['Current Account'],
-        disabled: false
-      },
-      {
-        name: 'Task Description',
-        component:  <Description
-          placeholder={"Task  Description"}
-          maxLength={1000}
-          postfix={postfix}
-          user={user}
-          htmlId="update_name_id"
-          valueProp={megazord.Description || ''}
-        />,
-        possibleValue: "*",
+        values: {
+          founderRewardInput: {id: 'updateProfile_FR', required: true, type:'float'}
+        },
         // possibleInputType: ['Current Account'],
         disabled: false
       }
@@ -136,8 +146,7 @@ const updateProfile = (data) => {
 }
 
 const send = (data) => {
-  const {megazord, user, api_functions, exchangeRate, indexFunctons} = data;
-  megazord.Username = 'Target Megazord'
+  const {megazord, user, api_functions, bitcloutData, indexFunctons} = data;
   const validateRecipient = (account) => {
     if (account.id === megazord.PublicKeyBase58Check) {
       throw Error('Cant send to self Megazord.');
@@ -147,21 +156,32 @@ const send = (data) => {
   const validateCurrencies = (currency) => {
     if (currency !== "$ClOUT" && wallet['$ClOUT'].BalanceNanos < 100000) {
       indexFunctons.notifSnak('open', 'error', 'Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)', 7000);
-      return false;
+      throw Error('Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)');
     }
     return true;
+  }
+  const getFee = (_amountNanos, CreatorPublicKeyBase58Check, reqId) => {
+    return new Promise((resolve)=>{
+      api_functions.getFee(_amountNanos, megazord.zords.map(z=>z.PublicKeyBase58Check), CreatorPublicKeyBase58Check)
+        .then(data => {
+          data.reqId = reqId;
+          resolve(data);
+        })
+    })
   }
   const wallet = Object.assign(
     {'$ClOUT': {BalanceNanos: megazord.BalanceNanos, CreatorPublicKeyBase58Check: ''}},
     megazord.UsersYouHODL.reduce((reducer, it)=>{
       reducer[it.ProfileEntryResponse.Username] = {
         BalanceNanos: it.BalanceNanos,
-        CreatorPublicKeyBase58Check: it.CreatorPublicKeyBase58Check
+        CreatorPublicKeyBase58Check: it.CreatorPublicKeyBase58Check,
+        CoinPriceBitCloutNanos: it.ProfileEntryResponse.CoinPriceBitCloutNanos
       }
       return reducer
     }, {})
   )
   return {
+    name: 'Send',
     controls: [
       {
         name: 'Recipient',
@@ -184,10 +204,12 @@ const send = (data) => {
         component:  <InputAmount
           placeholder={ "Input amount in BitClout"}
           // currencyTypes={['$BitClouts', 'Coins']}
-          exchRate={exchangeRate}
+          megazordId={megazord.id}
+          exchRate={bitcloutData.exchangeRate || {}}
           wallet={wallet}
           validate={validateCurrencies}
-          feesMap={api_functions.getFeesMap()}
+          feesMap={api_functions.getFeesMap}
+          getFee={getFee}
           user={user}
           htmlIds={{
             AmountNanos: "send_Amount_value",
@@ -254,7 +276,7 @@ const sell = (user) => {
 
 export default {
   getPublicKey,
-  // updateProfile,
+  updateProfile,
   send: send,
   // buy,
   // sell

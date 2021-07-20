@@ -5,8 +5,10 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import Button from "components/CustomButtons/Button.js";
 import { api_functions} from '../../firebase_init';
 import Avatar from '@material-ui/core/Avatar';
+import Fab from "@material-ui/core/Fab";
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Table from "components/Table/Table.js";
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
@@ -15,6 +17,7 @@ import Tasks from "components/Tasks/Tasks.js";
 import TasksMap from "../../controlsmap";
 import CustomTabs from "components/CustomTabs/CustomTabs.js";
 import Icon from "@material-ui/core/Icon";
+import AddPhotoAlternateIcon from "@material-ui/icons/AddPhotoAlternate";
 import Input from '@material-ui/core/Input';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import InputAdornment from '@material-ui/core/InputAdornment';
@@ -62,6 +65,20 @@ const useStyles = makeStyles((theme) => ({
     width:'100%',
     marginTop: theme.spacing(1),
     marginBottom: '26px'
+  },
+  uploadWrapper: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  imgPreview: {
+    '& img': {
+      maxWidth: '100%',
+      maxHeight: '100%'
+    },
+    overflow: 'hidden',
+    borderRadius: '100%',
+    height: '60px'
   },
   currency: {
     display: 'flex',
@@ -151,11 +168,16 @@ export function InputBitcloutAccount(
       }
       try {
         var bitcloutAccountResp = await api_functions.getBitcloutAcc(PubKey, accName);
-        bitcloutAccountResp.id = bitcloutAccountResp.PublicKeyBase58Check;
         validate(bitcloutAccountResp);
       } catch (err) {
+        console.log(err);
         setInputState(3);
         return
+      }
+      if(!bitcloutAccountResp) {
+        bitcloutAccountResp = {
+          Username:accName
+        }
       }
       setBitcloutAccount(bitcloutAccountResp);
       setInputState(2);
@@ -203,10 +225,12 @@ export function InputBitcloutAccount(
           "aria-label": "BitClout account"
         }}
       />
-      <FormHelperText component={'div'} id={'input_bitclout_account_helper_text'}
-        style={{visibility: bitcloutAccount ? 'visible' : 'hidden'}} className={classes.helper}>
-        {bitcloutAccount ? bitcloutAccount.PubKeyShort : 'Account Publick Key'}
-      </FormHelperText>
+      {htmlIds.Recipient &&
+        <FormHelperText component={'div'} id={'input_bitclout_account_helper_text'}
+          style={{visibility: bitcloutAccount ? 'visible' : 'hidden'}} className={classes.helper}>
+          {bitcloutAccount ? bitcloutAccount.PubKeyShort : 'Account Publick Key'}
+        </FormHelperText>
+      }
       {((addHandler) &&
         <Button edge="end" size='sm'
         style={{visibility: (inputState == 2) ? 'visible' : 'hidden'}}
@@ -216,21 +240,27 @@ export function InputBitcloutAccount(
           Add
         </Button>
       )}
-      <input type="hidden" id={htmlIds.Recipient} value={bitcloutAccount ? bitcloutAccount.id : ''}></input>
-      <input type="hidden" id={htmlIds.RecipientUsername} value={bitcloutAccount ? bitcloutAccount.Username : ''}></input>
+      {htmlIds.Recipient &&
+        <input type="hidden" id={htmlIds.Recipient} value={bitcloutAccount ? bitcloutAccount.PublicKeyBase58Check : ''}></input>
+      }
+      {htmlIds.RecipientUsername &&
+        <input type="hidden" id={htmlIds.RecipientUsername} value={bitcloutAccount ? bitcloutAccount.Username : ''}></input>
+      }
     </FormControl>
   )
 }
 
 export function InputAmount(props) {
   const classes = useStyles();
-  const {htmlIds, exchRate, feesMap, wallet, validate} = props;
+  const {htmlIds, exchRate, feesMap, wallet, validate, getFee} = props;
   const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a].BalanceNanos - wallet[b].BalanceNanos}).reverse();
   const [USDAmount, setUSDAmount] = React.useState(0);
   const [BTCLTAmount, setBTCLTAmount] = React.useState(0);
   const [amountNanos, setAmountNanos] = React.useState(0);
-  const [MGZDfee, setMGZDFee] = React.useState(0);
+  const [MGZDfee, setMGZDFee] = React.useState(null);
+  const [lastReqId, setLastReqId] = React.useState(null);
   const [currency, setCurrency] = React.useState('$ClOUT');
+  exchRate.USDbyBTCLT = exchRate.USDbyBTCLT || 0;
 
   var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';
   var fees = Object.keys(feesMap).sort().reverse();
@@ -248,23 +278,23 @@ export function InputAmount(props) {
   feesMapTable += '</table>'
 
   const handleChange = (_Amount) => {
+    setMGZDFee(null);
     setBTCLTAmount(_Amount);
+    setUSDAmount(0);
     _Amount = parseFloat(_Amount || 0);
-    if (exchRate.USDbyBTCLT) {
-      var USDAmount = _Amount * exchRate.USDbyBTCLT;
-      setUSDAmount(USDAmount);
-      var amountNanos = _Amount * 1e9;
-      setAmountNanos(amountNanos);
-      var trgFee = fees[0];
-      for (let fee of fees) {
-        let range = feesMap[fee];
-        if (USDAmount < range) {
-          trgFee = fee;
-          break
-        }
-      }
-      setMGZDFee(trgFee);
+    var _amountNanos = _Amount * 1e9;
+    setAmountNanos(_amountNanos);
+    let CreatorPublicKeyBase58Check;
+    if (wallet[currency].CreatorPublicKeyBase58Check) {
+      CreatorPublicKeyBase58Check = wallet[currency].CreatorPublicKeyBase58Check;
     }
+    setLastReqId(Math.random())
+    getFee(_amountNanos, CreatorPublicKeyBase58Check, lastReqId).then(({feePercent, AmountUSD, reqId}) => {
+      if (reqId === lastReqId) {
+        setMGZDFee(feePercent);
+        setUSDAmount(AmountUSD);
+      }
+    });
   }
 
   const maxHandler = (event) => {
@@ -274,9 +304,12 @@ export function InputAmount(props) {
 
   const handleCurrencyChange = (event) => {
     event.preventDefault();
-    if (validate(event.target.value)) {
-      setCurrency(event.target.value);
+    try {
+      validate(event.target.value)
+    } catch (e) {
+      return
     }
+    setCurrency(event.target.value);
   }
 
   return (
@@ -311,12 +344,12 @@ export function InputAmount(props) {
         onChange={e => handleChange(e.target.value)}
         required
         placeholder={BTCLTAmount.toLocaleString()}
-        value={BTCLTAmount ? BTCLTAmount : ''}
+        value={BTCLTAmount}
       />
       <FormHelperText component={'div'} id={'interact_amount_helper_text'} className={classes.helper}>
         <div>
           <div>
-          Platform fee: {MGZDfee}%
+          CloutMegazord fee: {MGZDfee !== null ? MGZDfee + "%" : 'Waiting'}
           <Tooltip
             id="tooltip-top"
             title={<div dangerouslySetInnerHTML={{
@@ -329,7 +362,21 @@ export function InputAmount(props) {
           </Tooltip>
           </div>
           <div>
-            Will receive: {BTCLTAmount - BTCLTAmount * (MGZDfee / 100).toFixed(4).toLocaleString()} (≈ ${USDAmount.toFixed(2).toLocaleString()} USD)
+            Will receive:
+            {
+              USDAmount ?
+            (BTCLTAmount - BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString() : 0
+            }
+            {" "}
+            (≈ $
+            {
+            (USDAmount - USDAmount  * ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()
+            }
+            USD)
+          </div>
+          <div>
+            Fee: { (BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
+            (≈ ${(USDAmount* ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()} USD)
           </div>
         </div>
       </FormHelperText>
@@ -341,25 +388,122 @@ export function InputAmount(props) {
 }
 
 export function Description(porps) {
-  return ( <TextField
-    id="standard-multiline-static"
-    label="Multiline"
-    multiline
-    rows={4}
-    defaultValue="Default Value"
-    onInput = {(e) =>{
-      e.target.value = Math.max(0, parseInt(e.target.value) ).toString().slice(0, porps.maxLength)
-    }}
-  />)
+  const classes = useStyles();
+  const {postfix, label, valueProp, htmlIds} = porps;
+  const [value, setValue] = React.useState(valueProp);
+  const onInputHandler = (e) => {
+    e.preventDefault();
+    setValue(e.target.value.slice(0, porps.maxLength))
+  }
+  return (
+    <FormControl className={classes.formControl}>
+      <TextField
+        id="description"
+        label={label}
+        multiline
+        value={value}
+        inputProps = {{
+          "spellCheck": false
+        }}
+        rows={4}
+        onInput = {onInputHandler}/>
+      <FormHelperText component={'div'} id={'description_helper_text'} className={classes.helper}>
+        {value.length} / {porps.maxLength} <br/>
+        "{postfix}" - postfix would be added to end of description by default.
+      </FormHelperText>
+      <input type="hidden" value={value} id={htmlIds.Description}/>
+    </FormControl>
+  )
 }
 
 
-export function UploadImage(props) {
-  return (<div></div>)
+export function UploadFile(props) {
+  const {valueProp, globalIds, validate, loadFile, user} = props;
+  const classes = useStyles();
+  const [filePreview, setFilePreview] = React.useState(valueProp);
+  const handleUploadClick = (e) => {
+    const files = e.target.files;
+    let fileToUpload = files.item(0);
+    try {
+      validate(fileToUpload)
+    } catch (e) {
+      return
+    }
+    loadFile(user.PublicKeyBase58Check + '_' + globalIds.Avatar,
+      fileToUpload, {contentType: fileToUpload.type,}
+    ).then(url=>{
+      window[globalIds.Avatar] = url;
+      setFilePreview(url);
+    });
+    // const reader = new FileReader();
+    // reader.readAsBinaryString(fileToUpload);
+    // reader.onload = (event) => {
+    //   // const base64Image = btoa(event.target.result);
+
+    //   // window[globalIds.Avatar] = `data:${fileToUpload.type};base64,${base64Image}`;
+    //   // setFilePreview(window[globalIds.Avatar]);
+    // };
+  }
+  return (
+    <FormControl className={classes.formControl}>
+     <FormHelperText component={'div'} id={'description_helper_text'} className={classes.helper}>
+        Change Avatar
+      </FormHelperText>
+      <div className={classes.uploadWrapper}>
+        <input
+          accept="image/*"
+          className={classes.input}
+          id="contained-button-file"
+          multiple
+          hidden
+          type="file"
+          onChange={handleUploadClick}
+        />
+         <label htmlFor="contained-button-file" style={{marginRight: 20}}>
+          <Fab component="span" className={classes.button}>
+            <AddPhotoAlternateIcon />
+          </Fab>
+        </label>
+        <div className={classes.imgPreview}>
+          <img src={filePreview}></img>
+        </div>
+      </div>
+    </FormControl>
+  )
 }
 
 export function FounderReward(props) {
-  return (<div></div>)
+  const {valueProp, htmlIds} = props;
+  const classes = useStyles();
+  const [value, setValue] = React.useState(valueProp);
+  const onInputHandler = (e) => {
+    e.preventDefault();
+    if (!e.target.value) {
+      setValue('');
+      return
+    }
+    let val = parseFloat(e.target.value);
+    if (val > 100 || val < 0) {
+      return
+    }
+    setValue(val)
+  }
+  return (
+    <FormControl className={classes.formControl}>
+    <TextField
+      id="FR"
+      label="Founder Reward Percentage"
+      type="number"
+      value={value}
+      InputProps={{ inputProps: { min: 0, max: 100 } }}
+      InputLabelProps={{
+        shrink: true,
+      }}
+      onInput = {onInputHandler}
+    />
+    <input type="hidden" value={value} id={htmlIds.FR}/>
+  </FormControl>
+  )
 }
 
 export default {}

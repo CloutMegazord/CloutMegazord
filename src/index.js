@@ -147,6 +147,9 @@ class App extends React.Component {
         if (targ.includes('/admin') || (window.location.pathname === '/')) {
           this.setState({redirect: '/landing/home'});
         }
+        api_functions.authToken = null;
+        api_functions.onErrorSubscribers = [];
+        // this.setState({redirect: '/landing/home'});
       }
     });
   }

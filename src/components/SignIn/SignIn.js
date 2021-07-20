@@ -103,6 +103,15 @@ const SignIn = (props) => {
 			setErrorOpen(true)
 		});
 	}
+  const signInWrapperClick = (e) => {
+    if (api_functions.authToken) {
+      e.nativeEvent.stopImmediatePropagation();
+      e.stopPropagation();
+      e.preventDefault();
+      window.location.pathname = '/admin/megazordslist';
+      return
+    }
+  }
 	const handleError = (e) => {
 
 	}
@@ -118,6 +127,7 @@ const SignIn = (props) => {
           Error: {errorText}
         </Alert>
       </Snackbar>
+      <div onClickCapture={signInWrapperClick}>
       <BitcloutLogin
         accessLevel={accessLevel}
         onSuccess={handleSignIn}
@@ -127,6 +137,7 @@ const SignIn = (props) => {
         customization={{className: classes.custloginButton}}
         customIcon={<LoginIcon/>}
       />
+      </div>
   	</div>);
 }
 

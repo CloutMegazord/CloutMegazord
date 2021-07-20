@@ -25,9 +25,12 @@ export const storage = firebase.storage();
 export const functions = firebase.functions();
 
 var apiEndpoint = "https://cloutmegazord.com/api";
+var signingEndpoint = "https://signing-cloutmegazord.web.app";
 if (window.location.hostname === "localhost") {
   apiEndpoint = "http://localhost:5000/api";
+  signingEndpoint = "http://localhost:7000";
   db.useEmulator("localhost", 9000);
+  storage.useEmulator("localhost",  9199);
   functions.useEmulator("localhost", 5001);
 }
 export const onErrorSubscribers = [];
@@ -36,6 +39,8 @@ const fireError = (e) => {
 };
 const waitingMegazordAvatar = "/assets/img/waitingMegazord.png";
 const defaultAvatar = "/assets/img/default_profile_pic.png";
+const defaultUsername = "Anonymous";
+
 
 function IsJsonString(str) {
   try {
@@ -140,6 +145,9 @@ async function getBitcloutAcc(publicKey = "", Username = "") {
     )
     .then((resp) => resp.data);
   var Profile = respData.data.Profile;
+  if (!Profile) {
+    return null
+  }
   Profile.id = Profile.PublicKeyBase58Check;
   Profile.PubKeyShort = Profile.PublicKeyBase58Check.slice(0, 12) + "...";
   Profile.ProfilePic = Profile.ProfilePic || defaultAvatar;
@@ -206,6 +214,9 @@ async function handleMegazord(megazordInfo, user) {
     var megazordStateless = await api_functions.getUserStateless(
       resultMegazord.PublicKeyBase58Check
     );
+    if (!megazordStateless) {
+      throw new Error('Get Megazord Error.');
+    }
     resultMegazord.status_id = 0;
     resultMegazord.status_text = "Active";
 
@@ -225,26 +236,18 @@ async function handleMegazord(megazordInfo, user) {
     task.addedBy = await api_functions.getBitcloutAcc(task.addedBy);
     resultMegazord.tasks.push(task);
   }
-  for (let k in megazordInfo.pendingZords) {
+  for (let k in Object.assign({...megazordInfo.pendingZords}, megazordInfo.confirmedZords)) {
+    let isPending = k in megazordInfo.pendingZords;
     let cloutAccount = await api_functions.getBitcloutAcc(k);
-    resultMegazord.canConfirm = k === user.id;
+    resultMegazord.canConfirm = isPending && (resultMegazord.canConfirm || k === user.id);
     resultMegazord.zords.push({
+      PublicKeyBase58Check: k,
       avatar: cloutAccount.ProfilePic,
-      status: "pending",
+      status: isPending ? "pending" : "confirmed",
       name: cloutAccount.Username,
       link: "https://bitclout.com/u/" + cloutAccount.Username,
     });
   }
-  for (let k in megazordInfo.confirmedZords) {
-    let cloutAccount = await api_functions.getBitcloutAcc(k);
-    resultMegazord.zords.push({
-      avatar: cloutAccount.ProfilePic,
-      status: "confirmed",
-      name: cloutAccount.Username,
-      link: "https://bitclout.com/u/" + cloutAccount.Username,
-    });
-  }
-
   if (!resultMegazord.ProfilePic) {
     if (resultMegazord.PublicKeyBase58Check) {
       resultMegazord.ProfilePic = defaultAvatar;
@@ -260,11 +263,13 @@ async function handleMegazord(megazordInfo, user) {
     resultMegazord.PubKeyShort =
       resultMegazord.PublicKeyBase58Check.slice(0, 12) + "...";
   }
-  resultMegazord.Username = resultMegazord.Username || "Anonymous";
+  resultMegazord.Username = resultMegazord.Username || defaultUsername;
   return resultMegazord;
 }
 
 export const api_functions = {
+  defaultAvatar: defaultAvatar,
+  defaultUsername: defaultUsername,
   getTaskSession: () => {
     var path = window.location.href.split("/").pop();
     var task = path.split("&")[0].split("=")[1];
@@ -304,6 +309,28 @@ export const api_functions = {
   logout: () => {
     localStorage.setItem("users", null);
     auth.signOut();
+  },
+  getFee: (AmountNanos, zords, CreatorPublicKeyBase58Check) => {
+    return new Promise(async (resolve, reject) => {
+      let resp = await axios.post(signingEndpoint + "/ts/getFee", {
+        data: { AmountNanos, zords, CreatorPublicKeyBase58Check },
+      });
+      if (resp.data.error) {
+        fireError("Task error: " + resp.data.error);
+        reject(resp.data.error);
+        return;
+      }
+      resolve(resp.data);
+    });
+  },
+  loadFile: (name, file, metadata) => {
+    return new Promise(async (resolve, reject) => {
+      const task = storage.ref().child(name).put(file, metadata);
+      task
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => resolve(url))
+        .catch(reject);
+    })
   },
   createMegazord: (zords) => {
     ///* forceRefresh */ true
@@ -432,10 +459,9 @@ export const api_functions = {
   },
   getFeesMap: () => {
     return {
-      3: 1 * 10 ** 4,
-      2: 1 * 10 ** 5,
-      1: 1 * 10 ** 6,
-      0.5: Infinity,
+      1.5: 1 * 10**4,
+      1: 1 * 10**5,
+      0.5: Infinity
     };
   },
   onUserData: async (publicKey, callback, errorCallback = () => {}) => {
@@ -488,7 +514,12 @@ export const api_functions = {
           return;
         }
         megazordData.id = id;
-        resMegazord = await handleMegazord(megazordData, user);
+        try {
+          resMegazord = await handleMegazord(megazordData, user);
+        } catch (e) {
+          errorCallback(e);
+          return;
+        }
         callback(resMegazord);
       },
       (error) => {
