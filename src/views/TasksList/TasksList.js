@@ -87,21 +87,7 @@ const useCreateTaskStyles = makeStyles((theme) => ({
 }));
 
 function CreateTask(props) {
-<<<<<<< HEAD
-  const {
-    onCreate,
-    onClose,
-    open,
-    user,
-    megazord,
-    api_functions,
-    exchangeRate,
-    indexFunctons,
-    ...other
-  } = props;
-=======
   const { onCreate, onClose, open, user, megazord, api_functions, bitcloutData, indexFunctons, ...other } = props;
->>>>>>> feature/update-bitclout-profile
   const classes = useCreateTaskStyles();
   const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
   const [inputState, setInputState] = React.useState(0);
@@ -111,19 +97,8 @@ function CreateTask(props) {
   var tasksTypes = new Array(Object.keys(TasksMap).length);
   var tasksMap = {};
   for (let key in TasksMap) {
-<<<<<<< HEAD
-    tasksMap[key] = TasksMap[key]({
-      user,
-      megazord,
-      api_functions,
-      exchangeRate,
-      indexFunctons,
-    });
-    tasksTypes[tasksMap[key].order] = { key, disabled: tasksMap[key].disabled };
-=======
     tasksMap[key] = TasksMap[key]({user, megazord, api_functions, bitcloutData, indexFunctons});
     tasksTypes[tasksMap[key].order] = {name: tasksMap[key].name, key, disabled: tasksMap[key].disabled}
->>>>>>> feature/update-bitclout-profile
   }
   if (taskType) {
     var taskForm = tasksMap[taskType];
@@ -165,22 +140,6 @@ function CreateTask(props) {
     onCreate(taskResult);
   };
 
-<<<<<<< HEAD
-  const addToList = (e) => {
-    e.preventDefault();
-    setAccounts([...accounts, { ...bitcloutAccount }]);
-    // setValue('');
-    // setInputState(0);
-  };
-
-  const removeFromList = (e, id) => {
-    e.preventDefault();
-    var _accounts = [...accounts].filter((it) => it.id !== id);
-    setAccounts(_accounts);
-  };
-
-=======
->>>>>>> feature/update-bitclout-profile
   const handleChange = (event) => {
     event.preventDefault();
     let taskType = event.target.value;
@@ -221,15 +180,7 @@ function CreateTask(props) {
                   <MenuItem
                     key={item.key}
                     id={item.key}
-<<<<<<< HEAD
-                    value={item.disabled ? "" : item.key}
-                  >
-                    {item.key + (item.disabled ? " (soon)" : "")}
-                  </MenuItem>
-                );
-=======
                     value={item.disabled ? '' : item.key}>{item.name + (item.disabled ? ' (soon)' : '')}</MenuItem>)
->>>>>>> feature/update-bitclout-profile
               })}
             </Select>
           </FormControl>
@@ -262,15 +213,7 @@ export default function TableList(props) {
   const user = props.user || {};
   const api_functions = props.api_functions;
   const indexFunctons = props.indexFunctons;
-<<<<<<< HEAD
-
-  if (props.bitcloutData) {
-    var exchangeRate = props.bitcloutData.exchangeRate;
-  }
-  const megazordId = window.location.pathname.split("/").pop();
-=======
   const megazordId = window.location.pathname.split('/').pop();
->>>>>>> feature/update-bitclout-profile
   var megazord = user.megazords ? user.megazords[megazordId] : {};
   megazord = megazord || {};
   const tasks = megazord.tasks || [];
@@ -330,25 +273,12 @@ export default function TableList(props) {
   };
   return (
     <div>
-<<<<<<< HEAD
-      {user.id && megazord.id && (
-        <CreateTask
-          open={openCT}
-          user={user}
-          megazord={megazord}
-          api_functions={api_functions}
-          exchangeRate={exchangeRate}
-          onCreate={createHandler}
-          onClose={closeHandler}
-          indexFunctons={indexFunctons}
-=======
       {(user.id && megazord.id && props.bitcloutData) &&
         <CreateTask
           open={openCT} user={user} megazord={megazord} api_functions={api_functions}
           bitcloutData={props.bitcloutData} onCreate={createHandler} onClose={closeHandler} indexFunctons={indexFunctons}
->>>>>>> feature/update-bitclout-profile
         />
-      )}
+      }
       <GridContainer>
         <GridItem xs={12} sm={12} md={12}>
           <Card>
