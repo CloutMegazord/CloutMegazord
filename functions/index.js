@@ -14,6 +14,8 @@ const jwt = require("jsonwebtoken");
 const bs58check = require("bs58check");
 const notifications = require("./notifications");
 const config = require("./config");
+var url = require("url");
+var path = require("path");
 
 let signingEndpoint, CMEndpoint;
 
@@ -31,6 +33,7 @@ if (process.env.NODE_ENV === "development") {
 admin.initializeApp();
 const db = admin.database();
 const auth = admin.auth();
+const storage = admin.storage();
 
 if (process.env.NODE_ENV === "development") {
   db.useEmulator("localhost", 9000);
@@ -156,6 +159,7 @@ async function bitcloutProxy(data) {
         console.log("Cache Hit");
         cachedData = cachedDataRef.val();
         resolve(cachedData.data);
+        return
       }
     }
     axios[method]("https://bitclout.com/api/v0/" + action, data, {
@@ -267,30 +271,31 @@ async function addMegazord(zords, owner) {
   }
 }
 
+async function deleteTask(megazordId, taskId) {
+  const megazordRef = db.ref("megazords/" + megazordId);
+  let taskSnap = await megazordRef.child("tasks").child(taskId).get();
+  if (!taskSnap.exists()) {
+    return
+  }
+  let task = taskSnap.val();
+  if (task.type === 'UpdateProfile') {
+    var parsed = url.parse(task.NewProfilePic);
+    await storage.ref().child(path.basename(parsed.pathname)).delete();
+  }
+  await megazordRef.child("tasks").child(taskId).remove();
+}
+
 async function getExchangeRate() {
   try {
-    var exchangeRate = await bitcloutProxy({
-      method: "get",
-      action: "get-exchange-rate",
-    });
-    var tickerResp = await axios.get("https://blockchain.info/ticker");
+    var exchangeRate = await bitcloutProxy({method: 'get', action: 'get-exchange-rate'});
   } catch (e) {
     throw new Error(e);
   }
-
-  if (tickerResp.data.error) {
-    reject(tickerResp.data.error);
+  var exchangeRate =  {
+    SatoshisPerBitCloutExchangeRate: exchangeRate.SatoshisPerBitCloutExchangeRate,
+    USDCentsPerBitcoinExchangeRate: exchangeRate.USDCentsPerBitcoinExchangeRate,
+    USDbyBTCLT: exchangeRate.USDCentsPerBitCloutExchangeRate / 100
   }
-  var ticker = tickerResp.data;
-  // var exchangeRate =  (ticker.USD.last / 100) * (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000)
-  var exchangeRate = {
-    SatoshisPerBitCloutExchangeRate:
-      exchangeRate.SatoshisPerBitCloutExchangeRate,
-    USDCentsPerBitcoinExchangeRate: ticker.USD.last,
-    USDbyBTCLT:
-      ticker.USD.last *
-      (exchangeRate.SatoshisPerBitCloutExchangeRate / 100000000),
-  };
   return exchangeRate;
 }
 
@@ -532,11 +537,13 @@ app.post("/api/confirmMegazord", async (req, res, next) => {
     res.send({ data: { error: e.toString() } });
     return;
   }
-  const task = Tasks.createTask({
-    type: "getPublicKey",
-    addedBy: CloutMegazordPubKey,
-    Recipient: "TargetMegazord"
-  });
+  if (Object.keys(megazord.pendingZords).length === 0) {
+    var task = Tasks.createTask({
+      type: "getPublicKey",
+      addedBy: CloutMegazordPubKey,
+      Recipient: "TargetMegazord"
+    });
+  }
   await megazordRef.child("tasks").push(task.toDBRecord());
   res.send({ data: { success: true } });
 });
@@ -592,9 +599,13 @@ app.post("/api/createMegazord", async (req, res, next) => {
 app.post("/api/finishTask", async (req, res, next) => {
   const { task, taskData, taskError } = req.body.data;
   const megazordRef = db.ref("megazords/" + taskData.megazordId);
-  await megazordRef.child("tasks/" + task.id + "/taskSessionRun").remove();
   if (!taskError) {
-    await megazordRef.child("tasks").child(task.id).remove();
+    if (task.type === "getPublicKey") {
+      megazordRef.child("PublicKeyBase58Check").set(taskData.megazordPublicKey);
+    }
+    await deleteTask(taskData.megazordId, task.id);
+  } else {
+    await megazordRef.child("tasks/" + task.id + "/taskSessionRun").remove();
   }
   var megazorSnap = await megazordRef.get();
   var megazord = megazorSnap.val();
@@ -609,9 +620,6 @@ app.post("/api/finishTask", async (req, res, next) => {
           error: taskError,
         })
       );
-  }
-  if (task.type === "getPublicKey") {
-    megazordRef.child("PublicKeyBase58Check").set(taskData.megazordPublicKey);
   }
   res.send({ ok: true });
 });
@@ -638,42 +646,6 @@ app.post("/api/changeNotificationStatus", async (req, res, next) => {
   } catch (err) {
     res.send({ data: { error: err.message } });
   }
-});
-
-app.post("/api/getFee", async (req, res, next) => {
-  const {AmountNanos, megazordId, CreatorPublicKeyBase58Check} = req.body.data;
-  let publicKey;
-  var customToken = req.headers.authorization.replace("Bearer ", "");
-  try {
-    let verif = await auth.verifyIdToken(customToken);
-    publicKey = verif.uid;
-  } catch (error) {
-    res.send({ data: { error: error.message } });
-    return;
-  }
-  const megazordRef = db.ref("megazords/" + megazordId);
-  var megazorSnap = await megazordRef.get();
-  if (megazorSnap.exists()) {
-    var megazord = megazorSnap.val();
-  } else {
-    res.send({ data: { error: "Megazord not Found" } });
-    return
-  }
-  let zords = Object.keys(megazord.confirmedZords);
-  let resp;
-  try {
-    resp = await axios.post(signingEndpoint + "/ts/getFee", {
-      data: { AmountNanos, zords, CreatorPublicKeyBase58Check },
-    });
-  } catch (e) {
-    res.send({ data: { error: "Megazord not Found" } });
-    return
-  }
-  if (resp.data.error) {
-    res.send({ data: { error: resp.data.error } });
-    return;
-  }
-  res.send({ data: resp.data });
 });
 
 app.post("/api/task", async (req, res, next) => {
@@ -708,7 +680,8 @@ app.post("/api/task", async (req, res, next) => {
       res.send({ data: {} });
       break;
     case "delete":
-      await megazordRef.child("tasks/" + data.task.id).remove();
+      await deleteTask(data.megazordId, data.task.id);
+      // await megazordRef.child("tasks/" + data.task.id).remove();
       res.send({ data: {} });
       break;
     case "powerOn":

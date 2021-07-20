@@ -252,13 +252,15 @@ export function InputBitcloutAccount(
 
 export function InputAmount(props) {
   const classes = useStyles();
-  const {htmlIds, exchRate, feesMap, wallet, validate, megazordId, getFee} = props;
+  const {htmlIds, exchRate, feesMap, wallet, validate, getFee} = props;
   const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a].BalanceNanos - wallet[b].BalanceNanos}).reverse();
   const [USDAmount, setUSDAmount] = React.useState(0);
   const [BTCLTAmount, setBTCLTAmount] = React.useState(0);
   const [amountNanos, setAmountNanos] = React.useState(0);
   const [MGZDfee, setMGZDFee] = React.useState(null);
+  const [lastReqId, setLastReqId] = React.useState(null);
   const [currency, setCurrency] = React.useState('$ClOUT');
+  exchRate.USDbyBTCLT = exchRate.USDbyBTCLT || 0;
 
   var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';
   var fees = Object.keys(feesMap).sort().reverse();
@@ -278,26 +280,21 @@ export function InputAmount(props) {
   const handleChange = (_Amount) => {
     setMGZDFee(null);
     setBTCLTAmount(_Amount);
+    setUSDAmount(0);
     _Amount = parseFloat(_Amount || 0);
-    if (exchRate.USDbyBTCLT) {
-      var _amountNanos = _Amount * 1e9;
-      setAmountNanos(_amountNanos);
-      let CreatorPublicKeyBase58Check;
-      if (wallet[currency].CreatorPublicKeyBase58Check) {
-        CreatorPublicKeyBase58Check = wallet[currency].CreatorPublicKeyBase58Check;
-      }
-      getFee(_amountNanos, megazordId, CreatorPublicKeyBase58Check).then(({feePercent}) => {
-        setMGZDFee(feePercent);
-        let _USDAmount
-        if (wallet[currency].CoinPriceBitCloutNanos) {
-          let CoinPriceBitCloutNanos = wallet[currency].CoinPriceBitCloutNanos;
-          _USDAmount = _Amount * (CoinPriceBitCloutNanos / 1e9 ) * exchRate.USDbyBTCLT;
-        } else {
-          _USDAmount = _Amount * exchRate.USDbyBTCLT
-        }
-        setUSDAmount(_USDAmount);
-      });
+    var _amountNanos = _Amount * 1e9;
+    setAmountNanos(_amountNanos);
+    let CreatorPublicKeyBase58Check;
+    if (wallet[currency].CreatorPublicKeyBase58Check) {
+      CreatorPublicKeyBase58Check = wallet[currency].CreatorPublicKeyBase58Check;
     }
+    setLastReqId(Math.random())
+    getFee(_amountNanos, CreatorPublicKeyBase58Check, lastReqId).then(({feePercent, AmountUSD, reqId}) => {
+      if (reqId === lastReqId) {
+        setMGZDFee(feePercent);
+        setUSDAmount(AmountUSD);
+      }
+    });
   }
 
   const maxHandler = (event) => {
@@ -347,7 +344,7 @@ export function InputAmount(props) {
         onChange={e => handleChange(e.target.value)}
         required
         placeholder={BTCLTAmount.toLocaleString()}
-        value={BTCLTAmount ? BTCLTAmount : ''}
+        value={BTCLTAmount}
       />
       <FormHelperText component={'div'} id={'interact_amount_helper_text'} className={classes.helper}>
         <div>
@@ -365,8 +362,17 @@ export function InputAmount(props) {
           </Tooltip>
           </div>
           <div>
-            Will receive: {(BTCLTAmount - BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
-            (≈ ${(USDAmount - USDAmount  * ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()} USD)
+            Will receive:
+            {
+              USDAmount ?
+            (BTCLTAmount - BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString() : 0
+            }
+            {" "}
+            (≈ $
+            {
+            (USDAmount - USDAmount  * ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()
+            }
+            USD)
           </div>
           <div>
             Fee: { (BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}

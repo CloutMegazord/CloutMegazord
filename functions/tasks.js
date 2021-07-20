@@ -23,7 +23,6 @@ class Task {
             type: this.type,
             description: this.description,
             addedBy: this.addedBy,
-            Recipient: this.Recipient,
             date: this.date
          }
 
@@ -44,19 +43,17 @@ class GetPublicKey extends Task {
         data.type = 'getPublicKey'
         data.defaultDescription = 'Launch this task for activate account and get public key';
         super(data);
-        this.Recipient = data.Recipient;
     }
 
     toDBRecord() {
         var record = super.toDBRecord();
-        record.Recipient = this.Recipient;
         return record;
     }
 }
 
 class Send extends Task {
     constructor(data) {
-        var AmountNanos = parseFloat(data.AmountNanos) || 0;
+        var AmountNanos = parseInt(data.AmountNanos) || 0;
         var currencyPostfix = (data.Currency === '$ClOUT') ? '' : ' coin';
         data.defaultDescription =
         `Send ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} ${data.Currency + currencyPostfix} to @${data.RecipientUsername}`;
@@ -81,7 +78,7 @@ class Send extends Task {
 class UpdateProfile extends Task {
     constructor(data) {
         data.type = 'updateProfile'
-        data.defaultDescription = 'Update Profile.';
+        data.defaultDescription = '';
         if (data.NewUsername) {
             data.defaultDescription += ` NewUsername: ${data.NewUsername};`
         }

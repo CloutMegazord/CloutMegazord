@@ -87,7 +87,7 @@ const updateProfile = (data) => {
           valueProp=''
         />,
         values: {
-          RecipientUsername: {id: 'send_RecipientUsername_value', required: true, type:'string'}
+          NewUsername: {id: 'send_RecipientUsername_value', required: true, type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
@@ -103,7 +103,7 @@ const updateProfile = (data) => {
           valueProp={megazord.Description || ''}
         />,
         values: {
-          RecipientUsername: {id: 'updateProfile_Description_value', required: false, type:'string'}
+          NewDescription: {id: 'updateProfile_Description_value', required: false, type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
@@ -120,7 +120,7 @@ const updateProfile = (data) => {
         />,
         //get from window object
         values: {
-          RecipientUsername: {globalName: 'updateProfile_avatar',
+          NewProfilePic: {globalName: 'updateProfile_avatar',
           required: megazord.ProfilePic === api_functions.defaultAvatar,//required
           type:'string'}
         },
@@ -134,7 +134,7 @@ const updateProfile = (data) => {
           valueProp={megazord.ProfilePic}
         />,
         values: {
-          RecipientUsername: {id: 'updateProfile_FR', required: true, type:'float'}
+          founderRewardInput: {id: 'updateProfile_FR', required: true, type:'float'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
@@ -159,6 +159,15 @@ const send = (data) => {
       throw Error('Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)');
     }
     return true;
+  }
+  const getFee = (_amountNanos, CreatorPublicKeyBase58Check, reqId) => {
+    return new Promise((resolve)=>{
+      api_functions.getFee(_amountNanos, megazord.zords.map(z=>z.PublicKeyBase58Check), CreatorPublicKeyBase58Check)
+        .then(data => {
+          data.reqId = reqId;
+          resolve(data);
+        })
+    })
   }
   const wallet = Object.assign(
     {'$ClOUT': {BalanceNanos: megazord.BalanceNanos, CreatorPublicKeyBase58Check: ''}},
@@ -196,11 +205,11 @@ const send = (data) => {
           placeholder={ "Input amount in BitClout"}
           // currencyTypes={['$BitClouts', 'Coins']}
           megazordId={megazord.id}
-          exchRate={bitcloutData.exchangeRate}
+          exchRate={bitcloutData.exchangeRate || {}}
           wallet={wallet}
           validate={validateCurrencies}
-          feesMap={api_functions.getFeesMap()}
-          getFee={api_functions.getFee}
+          feesMap={api_functions.getFeesMap}
+          getFee={getFee}
           user={user}
           htmlIds={{
             AmountNanos: "send_Amount_value",
