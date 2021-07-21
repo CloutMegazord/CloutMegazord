@@ -239,7 +239,7 @@ async function handleMegazord(megazordInfo, user) {
   for (let k in Object.assign({...megazordInfo.pendingZords}, megazordInfo.confirmedZords)) {
     let isPending = k in megazordInfo.pendingZords;
     let cloutAccount = await api_functions.getBitcloutAcc(k);
-    resultMegazord.canConfirm = isPending && (resultMegazord.canConfirm || k === user.id);
+    resultMegazord.canConfirm = resultMegazord.canConfirm || (isPending && k === user.id);
     resultMegazord.zords.push({
       PublicKeyBase58Check: k,
       avatar: cloutAccount.ProfilePic,
