@@ -23,7 +23,7 @@ import Snackbar from "components/Snackbar/Snackbar.js";
 import AddAlert from "@material-ui/icons/AddAlert";
 import Icon from "@material-ui/core/Icon";
 import InfoIcon from "@material-ui/icons/Info";
-import { ThemeProvider, createMuiTheme } from "@material-ui/core/styles";
+import { ThemeProvider, createTheme } from "@material-ui/core/styles";
 
 // Firebase.
 import firebase from "firebase/app";
@@ -58,7 +58,18 @@ console.log(mergedArray);
 import "assets/css/material-dashboard-react.css?v=1.9.0";
 
 const hist = createBrowserHistory();
-const theme = createMuiTheme({});
+const theme = createTheme({
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      smd: 750,
+      md: 1000,
+      lg: 1300,
+      xl: 1536
+    },
+  },
+});
 
 /**
  * The Splash Page containing the login UI.

@@ -311,6 +311,9 @@ const buttonStyle = {
     lineHeight: "1.5",
     borderRadius: "0.2rem",
   },
+  wide: {
+    padding: "12px 30px"
+  },
   round: {
     borderRadius: "30px",
   },

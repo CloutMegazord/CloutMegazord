@@ -214,7 +214,7 @@ export function InputBitcloutAccount(
         id={'input_bitclout_account_control'}
         required
         endAdornment={
-          <InputAdornment>
+          <InputAdornment position='end'>
             {(inputState == 1 &&
               <CircularProgress size="1rem" style={{ color: primaryColor[0] }}></CircularProgress>
             )}

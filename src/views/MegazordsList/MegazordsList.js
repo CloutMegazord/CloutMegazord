@@ -1,4 +1,5 @@
 import React from "react";
+import { useHistory } from 'react-router-dom'
 import classNames from "classnames";
 // react plugin for creating charts
 import ChartistGraph from "react-chartist";
@@ -372,12 +373,13 @@ function CreateMegazord(props) {
         </List>
       </DialogContent>
       <DialogActions>
-        <Button autoFocus onClick={handleCancel} color="secondary">
+        <Button autoFocus wide onClick={handleCancel} color="secondary">
           Cancel
         </Button>
         <Button
           onClick={handleOk}
           color="secondary"
+          wide
           disabled={accounts.length < 1}
         >
           {accounts.length < 1 ? "Min 2 Zords" : "Create"}
@@ -526,6 +528,7 @@ function adjust(color, amount) {
 
 export default function MegazordsList(props) {
   const classes = Object.assign(useStyles(), useStyles2());
+  const { push } = useHistory()
   const [open, setOpen] = React.useState(false);
   const [seedOpen, setSeedOpen] = React.useState(false);
   const [detachOpen, setDetachOpen] = React.useState(false);
@@ -651,13 +654,13 @@ export default function MegazordsList(props) {
       <Fab color="primary" aria-label="add" onClick={handleClickListItem}>
         <Icon>add</Icon>
       </Fab>
-      <Grid container spacing={3} xs={12}>
+      <Grid container spacing={3}>
         {Object.values(megazords)?.length ? (
           Object.values(megazordsOrdered)
             ?.reverse()
             ?.map((item) => {
               return (
-                <Grid xs={12} sm={12} md={6} lg={3} item key={item.id}>
+                <Grid xs={12} sm={12} smd={6} md={4} lg={3} item key={item.id}>
                   <Card
                     profile
                     style={{
@@ -950,8 +953,10 @@ export default function MegazordsList(props) {
                       {(item.status_id !== 1 && (
                         <Button
                           color="primary"
-                          href={"tasks_list/" + item.id}
+                          onClick={() => push("tasks_list/" + item.id)}
+                          // href={"tasks_list/" + item.id}
                           round
+                          wide
                         >
                           <Icon>task</Icon>
                           Tasks

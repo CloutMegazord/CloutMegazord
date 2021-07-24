@@ -17,6 +17,7 @@ export default function RegularButton(props) {
   const {
     color,
     round,
+    wide,
     children,
     disabled,
     simple,
@@ -33,6 +34,7 @@ export default function RegularButton(props) {
     [classes[size]]: size,
     [classes[color]]: color,
     [classes.round]: round,
+    [classes.wide]: wide,
     [classes.disabled]: disabled,
     [classes.simple]: simple,
     [classes.block]: block,
@@ -64,6 +66,7 @@ RegularButton.propTypes = {
   simple: PropTypes.bool,
   visibility: PropTypes.string,
   round: PropTypes.bool,
+  wide: PropTypes.bool,
   disabled: PropTypes.bool,
   block: PropTypes.bool,
   link: PropTypes.bool,
