@@ -522,6 +522,7 @@ export function FounderReward(props) {
 export function BitcloutPostLink ({ htmlIds, label}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [linkToSend, setLinkToSend] = useState('');
+  const [isInvalid, setIsInvalid] = useState(false);
   const [post, setPost] = useState({});
 
   const [isSearching, setIsSearching] = useState(false);
@@ -538,8 +539,14 @@ export function BitcloutPostLink ({ htmlIds, label}) {
             setIsSearching(false);
             setPost(result?.data?.data?.PostFound)
             const queryParamStart = searchTerm.indexOf('?');
+            if(result?.data?.data?.PostFound) {
+              setIsInvalid(false)
             setLinkToSend(queryParamStart !== -1 ? searchTerm.slice(0, queryParamStart) : searchTerm);
+            } else {
+              setIsInvalid(true)
+            }
           }).catch(() => {
+            setIsInvalid(true)
             setIsSearching(false)
           });
         }
@@ -551,6 +558,8 @@ export function BitcloutPostLink ({ htmlIds, label}) {
     <FormControl className={classes.formControl}>
       <InputLabel htmlFor="accountItem">{label}</InputLabel>
       <Input
+        required
+        error={isInvalid}
         onChange={(event) => setSearchTerm(event.target.value)}
         inputProps={{
           'aria-label': 'amount',
