@@ -6,13 +6,10 @@ import {
   Description,
   UploadFile,
   FounderReward,
-  UploadImage} from "components/FormControls/FormControls";
+  BitcloutPostLink,
+} from "components/FormControls/FormControls";
 
-// const InputBitcloutAccount = FormControls.InputBitcloutAccount;
 
-// SenderPublicKeyBase58Check,
-// RecipientPublicKeyOrUsername,
-// AmountNanos,
 const getPublicKey = (data) => {
   const megazord = data.megazord;
   const user = data.user;
@@ -288,6 +285,28 @@ const sell = (user) => {
   }
 }
 
+const reClout = () => {
+  return {
+    name: 'Reclout',
+    controls: [
+      {
+        name: 'link',
+        component:  <BitcloutPostLink 
+        htmlIds={{link: "link_to_post"}}
+        label="Link to post"
+        />,
+        values: {
+          link: {id: 'link_to_post', required: true, type:'string'}
+        },
+        possibleValue: "*",
+        disabled: false
+      },
+
+    ],
+    order: 6,
+    disabled: false,
+  };
+};
 
 export default {
   getPublicKey,
@@ -295,4 +314,5 @@ export default {
   send: send,
   // buy,
   // sell
+  reClout,
 }

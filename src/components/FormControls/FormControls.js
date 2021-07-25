@@ -1,6 +1,8 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import CircularProgress from '@material-ui/core/CircularProgress'
+import clsx from 'clsx';
+
 // core components
 import Button from "components/CustomButtons/Button.js";
 import { api_functions} from '../../firebase_init';
@@ -16,7 +18,7 @@ import CardBody from "components/Card/CardBody.js";
 import Tasks from "components/Tasks/Tasks.js";
 import TasksMap from "../../controlsmap";
 import CustomTabs from "components/CustomTabs/CustomTabs.js";
-import Icon from "@material-ui/core/Icon";
+import {Icon, Grid, Typography} from "@material-ui/core";
 import AddPhotoAlternateIcon from "@material-ui/icons/AddPhotoAlternate";
 import Input from '@material-ui/core/Input';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -52,6 +54,8 @@ import {
   blackColor,
   hexToRgb
 } from "assets/jss/material-dashboard-react.js";
+
+import {useDebounce} from '../../hooks';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -100,6 +104,12 @@ const useStyles = makeStyles((theme) => ({
   },
   helper: {
     fontSize: '0.9rem'
+  },
+  formHelperText: {
+    maxWidth: 500
+  },
+  successText: {
+    color: theme.palette.success.dark
   }
 }));
 
@@ -220,7 +230,7 @@ export function InputBitcloutAccount(
             {(inputState == 1 &&
               <CircularProgress size="1rem" style={{ color: primaryColor[0] }}></CircularProgress>
             )}
-          </InputAdornment>
+          </InputAdornment> 
         }
         inputProps = {{
           "spellCheck": false,
@@ -506,6 +516,77 @@ export function FounderReward(props) {
     <input type="hidden" value={value} id={htmlIds.FR}/>
   </FormControl>
   )
+}
+
+
+export function BitcloutPostLink ({ htmlIds, label}) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [linkToSend, setLinkToSend] = useState('');
+  const [post, setPost] = useState({});
+
+  const [isSearching, setIsSearching] = useState(false);
+  const debouncedSearchTerm = useDebounce(searchTerm, 1000);
+  const classes = useStyles();
+
+  useEffect(
+    () => {
+      if (debouncedSearchTerm) {
+        setIsSearching(true);
+        const postHash = searchTerm.includes('http') ? searchTerm.match(/\/posts\/(\w+)/)[1] : searchTerm;
+        if(postHash) {
+          api_functions.getSinglePost(postHash).then((result) => {
+            setIsSearching(false);
+            setPost(result?.data?.data?.PostFound)
+            const queryParamStart = searchTerm.indexOf('?');
+            setLinkToSend(queryParamStart !== -1 ? searchTerm.slice(0, queryParamStart) : searchTerm);
+          }).catch(() => {
+            setIsSearching(false)
+          });
+        }
+      }
+    },
+    [debouncedSearchTerm] // Only call effect if debounced search term changes
+  );
+  return (
+    <FormControl className={classes.formControl}>
+      <InputLabel htmlFor="accountItem">{label}</InputLabel>
+      <Input
+        onChange={(event) => setSearchTerm(event.target.value)}
+        inputProps={{
+          'aria-label': 'amount',
+        }}
+        variant="outlined"
+        endAdornment={
+          <InputAdornment>
+            {(isSearching &&
+              <CircularProgress size="1rem" style={{ color: primaryColor[0] }}></CircularProgress>
+            )}
+          </InputAdornment> 
+        }
+      />
+      {post?.Body &&
+      <>
+       <Grid container alignItems="center">
+        <FormHelperText component={'div'} className={clsx([classes.formHelperText, classes.successText])}>
+          Post has been found
+        </FormHelperText>
+        <Icon className={classes.successText}>check</Icon>
+        </Grid>
+        {post?.Body && 
+        <>
+          <Typography>
+          Post title:
+          </Typography>
+          <FormHelperText component={'div'} className={classes.formHelperText}>
+          {post?.Body}
+          </FormHelperText>
+        </>}
+        </>
+      }
+
+      <input type="hidden" id={htmlIds.link} value={linkToSend}></input>
+    </FormControl>
+    )
 }
 
 export default {}

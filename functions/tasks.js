@@ -75,6 +75,19 @@ class Send extends Task {
     }
 }
 
+class ReClout extends Task {
+    constructor(data) {
+        data.type = 'reClout'
+        data.defaultDescription = `Launch this task to Reclout: ${data.link}`;
+        super(data);
+    }
+
+    toDBRecord() {
+        var record = super.toDBRecord();
+        return record;
+    }
+}
+
 class UpdateProfile extends Task {
     constructor(data) {
         data.type = 'updateProfile'
@@ -134,6 +147,10 @@ function createTask(data) {
         }
         case 'updateProfile': {
             task = new UpdateProfile(data);
+            break;
+        }
+        case 'reClout': {
+            task = new ReClout(data);
             break;
         }
     }
