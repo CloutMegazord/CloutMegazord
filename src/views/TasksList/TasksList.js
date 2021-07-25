@@ -119,23 +119,31 @@ function CreateTask(props) {
     var taskResult = { type: taskType };
     for (let control of taskForm.controls) {
       for (let valueName in control.values) {
-        if (control.values[valueName].id) {
-          taskResult[valueName] = document.getElementById(control.values[valueName].id).value
-        } else if (control.values[valueName].globalName) {
-          taskResult[valueName] = window[control.values[valueName].globalName];
-        }
+        taskResult[valueName] = document.getElementById(control.values[valueName].id).value
         if (control.values[valueName].type === 'integer') {
           taskResult[valueName] = parseInt(taskResult[valueName])
         }
         if (control.values[valueName].type === 'float') {
           taskResult[valueName] = parseFloat(taskResult[valueName])
         }
-        if (!taskResult[valueName] && control.values[valueName].required) {
+        if (taskResult[valueName] === '' && control.values[valueName].required) {
           alert(`fill in ${control.name} field`);
           return;
         }
+        //skip updateProfile field if it is not changed
+        if (taskType === 'updateProfile') {
+          if ((control.values[valueName].default !== undefined) &&
+              (taskResult[valueName] === control.values[valueName].default)) {
+            delete taskResult[valueName];
+          }
+        }
       }
     }
+    if (taskType === 'updateProfile' && (Object.keys(taskResult).length === 1)) {
+      alert(`fill any field`);
+      return;
+    }
+    // console.log(taskResult);
     onFinish();
     onCreate(taskResult);
   };
@@ -154,7 +162,6 @@ function CreateTask(props) {
   return (
     <Dialog
       fullScreen
-      disableBackdropClick
       disableEscapeKeyDown
       maxWidth="xs"
       aria-labelledby="dialog-title"
@@ -196,10 +203,10 @@ function CreateTask(props) {
         </form>
       </DialogContent>
       <DialogActions>
-        <Button autoFocus onClick={handleCancel} color="secondary">
+        <Button autoFocus onClick={handleCancel} wide color="secondary">
           Cancel
         </Button>
-        <Button onClick={handleOk} color="secondary" disabled={!taskType}>
+        <Button onClick={handleOk} color="secondary" wide disabled={!taskType}>
           Create
         </Button>
       </DialogActions>
@@ -294,6 +301,7 @@ export default function TableList(props) {
                 }}
                 color="secondary"
                 edge="end"
+                wide
                 onClick={addNewTaskbtnHandler}
               >
                 Add new Task

@@ -51,6 +51,19 @@ function IsJsonString(str) {
   return true;
 }
 
+function getImageOrFallback(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.src = url
+    img.onload = () => resolve(true)
+    img.onerror = () => {
+      reject(`image not found for url ${url}`);
+      img.onerror=null
+      return false;
+    }
+  })
+}
+
 function getFromStorage(namespace, key) {
   var res = null;
   var item = localStorage.getItem(namespace);
@@ -211,9 +224,7 @@ async function handleMegazord(megazordInfo, user) {
     resultMegazord.status_id = 1;
     resultMegazord.status_text = "Pending zords confirmation";
   } else if (resultMegazord.PublicKeyBase58Check) {
-    var megazordStateless = await api_functions.getUserStateless(
-      resultMegazord.PublicKeyBase58Check
-    );
+    var megazordStateless = await api_functions.getUserStateless(resultMegazord.PublicKeyBase58Check);
     if (!megazordStateless) {
       throw new Error('Get Megazord Error.');
     }
@@ -226,6 +237,9 @@ async function handleMegazord(megazordInfo, user) {
     );
     resultMegazord.BalanceNanos = megazordStateless.BalanceNanos;
     resultMegazord.UsersYouHODL = megazordStateless.UsersYouHODL;
+    if (megazordStateless.ProfileEntryResponse) {
+      resultMegazord.founderRewardInput = (megazordStateless.ProfileEntryResponse.CoinEntry.CreatorBasisPoints / 100);
+    }
   } else {
     resultMegazord.status_id = 3;
     resultMegazord.status_text = "Pending Public Key";
@@ -236,7 +250,7 @@ async function handleMegazord(megazordInfo, user) {
     task.addedBy = await api_functions.getBitcloutAcc(task.addedBy);
     resultMegazord.tasks.push(task);
   }
-  for (let k in Object.assign({...megazordInfo.pendingZords}, megazordInfo.confirmedZords)) {
+  for (let k in {...megazordInfo.pendingZords, ...megazordInfo.confirmedZords}) {
     let isPending = k in megazordInfo.pendingZords;
     let cloutAccount = await api_functions.getBitcloutAcc(k);
     resultMegazord.canConfirm = resultMegazord.canConfirm || (isPending && k === user.id);
@@ -248,13 +262,19 @@ async function handleMegazord(megazordInfo, user) {
       link: "https://bitclout.com/u/" + cloutAccount.Username,
     });
   }
-  if (!resultMegazord.ProfilePic) {
-    if (resultMegazord.PublicKeyBase58Check) {
+  // if (!resultMegazord.ProfilePic) {
+  if (resultMegazord.PublicKeyBase58Check) {
+    const picUrl = 'https://bitclout.com/api/v0/get-single-profile-picture/' + resultMegazord.PublicKeyBase58Check;
+    try {
+      await getImageOrFallback(picUrl).then();
+      resultMegazord.ProfilePic = picUrl;
+    } catch (e) {
       resultMegazord.ProfilePic = defaultAvatar;
-    } else {
-      resultMegazord.ProfilePic = waitingMegazordAvatar;
     }
+  } else {
+    resultMegazord.ProfilePic = waitingMegazordAvatar;
   }
+  // }
   // resultMegazord.Username = resultMegazord.Username || resultMegazord.PubKeyShort || 'Not Activated';
   if (resultMegazord.Username) {
     resultMegazord.link = "https://bitclout.com/u/" + resultMegazord.Username;

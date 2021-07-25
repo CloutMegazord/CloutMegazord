@@ -142,7 +142,9 @@ export function InputBitcloutAccount(
   htmlIds={Recipient: "input_bitclout_account"}, ...rest }) {
   const classes = useStyles();
   const [inputState, setInputState] = React.useState(0);
-  const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
+  const [bitcloutAccount, setBitcloutAccount] = React.useState({
+    Username: valueProp || ''
+  });
   const [sleepVar, setSleepVar] = React.useState(-1);
   const [value, setValue] = React.useState(valueProp);
 
@@ -418,7 +420,7 @@ export function Description(porps) {
 
 
 export function UploadFile(props) {
-  const {valueProp, globalIds, validate, loadFile, user} = props;
+  const {valueProp, htmlIds, validate, loadFile, user} = props;
   const classes = useStyles();
   const [filePreview, setFilePreview] = React.useState(valueProp);
   const handleUploadClick = (e) => {
@@ -429,10 +431,9 @@ export function UploadFile(props) {
     } catch (e) {
       return
     }
-    loadFile(user.PublicKeyBase58Check + '_' + globalIds.Avatar,
+    loadFile(user.PublicKeyBase58Check + '_' + htmlIds.Avatar,
       fileToUpload, {contentType: fileToUpload.type,}
     ).then(url=>{
-      window[globalIds.Avatar] = url;
       setFilePreview(url);
     });
     // const reader = new FileReader();
@@ -468,6 +469,7 @@ export function UploadFile(props) {
           <img src={filePreview}></img>
         </div>
       </div>
+      <input type="hidden" value={filePreview} id={htmlIds.Avatar}/>
     </FormControl>
   )
 }

@@ -169,7 +169,6 @@ function SeedPhraseDialog(props) {
 
   return (
     <Dialog
-      disableBackdropClick
       disableEscapeKeyDown
       maxWidth="xs"
       transitionDuration={0}
@@ -232,13 +231,13 @@ function SeedPhraseDialog(props) {
           </Info> */}
       </DialogContent>
       <DialogActions>
-        <Button autoFocus onClick={handleCancel} color="secondary">
+        <Button autoFocus wide onClick={handleCancel} color="secondary">
           Cancel
         </Button>
-        <Button autoFocus onClick={handleCopy} color="primary">
+        <Button autoFocus wide onClick={handleCopy} color="primary">
           Copy
         </Button>
-        <Button onClick={handleOk} color="secondary">
+        <Button onClick={handleOk} wide color="secondary">
           Confirm
         </Button>
       </DialogActions>
@@ -292,7 +291,6 @@ function CreateMegazord(props) {
 
   return (
     <Dialog
-      disableBackdropClick
       disableEscapeKeyDown
       maxWidth="xs"
       aria-labelledby="dialog-title"
@@ -765,7 +763,7 @@ export default function MegazordsList(props) {
                       </CardAvatar>
                     </CardHeader>
                     <CardBody profile>
-                      <h6 className={classes.cardCategory}>
+                      <h5 className={classes.cardCategory} style={{height:'44px', textTransform:'none', fontSize: '17px'}}>
                         {
                           (item.status_id === 0 && (
                             <a target="_blank" href={item.link}>
@@ -816,8 +814,8 @@ export default function MegazordsList(props) {
                             ))
                           // item.status_text
                         }
-                      </h6>
-                      <h4 className={classes.cardTitle}>
+                      </h5>
+                      <h4 className={classes.cardTitle} style={{height:'27px'}}>
                         {item.PubKeyShort ? (
                           <div>
                             {item.PubKeyShort}
@@ -894,7 +892,7 @@ export default function MegazordsList(props) {
                         <b>Zords:</b>
                       </h5>
                       <GridContainer
-                        justify="center"
+                        justifyContent="center"
                         style={{ minHeight: "4rem", padding: "0.5rem 0 0 0" }}
                       >
                         {item.zords.map((owner) => {
@@ -968,13 +966,14 @@ export default function MegazordsList(props) {
                         </Button>
                       )) ||
                         (item.status_id === 1 && !item.canConfirm && (
-                          <Button color="grey" round>
+                          <Button wide color="grey" round>
                             <Icon>pending</Icon>
                             Pending
                           </Button>
                         )) ||
                         (item.canConfirm && (
                           <Button
+                            wide
                             color="success"
                             round
                             onClick={(e) => handleConfirmZord(item.id)}

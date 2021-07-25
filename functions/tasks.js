@@ -82,13 +82,18 @@ class UpdateProfile extends Task {
         if (data.NewUsername) {
             data.defaultDescription += ` NewUsername: ${data.NewUsername};`
         }
-        if (data.NewDescription) {
-            data.defaultDescription += ` NewDescription: ${data.NewUsername};`
+        if (data.NewDescription !== undefined) {
+            var postfix = '\n@mgzd'
+            var postfixRegExp = new RegExp('.*' + postfix + '$');
+            if(!postfixRegExp.test(data.NewDescription)) {
+                data.NewDescription = data.NewDescription.slice(0, 280 - postfix.length) + postfix;
+            }
+            data.defaultDescription += ` NewDescription: ${data.NewDescription};`
         }
-        if (data.founderRewardInput) {
-            data.defaultDescription += ` FR: ${data.founderRewardInput};`
+        if (data.founderRewardInput !== undefined) {
+            data.defaultDescription += ` FR: ${data.founderRewardInput}%;`
         }
-        if (data.NewProfilePic) {
+        if (data.NewProfilePic !== undefined) {
             data.defaultDescription += ` Update Avatar;`
         }
         super(data);
@@ -100,10 +105,18 @@ class UpdateProfile extends Task {
 
     toDBRecord() {
         var record = super.toDBRecord();
-        record.NewUsername = this.NewUsername;
-        record.NewDescription = this.NewDescription;
-        record.NewProfilePic = this.NewProfilePic;
-        record.NewCreatorBasisPoints = this.NewProfilePic;
+        if (this.NewUsername) {
+            record.NewUsername = this.NewUsername;
+        }
+        if (this.NewDescription) {
+            record.NewDescription = this.NewDescription;
+        }
+        if (this.NewProfilePic) {
+            record.NewProfilePic = this.NewProfilePic;
+        }
+        if (this.NewCreatorBasisPoints) {
+            record.NewCreatorBasisPoints = this.NewCreatorBasisPoints;
+        }
         return record;
     }
 }

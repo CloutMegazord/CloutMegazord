@@ -165,7 +165,6 @@ function CreateMegazord(props) {
 
   return (
     <Dialog
-      disableBackdropClick
       disableEscapeKeyDown
       maxWidth="xs"
       onEntering={handleEntering}

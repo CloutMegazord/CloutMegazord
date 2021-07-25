@@ -61,7 +61,6 @@ function DialogRaw(props) {
 
   return (
     <Dialog
-      disableBackdropClick
       disableEscapeKeyDown
       maxWidth="xs"
       onEntering={handleEntering}

@@ -42,7 +42,7 @@ const updateProfile = (data) => {
   const {megazord, user, indexFunctons, bitcloutData, api_functions} = data;
   const postfix = '\n@mgzd'
   const validateUsername = (account) => {
-    if (account) {
+    if (account && (account.Username !== megazord.Username)) {
       indexFunctons.notifSnak('open', 'error', 'Name already used', 2000);
       throw Error('Cant send to self Megazord.');
     }
@@ -84,10 +84,14 @@ const updateProfile = (data) => {
           validate={validateUsername}
           user={user}
           htmlIds={{RecipientUsername: "send_RecipientUsername_value"}}
-          valueProp=''
+          valueProp={megazord.Username}
         />,
         values: {
-          NewUsername: {id: 'send_RecipientUsername_value', required: true, type:'string'}
+          NewUsername: {
+            id: 'send_RecipientUsername_value',
+            required: !megazord.Username,
+            type:'string',
+            default: megazord.Username}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
@@ -103,7 +107,11 @@ const updateProfile = (data) => {
           valueProp={megazord.Description || ''}
         />,
         values: {
-          NewDescription: {id: 'updateProfile_Description_value', required: false, type:'string'}
+          NewDescription: {
+            id: 'updateProfile_Description_value',
+            required: false,
+            type:'string',
+            default: megazord.Description}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
@@ -114,15 +122,17 @@ const updateProfile = (data) => {
           maxSize={5 * 1024 * 1024}
           user={user}
           validate={validateAvatar}
-          globalIds={{Avatar: "updateProfile_avatar"}}
+          htmlIds={{Avatar: "updateProfile_avatar"}}
           valueProp={megazord.ProfilePic}
           loadFile={api_functions.loadFile}
         />,
         //get from window object
         values: {
-          NewProfilePic: {globalName: 'updateProfile_avatar',
-          required: megazord.ProfilePic === api_functions.defaultAvatar,//required
-          type:'string'}
+          NewProfilePic: {
+            id: 'updateProfile_avatar',
+            required: megazord.ProfilePic === api_functions.defaultAvatar,//required
+            default: megazord.ProfilePic,
+            type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
@@ -131,12 +141,16 @@ const updateProfile = (data) => {
         name: 'founderRewardInput',
         component:  <FounderReward
         htmlIds={{FR: "updateProfile_FR"}}
-          valueProp={megazord.ProfilePic}
+        valueProp={(megazord.founderRewardInput === undefined) ? 100 : megazord.founderRewardInput}
         />,
         values: {
-          founderRewardInput: {id: 'updateProfile_FR', required: true, type:'float'}
+          founderRewardInput: {
+            id: 'updateProfile_FR',
+            required: true,
+            type:'float',
+            default: megazord.founderRewardInput,
+          }
         },
-        // possibleInputType: ['Current Account'],
         disabled: false
       }
     ],
@@ -154,9 +168,10 @@ const send = (data) => {
     return true
   }
   const validateCurrencies = (currency) => {
-    if (currency !== "$ClOUT" && wallet['$ClOUT'].BalanceNanos < 100000) {
-      indexFunctons.notifSnak('open', 'error', 'Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)', 7000);
-      throw Error('Top up your $CLOUT balance to cover transaction fees (~ $ 1 equivalent)');
+    if (currency !== "$ClOUT" && wallet['$ClOUT'].BalanceNanos < 10000) {
+      let errorMess = 'Top up your $CLOUT balance to cover transaction fees (~ $ 0.01 equivalent)';
+      indexFunctons.notifSnak('open', 'error', errorMess, 7000);
+      throw Error(errorMess);
     }
     return true;
   }

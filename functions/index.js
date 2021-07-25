@@ -278,9 +278,11 @@ async function deleteTask(megazordId, taskId) {
     return
   }
   let task = taskSnap.val();
-  if (task.type === 'UpdateProfile') {
-    var parsed = url.parse(task.NewProfilePic);
-    await storage.ref().child(path.basename(parsed.pathname)).delete();
+  if (task.type === 'updateProfile') {
+    if (task.NewProfilePic) {
+      var parsed = url.parse(task.NewProfilePic);
+      await storage.bucket().file(path.basename(parsed.pathname)).delete();
+    }
   }
   await megazordRef.child("tasks").child(taskId).remove();
 }
