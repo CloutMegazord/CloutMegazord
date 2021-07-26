@@ -80,10 +80,12 @@ class ReClout extends Task {
         data.type = 'reClout'
         data.defaultDescription = `Launch this task to Reclout: ${data.link}`;
         super(data);
+        this.postHash = data.link.match(/\/posts\/(\w+)/)[1];
     }
 
     toDBRecord() {
         var record = super.toDBRecord();
+        record.postHash = this.postHash;
         return record;
     }
 }
@@ -150,7 +152,7 @@ function createTask(data) {
             break;
         }
         case 'reClout': {
-            task = new ReClout(data);
+            task = new ReClout({...data, postHash: data.link.match(/\/posts\/(\w+)/)[1]});
             break;
         }
     }
