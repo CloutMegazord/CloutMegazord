@@ -144,8 +144,7 @@ const updateProfile = (data) => {
           founderRewardInput: {
             id: 'updateProfile_FR',
             required: true,
-            type:'float',
-            default: megazord.founderRewardInput,
+            type:'float'
           }
         },
         disabled: false
