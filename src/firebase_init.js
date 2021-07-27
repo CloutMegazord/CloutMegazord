@@ -572,5 +572,25 @@ export const api_functions = {
         .catch(reject);
     });
   },
-  // 'helloWorld': functions.httpsCallable('signIn')
+
+  getSinglePost: (postHash) => {
+    var respData = axios
+      .post(
+        apiEndpoint + "/bitclout-proxy",
+        {
+          data: {
+            action: "get-single-post",
+            PostHashHex: postHash,
+            FetchParents: false,
+            CommentOffset: 0,
+            CommentLimit: 0,
+          },
+        },
+        api_functions.getReqConfigs()
+      )
+      .then((resp) => {
+       return resp 
+      });
+      return respData;
+  }
 };
