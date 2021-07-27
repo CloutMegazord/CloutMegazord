@@ -56,7 +56,7 @@ class Send extends Task {
         var AmountNanos = parseInt(data.AmountNanos) || 0;
         var currencyPostfix = (data.Currency === '$ClOUT') ? '' : ' coin';
         data.defaultDescription =
-        `Send ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} ${data.Currency + currencyPostfix} to @${data.RecipientUsername}`;
+        `Send ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} ${data.Currency + currencyPostfix} to ${data.RecipientUsername ? '@' + data.RecipientUsername : data.Recipient}`;
         super(data);
         this.Recipient = data.Recipient;
         this.RecipientUsername = data.RecipientUsername;

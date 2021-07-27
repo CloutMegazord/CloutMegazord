@@ -158,7 +158,7 @@ export function InputBitcloutAccount(
       var [accName, PubKey] = ['', ''];
       if (inputAccount.startsWith('BC1') && inputAccount.length > 30) {
         PubKey = inputAccount;
-        setBitcloutAccount({id:PubKey});
+        setBitcloutAccount({PublicKeyBase58Check:PubKey});
         setInputState(2);
         return
       } else {

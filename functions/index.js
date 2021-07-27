@@ -28,7 +28,7 @@ const bitcloutCahceExpire = {
 };
 const taskSessionsExpire = 10 * 60 * 1000;
 if (process.env.NODE_ENV === "development") {
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
+  // process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
 }
 admin.initializeApp();
 const db = admin.database();

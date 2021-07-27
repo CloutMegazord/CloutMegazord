@@ -83,12 +83,12 @@ const updateProfile = (data) => {
           placeholder={"Username"}
           validate={validateUsername}
           user={user}
-          htmlIds={{RecipientUsername: "send_RecipientUsername_value"}}
-          valueProp={megazord.Username}
+          htmlIds={{RecipientUsername: "updateProfile_RecipientUsername_value"}}
+          valueProp={megazord.Username === api_functions.defaultUsername ? '' : megazord.Username}
         />,
         values: {
           NewUsername: {
-            id: 'send_RecipientUsername_value',
+            id: 'updateProfile_RecipientUsername_value',
             required: !megazord.Username,
             type:'string',
             default: megazord.Username}
@@ -208,8 +208,8 @@ const send = (data) => {
           valueProp=''
         />,
         values: {
-          Recipient: {id: 'send_Recipient_value', required: true, type:'string'},
-          RecipientUsername: {id: 'send_RecipientUsername_value', required: true, type:'string'}
+          Recipient: {id: 'send_Recipient_value', required: false, type:'string'},
+          RecipientUsername: {id: 'send_RecipientUsername_value', required: false, type:'string'}
         },
         // possibleInputType: ['Current Account'],
         disabled: false
