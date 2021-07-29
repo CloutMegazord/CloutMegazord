@@ -92,9 +92,9 @@ function AppAppBar(props) {
             className={classes.logoLink}
             href="https://bitclout.com/u/CloutMegazord"
           >
-             <img src={logo} style={{
+             {/* <img src={logo} style={{
               //  filter: 'brightness(0) invert(1)'
-              }}alt="logo" className={classes.img} />
+              }}alt="logo" className={classes.img} /> */}
           </Link>
           {/* <div className={classes.left} /> */}
           <Box className={classes.buttonWrapper}>
