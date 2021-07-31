@@ -124,19 +124,6 @@ function getReqData(req, field) {
 }
 
 const getFeePercentage = async (zords, task) => {
-  let AmountUSD;
-  const exchRate = await getExchangeRate();
-  if (task.CreatorPublicKeyBase58Check) {
-      let userResp = await bitcloutProxy({
-          action: 'get-users-stateless',
-          PublicKeysBase58Check: [task.CreatorPublicKeyBase58Check],
-          SkipForLeaderboard: true
-      });
-      let CoinPriceBitCloutNanos = userResp.UserList[0].ProfileEntryResponse.CoinPriceBitCloutNanos;
-      AmountUSD = (task.AmountNanos / 1e9) * (CoinPriceBitCloutNanos / 1e9 ) * exchRate.USDbyBTCLT;
-  } else {
-      AmountUSD = task.AmountNanos / 1e9 * exchRate.USDbyBTCLT;
-  }
   let customFees;
   var trgFee;
   let customFeesSnap = await db.ref('customFees').get();
@@ -155,6 +142,19 @@ const getFeePercentage = async (zords, task) => {
       }
   }
   if (trgFee === undefined) {
+    let AmountUSD;
+    const exchRate = await getExchangeRate();
+    if (task.CreatorPublicKeyBase58Check) {
+        let userResp = await bitcloutProxy({
+            action: 'get-users-stateless',
+            PublicKeysBase58Check: [task.CreatorPublicKeyBase58Check],
+            SkipForLeaderboard: true
+        });
+        let CoinPriceBitCloutNanos = userResp.UserList[0].ProfileEntryResponse.CoinPriceBitCloutNanos;
+        AmountUSD = (task.AmountNanos / 1e9) * (CoinPriceBitCloutNanos / 1e9 ) * exchRate.USDbyBTCLT;
+    } else {
+        AmountUSD = task.AmountNanos / 1e9 * exchRate.USDbyBTCLT;
+    }
     var fees = Object.keys(FeesMap).sort().reverse();
     trgFee = fees[0];
     for (let fee of fees) {

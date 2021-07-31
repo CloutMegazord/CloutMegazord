@@ -523,7 +523,6 @@ export const api_functions = {
         targFeesMap = {[lowerZordsFee]: Infinity}
       }
       api_functions._feesMaps[megazord.id] = targFeesMap;
-      console.log(targFeesMap);
       resolve(targFeesMap);
     })
   },
