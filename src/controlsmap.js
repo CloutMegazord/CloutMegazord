@@ -157,6 +157,7 @@ const updateProfile = (data) => {
 
 const send = (data) => {
   const {megazord, user, api_functions, bitcloutData, indexFunctons} = data;
+
   const validateRecipient = (account) => {
     if (account.id === megazord.PublicKeyBase58Check) {
       throw Error('Cant send to self Megazord.');
@@ -219,7 +220,7 @@ const send = (data) => {
           exchRate={bitcloutData.exchangeRate || {}}
           wallet={wallet}
           validate={validateCurrencies}
-          feesMap={api_functions.getFeesMap}
+          feesMap={megazord.feesMap}
           getFee={getFee}
           user={user}
           htmlIds={{
@@ -290,7 +291,7 @@ const reClout = () => {
     controls: [
       {
         name: 'link',
-        component:  <BitcloutPostLink 
+        component:  <BitcloutPostLink
         htmlIds={{link: "link_to_post"}}
         label="Link to post"
         />,

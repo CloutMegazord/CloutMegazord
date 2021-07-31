@@ -280,7 +280,7 @@ export default function TableList(props) {
   };
   return (
     <div>
-      {(user.id && megazord.id && props.bitcloutData) &&
+      {(user.id && megazord.id && props.bitcloutData && openCT) &&
         <CreateTask
           open={openCT} user={user} megazord={megazord} api_functions={api_functions}
           bitcloutData={props.bitcloutData} onCreate={createHandler} onClose={closeHandler} indexFunctons={indexFunctons}

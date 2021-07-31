@@ -11,6 +11,9 @@
         ".read": "root.child('megazords').child($mid).child('pendingZords').hasChildren([auth.uid]) || root.child('megazords').child($mid).child('confirmedZords').hasChildren([auth.uid])"
       }
     },
+    "customFees": {
+      ".read": true
+    },
     ".write": false
   }
 }

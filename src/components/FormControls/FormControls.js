@@ -163,7 +163,7 @@ export function InputBitcloutAccount(
     var inputAccount = event.target.value;
     setValue(inputAccount);
     clearTimeout(sleepVar);
-    setBitcloutAccount(null);
+    setBitcloutAccount({Username: ''});
     let _sleepVar = setTimeout(async () => {
       var [accName, PubKey] = ['', ''];
       if (inputAccount.startsWith('BC1') && inputAccount.length > 30) {
@@ -201,7 +201,7 @@ export function InputBitcloutAccount(
   const _addHandler = (e) => {
     e.preventDefault();
     addHandler({...bitcloutAccount})
-    setBitcloutAccount(null)
+    setBitcloutAccount({Username: ''})
     clearTimeout(sleepVar);
     setValue('');
     setInputState(0);
@@ -209,7 +209,7 @@ export function InputBitcloutAccount(
 
   onCloseSubscribe(() => {
     setValue('');
-    setBitcloutAccount(null)
+    setBitcloutAccount({Username: ''})
     clearTimeout(sleepVar);
     setInputState(0);
   })
@@ -230,7 +230,7 @@ export function InputBitcloutAccount(
             {(inputState == 1 &&
               <CircularProgress size="1rem" style={{ color: primaryColor[0] }}></CircularProgress>
             )}
-          </InputAdornment> 
+          </InputAdornment>
         }
         inputProps = {{
           "spellCheck": false,
@@ -253,10 +253,10 @@ export function InputBitcloutAccount(
         </Button>
       )}
       {htmlIds.Recipient &&
-        <input type="hidden" id={htmlIds.Recipient} value={bitcloutAccount ? bitcloutAccount.PublicKeyBase58Check : ''}></input>
+        <input type="hidden" id={htmlIds.Recipient} value={bitcloutAccount.PublicKeyBase58Check || ''}></input>
       }
       {htmlIds.RecipientUsername &&
-        <input type="hidden" id={htmlIds.RecipientUsername} value={bitcloutAccount ? bitcloutAccount.Username : ''}></input>
+        <input type="hidden" id={htmlIds.RecipientUsername} value={bitcloutAccount.Username || ''}></input>
       }
     </FormControl>
   )
@@ -267,46 +267,52 @@ export function InputAmount(props) {
   const {htmlIds, exchRate, feesMap, wallet, validate, getFee} = props;
   const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a].BalanceNanos - wallet[b].BalanceNanos}).reverse();
   const [USDAmount, setUSDAmount] = React.useState(0);
-  const [BTCLTAmount, setBTCLTAmount] = React.useState(0);
+  const [CoinAmount, setCoinAmount] = React.useState(0);
   const [amountNanos, setAmountNanos] = React.useState(0);
   const [MGZDfee, setMGZDFee] = React.useState(null);
   const [lastReqId, setLastReqId] = React.useState(null);
   const [currency, setCurrency] = React.useState('$ClOUT');
-  exchRate.USDbyBTCLT = exchRate.USDbyBTCLT || 0;
+  const USDbyBTCLT = exchRate.USDbyBTCLT || 0;
 
   var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';
   var fees = Object.keys(feesMap).sort().reverse();
-  for (let i = 0; i < fees.length; i += 1) {
-    let fee = fees[i];
-    let range = feesMap[fee];
-    var rangeContent = '';
-    if(isFinite(range)) {
-      rangeContent = 'up to $' + range.toLocaleString();
-    } else {
-      rangeContent = 'more $'+feesMap[fees[i-1]].toLocaleString();
+  if (fees.length > 1) {
+    for (let i = 0; i < fees.length; i += 1) {
+      let fee = fees[i];
+      let range = feesMap[fee];
+      var rangeContent = '';
+      if(isFinite(range)) {
+        rangeContent = 'up to $' + range.toLocaleString();
+      } else {
+        rangeContent = 'more $'+feesMap[fees[i-1]].toLocaleString();
+      }
+      feesMapTable += '<tr><td>'+rangeContent+'</td><td>'+fee+'%</td></tr>'
     }
-    feesMapTable += '<tr><td>'+rangeContent+'</td><td>'+fee+'%</td></tr>'
+  } else {
+    feesMapTable += '<tr><td>Any amount</td><td>'+fees[0]+'%</td></tr>'
   }
   feesMapTable += '</table>'
 
   const handleChange = (_Amount) => {
-    setMGZDFee(null);
-    setBTCLTAmount(_Amount);
-    setUSDAmount(0);
-    _Amount = parseFloat(_Amount || 0);
-    var _amountNanos = _Amount * 1e9;
-    setAmountNanos(_amountNanos);
-    let CreatorPublicKeyBase58Check;
+    setCoinAmount(_Amount);
+    let _USDAmount;
     if (wallet[currency].CreatorPublicKeyBase58Check) {
-      CreatorPublicKeyBase58Check = wallet[currency].CreatorPublicKeyBase58Check;
+        let CoinPriceBitCloutNanos = wallet[currency].CoinPriceBitCloutNanos;
+        _USDAmount = _Amount * (CoinPriceBitCloutNanos / 1e9 ) * USDbyBTCLT;
+    } else {
+      _USDAmount = _Amount * USDbyBTCLT;
     }
-    setLastReqId(Math.random())
-    getFee(_amountNanos, CreatorPublicKeyBase58Check, lastReqId).then(({feePercent, AmountUSD, reqId}) => {
-      if (reqId === lastReqId) {
-        setMGZDFee(feePercent);
-        setUSDAmount(AmountUSD);
+    setUSDAmount(_USDAmount);
+    setAmountNanos(_Amount * 1e9);
+    var trgFee = fees[0];
+    for (let fee of fees) {
+      let range = feesMap[fee];
+      if (_USDAmount < range) {
+        trgFee = fee;
+        break
       }
-    });
+    }
+    setMGZDFee(trgFee);
   }
 
   const maxHandler = (event) => {
@@ -355,8 +361,8 @@ export function InputAmount(props) {
         }}
         onChange={e => handleChange(e.target.value)}
         required
-        placeholder={BTCLTAmount.toLocaleString()}
-        value={BTCLTAmount}
+        placeholder={CoinAmount.toLocaleString()}
+        value={CoinAmount}
       />
       <FormHelperText component={'div'} id={'interact_amount_helper_text'} className={classes.helper}>
         <div>
@@ -377,7 +383,7 @@ export function InputAmount(props) {
             Will receive:
             {
               USDAmount ?
-            (BTCLTAmount - BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString() : 0
+            (CoinAmount - CoinAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString() : 0
             }
             {" "}
             (≈ $
@@ -387,7 +393,7 @@ export function InputAmount(props) {
             USD)
           </div>
           <div>
-            Fee: { (BTCLTAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
+            Fee: { (CoinAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
             (≈ ${(USDAmount* ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()} USD)
           </div>
         </div>
@@ -570,7 +576,7 @@ export function BitcloutPostLink ({ htmlIds, label}) {
             {(isSearching &&
               <CircularProgress size="1rem" style={{ color: primaryColor[0] }}></CircularProgress>
             )}
-          </InputAdornment> 
+          </InputAdornment>
         }
       />
       {post?.Body &&
@@ -581,7 +587,7 @@ export function BitcloutPostLink ({ htmlIds, label}) {
         </FormHelperText>
         <Icon className={classes.successText}>check</Icon>
         </Grid>
-        {post?.Body && 
+        {post?.Body &&
         <>
           <Typography>
           Post title:

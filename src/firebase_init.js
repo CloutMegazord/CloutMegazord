@@ -264,11 +264,15 @@ async function handleMegazord(megazordInfo, user) {
   }
   // if (!resultMegazord.ProfilePic) {
   if (resultMegazord.PublicKeyBase58Check) {
-    const picUrl = 'https://bitclout.com/api/v0/get-single-profile-picture/' + resultMegazord.PublicKeyBase58Check;
-    try {
-      await getImageOrFallback(picUrl).then();
-      resultMegazord.ProfilePic = picUrl;
-    } catch (e) {
+    if (resultMegazord.Username) {
+      const picUrl = 'https://bitclout.com/api/v0/get-single-profile-picture/' + resultMegazord.PublicKeyBase58Check;
+      try {
+        await getImageOrFallback(picUrl).then();
+        resultMegazord.ProfilePic = picUrl;
+      } catch (e) {
+        resultMegazord.ProfilePic = defaultAvatar;
+      }
+    } else {
       resultMegazord.ProfilePic = defaultAvatar;
     }
   } else {
@@ -284,6 +288,7 @@ async function handleMegazord(megazordInfo, user) {
       resultMegazord.PublicKeyBase58Check.slice(0, 12) + "...";
   }
   resultMegazord.Username = resultMegazord.Username || defaultUsername;
+  resultMegazord.feesMap = await api_functions.getFeesMap(resultMegazord);
   return resultMegazord;
 }
 
@@ -477,12 +482,50 @@ export const api_functions = {
       resolve(res);
     });
   },
-  getFeesMap: () => {
-    return {
-      1.5: 1 * 10**4,
-      1: 1 * 10**5,
-      0.5: Infinity
-    };
+  getFeesMap: (megazord) => {
+    return new Promise(async (resolve, reject) => {
+      let defaultFeesMap = {
+        1.5: 1 * 10**4,
+        1: 1 * 10**5,
+        0.5: Infinity
+      };
+      let targFeesMap;
+      api_functions._feesMaps = api_functions._feesMaps || {};
+      api_functions._zordsFee = api_functions._zordsFee || {};
+      if (api_functions._feesMaps[megazord.id]) {
+        resolve(api_functions._feesMaps[megazord.id])
+        return
+      }
+      let targetZordFee;
+      let lowerZordsFee;
+      let zords = megazord.zords.map(it => it.PublicKeyBase58Check)
+      for (let zord of zords) {
+        if (api_functions._zordsFee[zord] === undefined) {
+          let zordFeeSnap = await db.ref('customFees').child(zord).get();
+          if (zordFeeSnap.exists()) {
+            targetZordFee = zordFeeSnap.val();
+            api_functions._zordsFee[zord] = targetZordFee;
+          } else {
+            api_functions._zordsFee[zord] = NaN;
+          }
+        } else if (!isNaN(api_functions._zordsFee[zord])) {
+          targetZordFee = api_functions._zordsFee[zord];
+        }
+        if (lowerZordsFee === undefined) {
+          lowerZordsFee = targetZordFee;
+        } else {
+          lowerZordsFee = (targetZordFee < lowerZordsFee) ? targetZordFee : lowerZordsFee;
+        }
+      }
+      if (lowerZordsFee === undefined) {
+        targFeesMap = Object.assign({}, defaultFeesMap);
+      } else {
+        targFeesMap = {[lowerZordsFee]: Infinity}
+      }
+      api_functions._feesMaps[megazord.id] = targFeesMap;
+      console.log(targFeesMap);
+      resolve(targFeesMap);
+    })
   },
   onUserData: async (publicKey, callback, errorCallback = () => {}) => {
     var data,
@@ -589,7 +632,7 @@ export const api_functions = {
         api_functions.getReqConfigs()
       )
       .then((resp) => {
-       return resp 
+       return resp
       });
       return respData;
   }

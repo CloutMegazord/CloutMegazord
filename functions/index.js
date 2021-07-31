@@ -18,6 +18,11 @@ var url = require("url");
 var path = require("path");
 
 let signingEndpoint, CMEndpoint;
+const FeesMap = {
+    1.5: 1 * 10**4,
+    1: 1 * 10**5,
+    0.5: Infinity
+}
 
 const CloutMegazordPubKey = config.get("mgzPubKey");
 const bitcloutCahceExpire = {
@@ -116,6 +121,39 @@ function getReqData(req, field) {
     throw new Error("Unsafety data.");
   }
   return sanitData;
+}
+
+const getFeePercentage = async (zords) => {
+  let customFees;
+  var trgFee;
+  let customFeesSnap = await db.ref('customFees').get();
+  if (customFeesSnap.exists()) {
+      customFees = customFeesSnap.val();
+  } else {
+      customFees = {};
+  }
+  for (let zord of zords) {
+      if (customFees[zord] !== undefined) {
+          if (trgFee === undefined) {
+              trgFee = customFees[zord];
+          } else {
+              trgFee = (trgFee < customFees[zord]) ? trgFee : customFees[zord];
+          }
+      }
+  }
+  if (trgFee === undefined) {
+    var fees = Object.keys(FeesMap).sort().reverse();
+    trgFee = fees[0];
+    for (let fee of fees) {
+      let range = FeesMap[fee];
+      if (AmountUSD < range) {
+          trgFee = parseFloat(fee);
+          break
+      }
+    }
+  }
+
+  return trgFee;
 }
 
 const validatePublicKey = (jwt_token, publicKey) => {
@@ -737,6 +775,7 @@ app.post("/api/task", async (req, res, next) => {
           taskSession.initiator.Username = profileRes.Profile.Username;
         }
       }
+      taskSession.trgFee = await getFeePercentage(Object.keys(zords));
       taskSession.zords = resZords;
       try {
         var resp = await axios.post(signingEndpoint + "/ts/create", {
