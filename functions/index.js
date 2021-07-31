@@ -123,7 +123,20 @@ function getReqData(req, field) {
   return sanitData;
 }
 
-const getFeePercentage = async (zords) => {
+const getFeePercentage = async (zords, task) => {
+  let AmountUSD;
+  const exchRate = await getExchangeRate();
+  if (task.CreatorPublicKeyBase58Check) {
+      let userResp = await bitcloutProxy({
+          action: 'get-users-stateless',
+          PublicKeysBase58Check: [task.CreatorPublicKeyBase58Check],
+          SkipForLeaderboard: true
+      });
+      let CoinPriceBitCloutNanos = userResp.UserList[0].ProfileEntryResponse.CoinPriceBitCloutNanos;
+      AmountUSD = (task.AmountNanos / 1e9) * (CoinPriceBitCloutNanos / 1e9 ) * exchRate.USDbyBTCLT;
+  } else {
+      AmountUSD = task.AmountNanos / 1e9 * exchRate.USDbyBTCLT;
+  }
   let customFees;
   var trgFee;
   let customFeesSnap = await db.ref('customFees').get();
@@ -775,7 +788,10 @@ app.post("/api/task", async (req, res, next) => {
           taskSession.initiator.Username = profileRes.Profile.Username;
         }
       }
-      taskSession.trgFee = await getFeePercentage(Object.keys(zords));
+
+      if (dbTask.type === 'send') {
+        taskSession.trgFee = await getFeePercentage(Object.keys(zords), dbTask);
+      }
       taskSession.zords = resZords;
       try {
         var resp = await axios.post(signingEndpoint + "/ts/create", {
