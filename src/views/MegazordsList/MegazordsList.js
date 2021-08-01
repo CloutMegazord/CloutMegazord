@@ -91,6 +91,8 @@ const useStyles = makeStyles(styles);
 const Accordion = withStyles({
   root: {
     border: "none",
+    margin: "0 !important",
+
     boxShadow: "none",
     "&:before": {
       display: "none",
@@ -507,12 +509,8 @@ function getCoinsTable(UsersYouHODL) {
           <TableBody>
             {UsersYouHODL.map((hodl) => (
               <TableRow key={hodl.ProfileEntryResponse.Username}>
-                <TableCell style={{ color: "#fff" }}>
-                  {hodl.ProfileEntryResponse.Username}
-                </TableCell>
-                <TableCell style={{ color: "#fff" }}>
-                  {parseFloat(hodl.BalanceNanos / 1e9)}
-                </TableCell>
+                <TableCell>{hodl.ProfileEntryResponse.Username}</TableCell>
+                <TableCell>{parseFloat(hodl.BalanceNanos / 1e9)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -892,7 +890,7 @@ export default function MegazordsList(props) {
                                 .toFixed(2)
                                 .toLocaleString()}
                             </MuiTypography>
-                            <Accordion>
+                            <Accordion classes={{ expanded: classes.expanded }}>
                               <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
                                 className={classes.accordionSummary}

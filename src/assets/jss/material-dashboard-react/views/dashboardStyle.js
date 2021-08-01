@@ -78,8 +78,15 @@ const dashboardStyle = {
     },
   },
   accordionSummary: {
-    "& .MuiAccordionSummary-content": {
+    "& > div": {
       flexGrow: 0,
+      margin: "0 !important",
+      padding: "0 !important",
+    },
+  },
+  expanded: {
+    "& > div": {
+      minHeight: "48px !important",
     },
   },
 };
