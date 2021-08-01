@@ -539,7 +539,12 @@ export function BitcloutPostLink ({ htmlIds, label}) {
     () => {
       if (debouncedSearchTerm) {
         setIsSearching(true);
-        const postHash = searchTerm.includes('http') ? searchTerm.match(/\/posts\/(\w+)/)[1] : searchTerm;
+        let postHash
+        if (searchTerm.includes('http')) {
+          postHash = searchTerm.split('/').pop().split('?')[0];
+        } else {
+          postHash = searchTerm;
+        }
         if(postHash) {
           api_functions.getSinglePost(postHash).then((result) => {
             setIsSearching(false);
@@ -572,7 +577,7 @@ export function BitcloutPostLink ({ htmlIds, label}) {
         }}
         variant="outlined"
         endAdornment={
-          <InputAdornment>
+          <InputAdornment position="end">
             {(isSearching &&
               <CircularProgress size="1rem" style={{ color: primaryColor[0] }}></CircularProgress>
             )}
