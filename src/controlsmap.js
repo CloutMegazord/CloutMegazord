@@ -287,7 +287,7 @@ const sell = (user) => {
 
 const reClout = () => {
   return {
-    name: 'Reclout',
+    name: 'Re-Clout',
     controls: [
       {
         name: 'link',

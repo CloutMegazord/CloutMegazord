@@ -78,9 +78,13 @@ class Send extends Task {
 class ReClout extends Task {
     constructor(data) {
         data.type = 'reClout'
-        data.defaultDescription = `Launch this task to Reclout: ${data.link}`;
+        data.defaultDescription = `Launch this task to Re-Clout: ${data.link}`;
         super(data);
-        this.postHash = data.link.match(/\/posts\/(\w+)/)[1];
+        if (data.link.includes('http')) {
+            this.postHash = data.link.split('/').pop().split('?')[0];
+        } else {
+            this.postHash = data.link;
+        }
     }
 
     toDBRecord() {
@@ -152,7 +156,7 @@ function createTask(data) {
             break;
         }
         case 'reClout': {
-            task = new ReClout({...data, postHash: data.link.match(/\/posts\/(\w+)/)[1]});
+            task = new ReClout(data);
             break;
         }
     }
