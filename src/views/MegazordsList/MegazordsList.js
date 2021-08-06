@@ -1,5 +1,5 @@
 import React from "react";
-import { useHistory } from 'react-router-dom'
+import { useHistory } from "react-router-dom";
 import classNames from "classnames";
 // react plugin for creating charts
 import ChartistGraph from "react-chartist";
@@ -17,6 +17,10 @@ import Warning from "@material-ui/icons/Warning";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import PropTypes from "prop-types";
 import List from "@material-ui/core/List";
+import { AccordionDetails, AccordionSummary } from "@material-ui/core";
+import { withStyles } from "@material-ui/core/styles";
+import MuiAccordion from "@material-ui/core/Accordion";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
@@ -83,6 +87,18 @@ import avatar from "assets/img/faces/marc.jpg";
 
 var nameThisColor = require("name-this-color");
 const useStyles = makeStyles(styles);
+
+const Accordion = withStyles({
+  root: {
+    border: "none",
+    margin: "0 !important",
+
+    boxShadow: "none",
+    "&:before": {
+      display: "none",
+    },
+  },
+})(MuiAccordion);
 
 function makeid(length) {
   var result = [];
@@ -487,26 +503,22 @@ const useStyles2 = makeStyles((theme) => ({
 
 function getCoinsTable(UsersYouHODL) {
   return (
-    <div>
+    <>
       {UsersYouHODL.length ? (
         <Table>
           <TableBody>
             {UsersYouHODL.map((hodl) => (
               <TableRow key={hodl.ProfileEntryResponse.Username}>
-                <TableCell style={{ color: "#fff" }}>
-                  {hodl.ProfileEntryResponse.Username}
-                </TableCell>
-                <TableCell style={{ color: "#fff" }}>
-                  {parseFloat(hodl.BalanceNanos / 1e9)}
-                </TableCell>
+                <TableCell>{hodl.ProfileEntryResponse.Username}</TableCell>
+                <TableCell>{parseFloat(hodl.BalanceNanos / 1e9)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       ) : (
-        <div>No Creator Coins yet.</div>
+        <MuiTypography>No Creator Coins yet.</MuiTypography>
       )}
-    </div>
+    </>
   );
 }
 
@@ -526,7 +538,7 @@ function adjust(color, amount) {
 
 export default function MegazordsList(props) {
   const classes = Object.assign(useStyles(), useStyles2());
-  const { push } = useHistory()
+  const { push } = useHistory();
   const [open, setOpen] = React.useState(false);
   const [seedOpen, setSeedOpen] = React.useState(false);
   const [detachOpen, setDetachOpen] = React.useState(false);
@@ -658,10 +670,20 @@ export default function MegazordsList(props) {
             ?.reverse()
             ?.map((item) => {
               return (
-                <Grid xs={12} sm={12} smd={6} md={4} lg={3} item key={item.id}>
+                <Grid
+                  xs={12}
+                  sm={12}
+                  smd={6}
+                  md={4}
+                  lg={3}
+                  item
+                  key={item.id}
+                  container
+                >
                   <Card
                     profile
                     style={{
+                      paddingBottom: 16,
                       opacity: Object.keys(user.hiddenMegazords || {}).includes(
                         item.id
                       )
@@ -762,8 +784,15 @@ export default function MegazordsList(props) {
                         </a>
                       </CardAvatar>
                     </CardHeader>
-                    <CardBody profile>
-                      <h5 className={classes.cardCategory} style={{height:'44px', textTransform:'none', fontSize: '17px'}}>
+                    <CardBody profile style={{ paddingBottom: 0 }}>
+                      <h5
+                        className={classes.cardCategory}
+                        style={{
+                          height: "44px",
+                          textTransform: "none",
+                          fontSize: "17px",
+                        }}
+                      >
                         {
                           (item.status_id === 0 && (
                             <a target="_blank" href={item.link}>
@@ -815,7 +844,10 @@ export default function MegazordsList(props) {
                           // item.status_text
                         }
                       </h5>
-                      <h4 className={classes.cardTitle} style={{height:'27px'}}>
+                      <h4
+                        className={classes.cardTitle}
+                        style={{ height: "27px" }}
+                      >
                         {item.PubKeyShort ? (
                           <div>
                             {item.PubKeyShort}
@@ -866,14 +898,12 @@ export default function MegazordsList(props) {
                                 .toFixed(2)
                                 .toLocaleString()}
                             </MuiTypography>
-                            <MuiTypography style={{ color: grayColor[2] }}>
-                              Coins
-                              <Tooltip
-                                id="tooltip-top"
-                                interactive
-                                title={getCoinsTable(item.UsersYouHODL)}
-                                placement="bottom"
+                            <Accordion classes={{ expanded: classes.expanded }}>
+                              <AccordionSummary
+                                expandIcon={<ExpandMoreIcon />}
+                                className={classes.accordionSummary}
                               >
+                                Coins
                                 <Icon
                                   style={{
                                     verticalAlign: "-6px",
@@ -883,8 +913,13 @@ export default function MegazordsList(props) {
                                 >
                                   toll
                                 </Icon>
-                              </Tooltip>
-                            </MuiTypography>
+                              </AccordionSummary>
+                              <AccordionDetails
+                                style={{ justifyContent: "center" }}
+                              >
+                                {getCoinsTable(item.UsersYouHODL)}
+                              </AccordionDetails>
+                            </Accordion>
                           </div>
                         )}
                       </div>
@@ -948,6 +983,8 @@ export default function MegazordsList(props) {
                       human foundation in truth And I love you like Kanye loves Kanye
                       I love Rick Owens’ bed design but the back is...
                     </p> */}
+                    </CardBody>
+                    <CardFooter style={{ justifyContent: "center" }}>
                       {(item.status_id !== 1 && (
                         <Button
                           color="primary"
@@ -982,7 +1019,7 @@ export default function MegazordsList(props) {
                             Confirm
                           </Button>
                         ))}
-                    </CardBody>
+                    </CardFooter>
                   </Card>
                 </Grid>
               );
