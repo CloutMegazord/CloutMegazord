@@ -670,11 +670,19 @@ export default function MegazordsList(props) {
             ?.reverse()
             ?.map((item) => {
               return (
-                <Grid xs={12} sm={12} smd={6} md={4} lg={3} item key={item.id}>
+                <Grid
+                  xs={12}
+                  sm={12}
+                  smd={6}
+                  md={4}
+                  lg={3}
+                  item
+                  key={item.id}
+                  container
+                >
                   <Card
                     profile
                     style={{
-                      height: "93%",
                       paddingBottom: 16,
                       opacity: Object.keys(user.hiddenMegazords || {}).includes(
                         item.id
