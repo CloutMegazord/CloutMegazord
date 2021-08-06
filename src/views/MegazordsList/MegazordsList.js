@@ -784,7 +784,7 @@ export default function MegazordsList(props) {
                         </a>
                       </CardAvatar>
                     </CardHeader>
-                    <CardBody profile>
+                    <CardBody profile style={{ paddingBottom: 0 }}>
                       <h5
                         className={classes.cardCategory}
                         style={{
