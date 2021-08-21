@@ -86,7 +86,7 @@ function ProductHero(props) {
           <div className={classes.shadowWrapper}>
             <img src={logo} className={classes.logo} alt="increase priority" />
           </div>
-          <a target="_blank" style={{color:whiteColor}}href="https://bitclout.com/u/charliehilton">logo: @charliehilton</a>
+          <a target="_blank" style={{color:whiteColor}}href="https://bitclout.com/u/charlie">logo: @charlie</a>
           </div>
         </GridItem>
         <GridItem xs={12} sm={6}>
