@@ -295,6 +295,14 @@ async function handleMegazord(megazordInfo, user) {
 export const api_functions = {
   defaultAvatar: defaultAvatar,
   defaultUsername: defaultUsername,
+  terms: {
+    get accepted() {
+      return localStorage.getItem('acceptTerms');
+    },
+    set accepted(flag) {
+      localStorage.setItem('acceptTerms', flag);
+    }
+  },
   getTaskSession: () => {
     var path = window.location.href.split("/").pop();
     var task = path.split("&")[0].split("=")[1];

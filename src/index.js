@@ -129,7 +129,7 @@ class App extends React.Component {
         this.setState({bitcloutData: bitcloutData});
       }).catch(err => {})
       if (isSignedIn) {
-        if (targ.includes('/admin') === false) {
+        if (targ.includes('/admin') === false && targ.includes('/landing') === false) {
           this.setState({redirect: '/landing/home'});
         } else {
           if (!this.state.user) {

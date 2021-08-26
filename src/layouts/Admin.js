@@ -10,6 +10,7 @@ import Navbar from "components/Navbars/Navbar.js";
 import Footer from "components/Footer/Footer.js";
 import Sidebar from "components/Sidebar/Sidebar.js";
 import FixedPlugin from "components/FixedPlugin/FixedPlugin.js";
+import TermsAndConditions from "components/Terms/Terms.js"
 import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
 
@@ -103,6 +104,9 @@ export default function Admin({ ...rest }) {
   }, [mainPanel]);
   return (
     <div className={classes.wrapper}>
+      <TermsAndConditions
+        terms={rest.api_functions.terms}
+      />
       <Sidebar
         routes={routes}
         logoText={"CloutMegazord"}
@@ -114,6 +118,7 @@ export default function Admin({ ...rest }) {
         {...rest}
       />
       <div className={classes.mainPanel} ref={mainPanel}>
+
         <Navbar
           routes={routes}
           handleDrawerToggle={handleDrawerToggle}
