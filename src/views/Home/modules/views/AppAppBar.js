@@ -118,6 +118,7 @@ function AppAppBar(props) {
             <MenuItem><a target="_blank" href="https://b-didenko.gitbook.io/cloutmegazord/faq">FAQ</a></MenuItem>
             <MenuItem><a target="_blank" href="https://cloutmegazord.medium.com/cloutmegazord-mvp-functionality-overview-4353b3c715c5">Guid</a></MenuItem>
             <MenuItem><a target="_blank" href="https://bitclout.com/u/CloutMegazord">Invest</a></MenuItem>
+            <MenuItem><Link href="/landing/terms">Terms</Link></MenuItem>
           </MenuList>
 
           </div>
