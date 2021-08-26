@@ -11,8 +11,13 @@ import Toolbar, { styles as toolbarStyles } from '../components/Toolbar';
 import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import Box from '@material-ui/core/Box';
 import logo from "assets/img/text-logo-2.svg";
+import MenuIcon from '@material-ui/icons/Menu';
+import Menu from '@material-ui/core/Menu';
+import withWidth, { isWidthDown } from '@material-ui/core/withWidth';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
+import IconButton from '@material-ui/core/IconButton';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 import {
   primaryColor,
   secondaryColor,
@@ -68,10 +73,16 @@ const styles = (theme) => ({
     overflow: 'hidden',
     color: '#000',
     [theme.breakpoints.down('md')]: {
-      display: 'none'
+      flexDirection: 'column'
     },
     '& a': {
       color: '#000'
+    }
+  },
+  menuIcon: {
+    display: 'none',
+    [theme.breakpoints.down('md')]: {
+      display: 'block'
     }
   },
   buttonWrapper: {
@@ -82,8 +93,32 @@ const styles = (theme) => ({
   }
 });
 
+function AppMenuList({menu}) {
+  return (
+    <MenuList className={menu}>
+      <MenuItem>
+        <Link href="#product">Features</Link>
+      </MenuItem>
+      <MenuItem><a target="_blank" href="https://b-didenko.gitbook.io/cloutmegazord/faq">FAQ</a></MenuItem>
+      <MenuItem><a target="_blank" href="https://cloutmegazord.medium.com/cloutmegazord-mvp-functionality-overview-4353b3c715c5">Guid</a></MenuItem>
+      <MenuItem><a target="_blank" href="https://bitclout.com/u/CloutMegazord">Invest</a></MenuItem>
+      <MenuItem><Link href="/landing/terms">Terms</Link></MenuItem>
+    </MenuList>
+  )
+}
+
 function AppAppBar(props) {
   const { classes, api_functions } = props;
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const ismd = isWidthDown('md', props.width)
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
   return (
     <div style={{height: '7vh'}}>
       <AppBar position="fixed">
@@ -111,16 +146,29 @@ function AppAppBar(props) {
           </Box>
           {/* className={classes.right} */}
           <div>
-          <MenuList className={classes.menu}>
-            <MenuItem>
-              <Link href="#product">Features</Link>
-            </MenuItem>
-            <MenuItem><a target="_blank" href="https://b-didenko.gitbook.io/cloutmegazord/faq">FAQ</a></MenuItem>
-            <MenuItem><a target="_blank" href="https://cloutmegazord.medium.com/cloutmegazord-mvp-functionality-overview-4353b3c715c5">Guid</a></MenuItem>
-            <MenuItem><a target="_blank" href="https://bitclout.com/u/CloutMegazord">Invest</a></MenuItem>
-            <MenuItem><Link href="/landing/terms">Terms</Link></MenuItem>
-          </MenuList>
-
+          {ismd ?
+            <Menu
+              id="simple-menu"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+              }}
+              keepMounted
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+            >
+              <AppMenuList menu={classes.menu}/>
+            </Menu>
+          : <AppMenuList  menu={classes.menu}/>}
+          <IconButton
+            className={classes.menuIcon}
+            aria-label="more"
+            aria-controls="long-menu"
+            aria-haspopup="true"
+            onClick={handleClick}
+          >
+            <MenuIcon />
+          </IconButton>
           </div>
         </Toolbar>
       </AppBar>
@@ -134,4 +182,4 @@ AppAppBar.propTypes = {
   api_functions: PropTypes.object,
 };
 
-export default withStyles(styles)(AppAppBar);
+export default withWidth()(withStyles(styles)(AppAppBar));
