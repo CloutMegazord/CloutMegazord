@@ -4,7 +4,7 @@ import MuiTypography from "@material-ui/core/Typography";
 export default function TermsContent(props) {
     return (<div style={{padding:'3vh 3vw'}}>
 
-        <MuiTypography variant='h5' id="alert-dialog-title">{"Terms and Conditions for CloutMegazord service"}</MuiTypography>
+        <MuiTypography   paragraph={true} variant='h5' id="alert-dialog-title">{"Terms and Conditions for CloutMegazord service"}</MuiTypography>
         <MuiTypography paragraph={true}>
             Important: Please carefully read and understand these terms and conditions (“terms”).
         </MuiTypography>
