@@ -50,7 +50,7 @@ export default function TermsAndConditions(props) {
                                 color="primary"
                             />
                         }
-                        label="I agree to the terms of service"
+                        label="I agree with the Terms and Conditions"
                     />
                     <Button onClick={handleClose} color="primary" disabled={!checked} autoFocus>
                         Continue
