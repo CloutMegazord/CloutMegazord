@@ -7,6 +7,7 @@ import GridContainer from "components/Grid/GridContainer.js";
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
+import DialogContentText from "@material-ui/core/DialogContentText";
 import Button from "components/CustomButtons/Button.js";
 import Tasks from "components/Tasks/Tasks.js";
 import TasksMap from "../../controlsmap";
@@ -21,6 +22,8 @@ import Select from "@material-ui/core/Select";
 import {
   grayColor,
   secondaryColor,
+  warningColor,
+  infoColor
 } from "assets/jss/material-dashboard-react.js";
 
 const styles = {
@@ -215,6 +218,41 @@ function CreateTask(props) {
   );
 }
 
+function ConfirmPrompt(props) {
+  const { open, handleClose } = { ...props };
+
+  return (
+    <div>
+      <Dialog
+        open={open}
+        onClose={e => handleClose(e, false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          Make sure the rest of the zords are in touch
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            style={{ color: infoColor[0] }}
+            id="alert-dialog-description"
+          >
+           To sign the transaction, the account owners (zords) need to send their parts of the seed phrase within <b>10 minutes</b>. Make sure that all zords will be able to interact with CloutMegazord service within the specified time range.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button wide onClick={e => handleClose(e, false)} color="primary">
+            Cancel
+          </Button>
+          <Button wide  onClick={e => handleClose(e, true)} color="primary" autoFocus>
+            Confirm, All Zords in Touch
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function TableList(props) {
   const classes = useStyles();
   const user = props.user || {};
@@ -225,24 +263,36 @@ export default function TableList(props) {
   megazord = megazord || {};
   const tasks = megazord.tasks || [];
   const [openCT, setOpenCT] = React.useState(false);
+  const [openPowerOnDialog, setOpenPowerOnDialog] = React.useState(false);
+  const [targetTaskId, setTargetTaskId] = React.useState('');
 
-  const powerOnHandler = (e, taskId) => {
+  const openPowerOnDialogHandler = (e, taskId) => {
     e.preventDefault();
+    setTargetTaskId(taskId);
+    setOpenPowerOnDialog(true);
+  }
+
+  const powerOnHandler = (e, flag) => {
+    setOpenPowerOnDialog(false);
+    if (!flag) {return;}
     props.setOpenBackdrop(true);
     api_functions
       .task({
         action: "powerOn",
-        task: { id: taskId },
+        task: { id: targetTaskId },
         megazordId: megazordId,
       })
       .then((data) => {
         props.setOpenBackdrop(false);
+        setTargetTaskId('');
         window.location.href = data.taskLink;
       })
       .catch((e) => {
+        setTargetTaskId('');
         props.setOpenBackdrop(false);
       });
   };
+
 
   const createHandler = (taskResult) => {
     api_functions.task({
@@ -286,6 +336,10 @@ export default function TableList(props) {
           bitcloutData={props.bitcloutData} onCreate={createHandler} onClose={closeHandler} indexFunctons={indexFunctons}
         />
       }
+      <ConfirmPrompt
+        open={openPowerOnDialog}
+        handleClose={powerOnHandler}
+      />
       <GridContainer>
         <GridItem xs={12} sm={12} md={12}>
           <Card>
@@ -312,7 +366,7 @@ export default function TableList(props) {
                 tableHeaderColor="primary"
                 user={user}
                 tasks={tasks}
-                powerOnHandler={powerOnHandler}
+                powerOnHandler={openPowerOnDialogHandler}
                 deleteHandler={deleteHandler}
               />
             </CardBody>
