@@ -795,7 +795,7 @@ app.post("/api/task", async (req, res, next) => {
       taskSession.zords = resZords;
       try {
         var resp = await axios.post(signingEndpoint + "/ts/create", {
-          data: { taskId, taskSession },
+          data: { taskSession },
         });
       } catch (e) {
         await megazordRef.child("tasks/" + taskId + "/taskSessionRun").remove();
@@ -811,7 +811,7 @@ app.post("/api/task", async (req, res, next) => {
         data: {
           taskLink:
             signingEndpoint +
-            `/ts/get?tid=${taskId}&zid=${taskSession.initiator.shrtId}`,
+            `/ts/get?sid=${resp.sessionId}&zid=${taskSession.initiator.shrtId}`,
         },
       });
       break;

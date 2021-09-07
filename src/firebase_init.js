@@ -303,17 +303,6 @@ export const api_functions = {
       localStorage.setItem('acceptTerms', flag);
     }
   },
-  getTaskSession: () => {
-    var path = window.location.href.split("/").pop();
-    var task = path.split("&")[0].split("=")[1];
-    return axios
-      .post(
-        apiEndpoint + "/getTaskSession",
-        { data: { task } },
-        api_functions.getReqConfigs()
-      )
-      .then((resp) => resp.data);
-  },
   task: (data) => {
     return new Promise(async (resolve, reject) => {
       var resp = await axios
