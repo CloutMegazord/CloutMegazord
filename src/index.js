@@ -20,6 +20,7 @@ import ReactDOM from "react-dom";
 import { createBrowserHistory } from "history";
 import { Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
 import Snackbar from "components/Snackbar/Snackbar.js";
+import SignIn from 'components/SignIn/SignIn';
 import AddAlert from "@material-ui/icons/AddAlert";
 import Icon from "@material-ui/core/Icon";
 import InfoIcon from "@material-ui/icons/Info";
@@ -160,7 +161,6 @@ class App extends React.Component {
         }
         api_functions.authToken = null;
         api_functions.onErrorSubscribers = [];
-        // this.setState({redirect: '/landing/home'});
       }
     });
   }

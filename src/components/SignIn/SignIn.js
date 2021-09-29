@@ -77,6 +77,7 @@ const SignIn = (props) => {
 	const [errorText, setErrorText] = React.useState(false);
 	const api_functions = props.api_functions;
   const component = props.component;
+  const needRedirect = props.redirect
 	const accessLevel = 2;
 	const handleSignIn = (e) => {
 		api_functions.login({
@@ -108,7 +109,9 @@ const SignIn = (props) => {
       e.nativeEvent.stopImmediatePropagation();
       e.stopPropagation();
       e.preventDefault();
-      window.location.pathname = '/admin/megazordslist';
+      if (needRedirect) {
+        window.location.pathname = '/admin/megazordslist';
+      }
       return
     }
   }

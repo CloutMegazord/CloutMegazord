@@ -42,6 +42,7 @@ import RTLPage from "views/RTLPage/RTLPage.js";
 // core components/views for Landing layout
 import Home from "views/Home/Home.js";
 import TermsContent from "components/Terms/TermsContent.js";
+import TaskSessionRedirect from "components/Terms/TaskSessionRedirect.js";
 
 const routes = [
     {
@@ -54,6 +55,12 @@ const routes = [
       path: "/terms",
       name: "Terms",
       component: TermsContent,
+      layout: "/landing"
+    },
+    {
+      path: "/sr",
+      name: "TaskSessionRedirect",
+      component: TaskSessionRedirect,
       layout: "/landing"
     },
     {

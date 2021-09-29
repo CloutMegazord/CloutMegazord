@@ -363,6 +363,18 @@ async function getSingleProfile(data) {
   }
 }
 
+async function getTaskSessionLink(publicKey, taskId) {
+  var dbTaskSession = null;
+  const dbTaskSessionRef = db.ref("taskSessions/" + taskId);
+  var dbTaskSessionSnap = await dbTaskSessionRef.get();
+  if (dbTaskSessionSnap.exists()) {
+    dbTaskSession = dbTaskSessionSnap.val();
+    let initiatorSid = dbTaskSession.zsids[publicKey];
+    return `${signingEndpoint}/ts/get?sid=${dbTaskSession.sessionId}&zsid=${initiatorSid}`;
+  }
+  return null;
+}
+
 const Validation = {
   async checkOnMegazordsCountError(publicKey) {
     var allowlist = await db.ref("allowlist").get();
@@ -701,6 +713,22 @@ app.post("/api/changeNotificationStatus", async (req, res, next) => {
   }
 });
 
+app.post("/api/getTaskSessionLink", async (req, res, next) => {
+  var data = req.body.data;
+  var customToken = req.headers.authorization.replace("Bearer ", "");
+  var publicKey;
+  try {
+    let verif = await auth.verifyIdToken(customToken);
+    publicKey = verif.uid;
+  } catch (error) {
+    res.send({ data: { error: error.message } });
+    return;
+  }
+  const taskLink = await getTaskSessionLink(publicKey, data.taskId);
+  res.send({data: {taskLink: taskLink}});
+});
+
+
 app.post("/api/task", async (req, res, next) => {
   var data = req.body.data;
   var publicKey;
@@ -740,31 +768,29 @@ app.post("/api/task", async (req, res, next) => {
     case "powerOn":
       var taskId = data.task.id;
       var dbTask = megazord.tasks[data.task.id];
-      if (dbTask.taskSessionRun) {
-        res.send({
-          data: {
-            error: `Task Session already running. Ask task initiator for personal link.`,
-          },
-        });
+      const taskLink = await getTaskSessionLink(publicKey, taskId);
+      if (taskLink) {
+        res.send({data: {taskLink: taskLink}});
         return;
       }
-      dbTask.taskSessionRun = Date.now();
-      await megazordRef.child("tasks/" + taskId).update(dbTask);
       var taskSession = {
-        initiator: { publicKey },
+        initiator: { PublicKeyBase58Check: publicKey },
         megazordId: data.megazordId,
         task: dbTask,
         taskId: taskId,
         readyZordsShrtIds: [],
         redirect: CMEndpoint + "/admin/megazordslist",
+        zords: [],
+        trgFee: null,
+        startTime: Date.now()
       };
       if (megazord.PublicKeyBase58Check) {
-        taskSession.megazordPublicKey = megazord.PublicKeyBase58Check;
+        taskSession.megazordPublicKeyBase58Check = megazord.PublicKeyBase58Check;
       }
       var zords = megazord.confirmedZords;
-      var resZords = [];
+      var zsids = {}
       for (let zordPublicKey in zords) {
-        let shrtId = crypto.randomBytes(2).toString("hex");
+        zsids[zordPublicKey] = crypto.randomBytes(8).toString("hex");
         try {
           var profileRes = await bitcloutProxy({
             action: "get-single-profile",
@@ -775,45 +801,35 @@ app.post("/api/task", async (req, res, next) => {
           res.send({ data: { error: err.toString() } });
           return;
         }
-        resZords.push({
+        taskSession.zords.push({
           PubKeyShort: zordPublicKey.slice(0, 14) + "...",
           PublicKeyBase58Check: zordPublicKey,
-          shrtId: shrtId,
           Username: profileRes.Profile.Username,
-          ProfilePic: profileRes.Profile.ProfilePic,
-          link: signingEndpoint + `/ts/get?tid=${taskId}&zid=${shrtId}`,
+          ProfilePic: profileRes.Profile.ProfilePic
         });
         if (zordPublicKey === publicKey) {
-          taskSession.initiator.shrtId = shrtId;
-          taskSession.initiator.Username = profileRes.Profile.Username;
+          taskSession.initiator.PublicKeyBase58Check = publicKey;
         }
       }
 
       if (dbTask.type === 'send') {
         taskSession.trgFee = await getFeePercentage(Object.keys(zords), dbTask);
       }
-      taskSession.zords = resZords;
       try {
         var resp = await axios.post(signingEndpoint + "/ts/create", {
-          data: { taskSession },
+          data: { taskSession, zsids },
         });
       } catch (e) {
-        await megazordRef.child("tasks/" + taskId + "/taskSessionRun").remove();
         res.send({ data: { error: "signing connection error." } });
         return;
       }
-      if (resp.data.error) {
-        res.send({ data: { error: resp.data.error } });
-        await megazordRef.child("tasks/" + taskId + "/taskSessionRun").remove();
-        return;
-      }
-      res.send({
-        data: {
-          taskLink:
-            signingEndpoint +
-            `/ts/get?sid=${resp.sessionId}&zid=${taskSession.initiator.shrtId}`,
-        },
+      await db.ref("taskSessions").child(taskId).set({
+        startTime: taskSession.startTime,
+        zsids: zsids,
+        sessionId: sessionId
       });
+      let initiatorSid = zsids[taskSession.initiator.PublicKeyBase58Check];
+      res.send({data: {taskLink:`${signingEndpoint}/ts/get?sid=${resp.sessionId}&zsid=${initiatorSid}`}});
       break;
   }
 });

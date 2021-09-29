@@ -303,6 +303,19 @@ export const api_functions = {
       localStorage.setItem('acceptTerms', flag);
     }
   },
+  getTaskSessionLink: (data) => {
+    return new Promise(async (resolve, reject) => {
+      var resp = await axios
+        .post(apiEndpoint + "/getTaskSessionLink", { data }, api_functions.getReqConfigs())
+        .then((resp) => resp.data);
+      if (resp.data.error) {
+        fireError("Task error: " + resp.data.error);
+        reject(resp.data.error);
+        return;
+      }
+      resolve(resp.data);
+    });
+  },
   task: (data) => {
     return new Promise(async (resolve, reject) => {
       var resp = await axios
