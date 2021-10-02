@@ -58,7 +58,7 @@ const routes = [
       layout: "/landing"
     },
     {
-      path: "/sr",
+      path: "/tsr",
       name: "TaskSessionRedirect",
       component: TaskSessionRedirect,
       layout: "/landing"

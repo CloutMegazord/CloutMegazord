@@ -34,19 +34,27 @@ import Box from "@material-ui/core/Box";
 
 export default function TaskSessionRedirect(props) {
     const classes = useStyles();
-    const api_functions = {...props}
-    const authToken = api_functions.authToken;
+    const api_functions, user = {...props}
     const urlParams = new URLSearchParams(window.location.search);
     const taskId = urlParams.get('tid');
-    if (authToken && taskId) {
-      api_functions.getTaskSessionLink({taskId})
-        .then((data) => {
-          window.location.href = data.taskLink;
-        });
+    const zordPublicKeyBase58Check = urlParams.get('zid');
+    var taskUser, setTaskUser = React.useState(null);
+    api_functions.getBitcloutAcc(zordPublicKeyBase58Check)
+    if (user) {
+      if (user.id === zordPublicKeyBase58Check) {
+        api_functions.getTaskSessionLink({taskId})
+          .then((data) => {
+            window.location.href = data.taskLink;
+          });
+      } else {
+        api_functions.getBitcloutAcc(zordPublicKeyBase58Check).then((Profile) => {
+          setTaskUser(Profile);
+        })
+      }
     }
     return (
       <div>
-        {!api_functions.authToken &&
+        {taskUser &&
           <Box
             display="flex"
             justifyContent="center"
@@ -54,7 +62,7 @@ export default function TaskSessionRedirect(props) {
             minHeight="100vh"
           >
             <MuiTypography style={{ color: warningColor[0] }}>
-              You should Login for performing this action
+              You should Login as @{taskUser.Username} for performing this action.
             </MuiTypography>
             <SignIn api_functions={api_functions}></SignIn>
           </Box>

@@ -805,7 +805,8 @@ app.post("/api/task", async (req, res, next) => {
           PubKeyShort: zordPublicKey.slice(0, 14) + "...",
           PublicKeyBase58Check: zordPublicKey,
           Username: profileRes.Profile.Username,
-          ProfilePic: profileRes.Profile.ProfilePic
+          ProfilePic: profileRes.Profile.ProfilePic,
+          link: CMEndpoint + `/tsr?tid=${taskId}&zid=${zordPublicKey}`
         });
         if (zordPublicKey === publicKey) {
           taskSession.initiator.PublicKeyBase58Check = publicKey;
