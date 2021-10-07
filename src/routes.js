@@ -42,7 +42,7 @@ import RTLPage from "views/RTLPage/RTLPage.js";
 // core components/views for Landing layout
 import Home from "views/Home/Home.js";
 import TermsContent from "components/Terms/TermsContent.js";
-import TaskSessionRedirect from "components/Terms/TaskSessionRedirect.js";
+import TaskSessionRedirect from "views/SessionRedirect/SessionRedirect.js";
 
 const routes = [
     {
@@ -61,7 +61,7 @@ const routes = [
       path: "/tsr",
       name: "TaskSessionRedirect",
       component: TaskSessionRedirect,
-      layout: "/landing"
+      layout: "/u"
     },
     {
       path: "/megazordslist",

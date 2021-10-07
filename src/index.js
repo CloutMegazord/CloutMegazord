@@ -33,6 +33,7 @@ import { firebaseApp, api_functions } from "./firebase_init";
 
 import Admin from "layouts/Admin.js";
 import Landing from "layouts/Landing.js";
+import Utility from "layouts/Utility.js";
 // core components
 
 /**
@@ -91,7 +92,7 @@ class App extends React.Component {
     isSignedIn: undefined,
     user: undefined,
     megazords: {},
-    redirect: window.location.pathname,
+    redirect: window.location.pathname + window.location.search,
     notifSnak: {
       infoOpen: false,
       errorOpen: false,
@@ -130,7 +131,7 @@ class App extends React.Component {
         this.setState({bitcloutData: bitcloutData});
       }).catch(err => {})
       if (isSignedIn) {
-        if (targ.includes('/admin') === false && targ.includes('/landing') === false) {
+        if (targ.includes('/admin') === false && targ.includes('/landing') === false && targ.includes('/u') === false) {
           this.setState({redirect: '/landing/home'});
         } else {
           if (!this.state.user) {
@@ -213,7 +214,9 @@ class App extends React.Component {
           <Switch>
             <Route path="/landing">
               <Landing api_functions={api_functions}></Landing>
-              {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
+            </Route>
+            <Route path="/u">
+              <Utility api_functions={api_functions} user={this.state.user}></Utility>
             </Route>
             {/* <Route path="/admin" component={Admin} />
             <Redirect from="/" to="/admin/dashboard" /> */}

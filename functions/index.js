@@ -31,7 +31,7 @@ const bitcloutCahceExpire = {
   "get-single-profile": 48 * 60 * 60 * 1000,
   "get-app-state": 24 * 60 * 60 * 1000,
 };
-const taskSessionsExpire = 10 * 60 * 1000;
+const taskExecutionExpire = 10 * 60 * 1000;
 if (process.env.NODE_ENV === "development") {
   // process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
 }
@@ -103,11 +103,12 @@ setInterval(async () => {
     for (let taskid in megazord.tasks || {}) {
       let task = megazord.tasks[taskid];
       if (
-        task.taskSessionRun &&
-        task.taskSessionRun + taskSessionsExpire < Date.now()
+        task.taskExecutionStart &&
+        task.taskExecutionStart + taskExecutionExpire < Date.now()
       ) {
+        db.ref("taskSessions/" + taskid).remove();
         db.ref(
-          "megazords/" + megazordId + "/tasks/" + taskid + "/taskSessionRun"
+          "megazords/" + megazordId + "/tasks/" + taskid + "/taskExecutionStart"
         ).remove();
       }
     }
@@ -661,16 +662,29 @@ app.post("/api/createMegazord", async (req, res, next) => {
   res.send({ data: {} });
 });
 
+
+
+app.get('/api/taskExecutionRedirect', async function(req, res) {
+  const taskId = req.query.tid;
+  const megazordId = req.query.mid;
+  db.ref(
+    "megazords/" + megazordId + "/tasks/" + taskId + "/taskExecutionStart"
+  ).set(Date.now());
+  res.redirect(CMEndpoint + "/admin/megazordslist")
+})
+
+
 app.post("/api/finishTask", async (req, res, next) => {
   const { task, taskData, taskError } = req.body.data;
   const megazordRef = db.ref("megazords/" + taskData.megazordId);
+  await db.ref("taskSessions").child(task.id).remove();
   if (!taskError) {
     if (task.type === "getPublicKey") {
       megazordRef.child("PublicKeyBase58Check").set(taskData.megazordPublicKey);
     }
     await deleteTask(taskData.megazordId, task.id);
   } else {
-    await megazordRef.child("tasks/" + task.id + "/taskSessionRun").remove();
+    await megazordRef.child("tasks/" + task.id + "/taskExecutionStart").remove();
   }
   var megazorSnap = await megazordRef.get();
   var megazord = megazorSnap.val();
@@ -728,7 +742,6 @@ app.post("/api/getTaskSessionLink", async (req, res, next) => {
   res.send({data: {taskLink: taskLink}});
 });
 
-
 app.post("/api/task", async (req, res, next) => {
   var data = req.body.data;
   var publicKey;
@@ -779,7 +792,6 @@ app.post("/api/task", async (req, res, next) => {
         task: dbTask,
         taskId: taskId,
         readyZordsShrtIds: [],
-        redirect: CMEndpoint + "/admin/megazordslist",
         zords: [],
         trgFee: null,
         startTime: Date.now()
@@ -801,16 +813,19 @@ app.post("/api/task", async (req, res, next) => {
           res.send({ data: { error: err.toString() } });
           return;
         }
+        var redirect = CMEndpoint + "/admin/megazordslist";
+        if (zordPublicKey === publicKey) {
+          redirect = CMEndpoint +  `/api/taskExecutionRedirect?tid=${taskId}&mid=${data.megazordId}`;
+        }
         taskSession.zords.push({
           PubKeyShort: zordPublicKey.slice(0, 14) + "...",
           PublicKeyBase58Check: zordPublicKey,
           Username: profileRes.Profile.Username,
           ProfilePic: profileRes.Profile.ProfilePic,
-          link: CMEndpoint + `/tsr?tid=${taskId}&zid=${zordPublicKey}`
+          link: CMEndpoint + `/u/tsr?tid=${taskId}&zid=${zordPublicKey}`,
+          redirect: redirect
         });
-        if (zordPublicKey === publicKey) {
-          taskSession.initiator.PublicKeyBase58Check = publicKey;
-        }
+
       }
 
       if (dbTask.type === 'send') {
@@ -820,17 +835,19 @@ app.post("/api/task", async (req, res, next) => {
         var resp = await axios.post(signingEndpoint + "/ts/create", {
           data: { taskSession, zsids },
         });
+        var sessionId =  resp.data.sessionId;
       } catch (e) {
         res.send({ data: { error: "signing connection error." } });
         return;
       }
+      //Delete task implement
       await db.ref("taskSessions").child(taskId).set({
         startTime: taskSession.startTime,
         zsids: zsids,
         sessionId: sessionId
       });
       let initiatorSid = zsids[taskSession.initiator.PublicKeyBase58Check];
-      res.send({data: {taskLink:`${signingEndpoint}/ts/get?sid=${resp.sessionId}&zsid=${initiatorSid}`}});
+      res.send({data: {taskLink:`${signingEndpoint}/ts/get?sid=${sessionId}&zsid=${initiatorSid}`}});
       break;
   }
 });

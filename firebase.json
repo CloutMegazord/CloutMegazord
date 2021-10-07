@@ -25,12 +25,8 @@
         "function": "powerTask"
       },
       {
-        "source": "!(/api/**|/s/**|/powerTask/**|/tsr)",
+        "source": "!(/api/**|/s/**|/powerTask/**)",
         "destination": "/index.html"
-      },
-      {
-        "source": "/tsr",
-        "destination": "/landing/tsr"
       }
     ]
   },

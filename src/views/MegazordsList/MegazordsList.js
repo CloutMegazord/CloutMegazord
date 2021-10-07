@@ -875,7 +875,7 @@ export default function MegazordsList(props) {
                         }}
                       >
                         <div>Wallet Balance:</div>
-                        {item.tasks.some((task) => !!task.taskSessionRun) ? (
+                        {item.tasks.some((task) => !!task.taskExecutionStart) ? (
                           <CircularProgress
                             style={{
                               color: primaryColor[0],
