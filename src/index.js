@@ -114,15 +114,13 @@ class App extends React.Component {
     api_functions.onError((e) => {
       this.notifSnak("open", "error", e.toString(), 7000);
     });
-    const updateIdToken = (userAuth) => {
-      userAuth.getIdToken(true).then(function (idToken) {
-        api_functions.authToken = idToken;
-      });
+    const updateIdToken = async (userAuth) => {
+      api_functions.authToken = await userAuth.getIdToken(true);
     }
-    this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
+    this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged(async (userAuth) => {
       var self = this;
       if (userAuth) {
-        updateIdToken(userAuth);
+        await updateIdToken(userAuth);
         setInterval(() => updateIdToken(userAuth), 60*1000)
       }
       const isSignedIn = !!userAuth;
@@ -134,7 +132,7 @@ class App extends React.Component {
         if (targ.includes('/admin') === false && targ.includes('/landing') === false && targ.includes('/u') === false) {
           this.setState({redirect: '/landing/home'});
         } else {
-          if (!this.state.user) {
+          if (!self.state.user || (self.state.user?.id !== userAuth.uid)) {
             api_functions.onUserData(userAuth.uid, (userData) => {
               for (let megazordId in userData.megazordsIds) {
                 userData.megazords = userData.megazords || {};
@@ -171,6 +169,7 @@ class App extends React.Component {
    */
   componentWillUnmount() {
     this.unregisterAuthObserver();
+    api_functions.authToken = null;
     api_functions.onErrorSubscribers = [];
   }
 

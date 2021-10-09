@@ -86,7 +86,7 @@ export default function TaskSessionRedirect(props) {
             <MuiTypography className={classes.message}>
               You should be logined as <a target="_blank" href={"https://bitclout.com/u/" + taskUser.Username}>@{taskUser.Username}</a> for performing this action.
             </MuiTypography>
-            <SignIn api_functions={api_functions} autoComplete={false}></SignIn>
+            <SignIn api_functions={api_functions} autoRedirect={false}></SignIn>
           </Box>
         }
       </div>

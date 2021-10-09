@@ -95,7 +95,7 @@ const SignIn = (props) => {
           if (autoRedirect) {
             window.location.pathname = '/admin/megazordslist';
           }
-          setSuccessOpen(true)
+          setSuccessOpen(true);
         })
         .catch((error) => {
           setErrorText(error.response.message)

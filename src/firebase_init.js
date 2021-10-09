@@ -293,6 +293,7 @@ async function handleMegazord(megazordInfo, user) {
 }
 
 export const api_functions = {
+  auth: auth,
   defaultAvatar: defaultAvatar,
   defaultUsername: defaultUsername,
   terms: {
@@ -565,7 +566,7 @@ export const api_functions = {
       },
       async (e) => {
         errorCallback(e);
-        console.log("EEE", e);
+        console.log(e);
       }
     );
   },
