@@ -53,7 +53,7 @@ const updateProfile = (data) => {
       indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
       throw Error(errorMessage);
     }
-    if (fileToUpload.size > 5 * 1024 * 1024) {
+    if (fileToUpload.size > 2 * 1024 * 1024) {
       errorMessage = "Please upload an image that is smaller than 5MB.";
       indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
       throw Error(errorMessage);
@@ -165,8 +165,8 @@ const send = (data) => {
     return true
   }
   const validateCurrencies = (currency) => {
-    if (currency !== "$ClOUT" && wallet['$ClOUT'].BalanceNanos < 10000) {
-      let errorMess = 'Top up your $CLOUT balance to cover transaction fees (~ $ 0.01 equivalent)';
+    if (currency !== "$DESO" && wallet['$DESO'].BalanceNanos < 10000) {
+      let errorMess = 'Top up your $DESO balance to cover transaction fees (~ $ 0.01 equivalent)';
       indexFunctons.notifSnak('open', 'error', errorMess, 7000);
       throw Error(errorMess);
     }
@@ -182,7 +182,7 @@ const send = (data) => {
     })
   }
   const wallet = Object.assign(
-    {'$ClOUT': {BalanceNanos: megazord.BalanceNanos, CreatorPublicKeyBase58Check: ''}},
+    {'$DESO': {BalanceNanos: megazord.BalanceNanos, CreatorPublicKeyBase58Check: ''}},
     megazord.UsersYouHODL.reduce((reducer, it)=>{
       reducer[it.ProfileEntryResponse.Username] = {
         BalanceNanos: it.BalanceNanos,
@@ -285,9 +285,9 @@ const sell = (user) => {
   }
 }
 
-const reClout = () => {
+const repost = () => {
   return {
-    name: 'Re-Clout',
+    name: 'Repost',
     controls: [
       {
         name: 'link',
@@ -314,5 +314,5 @@ export default {
   send: send,
   // buy,
   // sell
-  reClout,
+  repost
 }

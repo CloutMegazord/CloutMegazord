@@ -237,7 +237,7 @@ function ConfirmPrompt(props) {
             style={{ color: infoColor[0] }}
             id="alert-dialog-description"
           >
-           To sign the transaction, the account owners (zords) need to send their parts of the seed phrase within <b>10 minutes</b>. Make sure that all zords will be able to interact with CloutMegazord service within the specified time range.
+           To sign the transaction, the account owners (zords) need to send their parts together. Make sure that all zords will be able to interact with CloutMegazord service within the specified time range.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

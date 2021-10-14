@@ -17,7 +17,7 @@ const config = require("./config");
 var url = require("url");
 var path = require("path");
 
-let signingEndpoint, CMEndpoint;
+let signingEndpoint, CMEndpoint, CMAPI;
 const FeesMap = {
     1.5: 1 * 10**4,
     1: 1 * 10**5,
@@ -31,7 +31,7 @@ const bitcloutCahceExpire = {
   "get-single-profile": 48 * 60 * 60 * 1000,
   "get-app-state": 24 * 60 * 60 * 1000,
 };
-const taskExecutionExpire = 10 * 60 * 1000;
+const taskExecutionExpire = 4 * 60 * 1000;
 if (process.env.NODE_ENV === "development") {
   // process.env.GOOGLE_APPLICATION_CREDENTIALS = config.get("firebase");
 }
@@ -43,9 +43,11 @@ const storage = admin.storage();
 if (process.env.NODE_ENV === "development") {
   db.useEmulator("localhost", 9000);
   CMEndpoint = "http://localhost:3000";
+  CMAPI = "http://localhost:5000";
   signingEndpoint = "http://localhost:7000";
 } else {
   signingEndpoint = "https://signing-cloutmegazord.web.app";
+  CMAPI = "https://cloutmegazord.com";
   CMEndpoint = "https://cloutmegazord.com";
 }
 
@@ -104,10 +106,10 @@ setInterval(async () => {
       let task = megazord.tasks[taskid];
       if (
         task.taskExecutionStart &&
-        task.taskExecutionStart + taskExecutionExpire < Date.now()
+        (task.taskExecutionStart + taskExecutionExpire) < Date.now()
       ) {
-        db.ref("taskSessions/" + taskid).remove();
-        db.ref(
+        await db.ref("taskSessions/" + taskid).remove();
+        await db.ref(
           "megazords/" + megazordId + "/tasks/" + taskid + "/taskExecutionStart"
         ).remove();
       }
@@ -663,7 +665,6 @@ app.post("/api/createMegazord", async (req, res, next) => {
 });
 
 
-
 app.get('/api/taskExecutionRedirect', async function(req, res) {
   const taskId = req.query.tid;
   const megazordId = req.query.mid;
@@ -680,7 +681,7 @@ app.post("/api/finishTask", async (req, res, next) => {
   await db.ref("taskSessions").child(task.id).remove();
   if (!taskError) {
     if (task.type === "getPublicKey") {
-      megazordRef.child("PublicKeyBase58Check").set(taskData.megazordPublicKey);
+      megazordRef.child("PublicKeyBase58Check").set(taskData.megazordPublicKeyBase58Check);
     }
     await deleteTask(taskData.megazordId, task.id);
   } else {
@@ -769,7 +770,6 @@ app.post("/api/task", async (req, res, next) => {
         addedBy: publicKey,
         megazorSnap: megazorSnap,
       });
-
       await megazordRef.child("tasks").push(task.toDBRecord());
       res.send({ data: {} });
       break;
@@ -814,8 +814,8 @@ app.post("/api/task", async (req, res, next) => {
           return;
         }
         var redirect = CMEndpoint + "/admin/megazordslist";
-        if (zordPublicKey === publicKey) {
-          redirect = CMEndpoint +  `/api/taskExecutionRedirect?tid=${taskId}&mid=${data.megazordId}`;
+        if ((zordPublicKey === publicKey) && (dbTask.type !== 'getPublicKey')) {
+          redirect = CMAPI + `/api/taskExecutionRedirect?tid=${taskId}&mid=${data.megazordId}`;
         }
         taskSession.zords.push({
           PubKeyShort: zordPublicKey.slice(0, 14) + "...",
@@ -825,7 +825,6 @@ app.post("/api/task", async (req, res, next) => {
           link: CMEndpoint + `/u/tsr?tid=${taskId}&zid=${zordPublicKey}`,
           redirect: redirect
         });
-
       }
 
       if (dbTask.type === 'send') {

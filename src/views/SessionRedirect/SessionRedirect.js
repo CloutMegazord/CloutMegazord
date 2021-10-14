@@ -52,13 +52,15 @@ const useStyles = makeStyles((theme) => ({
 
 export default function TaskSessionRedirect(props) {
     const classes = useStyles();
-    const {api_functions, user} = props
+    const {api_functions, user, isSignedIn} = props
     const urlParams = new URLSearchParams(window.location.search);
     const taskId = urlParams.get('tid');
     const zordPublicKeyBase58Check = urlParams.get('zid');
     var [taskUser, setTaskUser] = React.useState(null);
-    if (user && taskId && zordPublicKeyBase58Check) {
-      if (user.id === zordPublicKeyBase58Check) {
+    var [isTaskUserLoginned, setIsTaskUserLoginned] = React.useState(false);
+    if (isSignedIn !== undefined && taskId && zordPublicKeyBase58Check) {
+      if (user && user.id === zordPublicKeyBase58Check) {
+        !isTaskUserLoginned && setIsTaskUserLoginned(true)
         api_functions.getTaskSessionLink({taskId})
           .then((data) => {
             window.location.href = data.taskLink;
@@ -75,7 +77,7 @@ export default function TaskSessionRedirect(props) {
         <div>
           <img src={logo} className={classes.logo} alt="increase priority" />
         </div>
-        {taskUser &&
+        {(taskUser && !isTaskUserLoginned) &&
           <Box
             display="flex"
             justifyContent="center"

@@ -82,7 +82,8 @@ const useStyles = makeStyles((theme) => ({
     },
     overflow: 'hidden',
     borderRadius: '100%',
-    height: '60px'
+    height: '60px',
+    width: '60px'
   },
   currency: {
     display: 'flex',
@@ -271,7 +272,7 @@ export function InputAmount(props) {
   const [amountNanos, setAmountNanos] = React.useState(0);
   const [MGZDfee, setMGZDFee] = React.useState(null);
   const [lastReqId, setLastReqId] = React.useState(null);
-  const [currency, setCurrency] = React.useState('$ClOUT');
+  const [currency, setCurrency] = React.useState('$DESO');
   const USDbyBTCLT = exchRate.USDbyBTCLT || 0;
 
   var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';

@@ -215,7 +215,7 @@ class App extends React.Component {
               <Landing api_functions={api_functions}></Landing>
             </Route>
             <Route path="/u">
-              <Utility api_functions={api_functions} user={this.state.user}></Utility>
+              <Utility isSignedIn={this.state.isSignedIn} api_functions={api_functions} user={this.state.user}></Utility>
             </Route>
             {/* <Route path="/admin" component={Admin} />
             <Redirect from="/" to="/admin/dashboard" /> */}
