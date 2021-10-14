@@ -86,12 +86,12 @@ function ProductHero(props) {
           <div className={classes.shadowWrapper}>
             <img src={logo} className={classes.logo} alt="increase priority" />
           </div>
-          <a target="_blank" style={{color:whiteColor}}href="https://bitclout.com/u/charlie">logo: @charlie</a>
+          <a target="_blank" style={{color:whiteColor}} href="https://bitclout.com/u/charlie">logo: @charlie</a>
           </div>
         </GridItem>
         <GridItem xs={12} sm={6}>
-          <Typography color="inherit" align="center" variant="h4" marked="center" className={classes.title}>
-            Revolution in Bitclout cooperation
+          <Typography color="inherit" align="center" style={{textTransform:'none'}} variant="h4" marked="center" className={classes.title}>
+            New level of cooperation in DeSo
           </Typography>
           {/* <Typography color="inherit" align="center" variant="subtitle1" className={classes.subtitle1}>
             First distributed account management tool for Bitclout
