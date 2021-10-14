@@ -777,8 +777,8 @@ export default function MegazordsList(props) {
                             }
                             style={{
                               objectFit: "contain",
-                              width: "100%",
-                              height: "100%",
+                              width: "130px",
+                              height: "130px",
                             }}
                           />
                         </a>
@@ -875,7 +875,7 @@ export default function MegazordsList(props) {
                         }}
                       >
                         <div>Wallet Balance:</div>
-                        {item.tasks.some((task) => !!task.taskSessionRun) ? (
+                        {item.tasks.some((task) => !!task.taskExecutionStart) ? (
                           <CircularProgress
                             style={{
                               color: primaryColor[0],
@@ -886,7 +886,7 @@ export default function MegazordsList(props) {
                         ) : (
                           <div>
                             <MuiTypography style={{ color: grayColor[2] }}>
-                              $CLOUT{" "}
+                              $DESO{" "}
                               {parseFloat(
                                 (item.BalanceNanos / 1e9).toFixed(4)
                               ).toLocaleString()}{" "}

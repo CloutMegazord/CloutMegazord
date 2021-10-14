@@ -127,7 +127,7 @@ export default function Tasks(props) {
                 </TableCell>
               )}
               <TableCell className={tableCellClasses}>
-                {!!task.taskSessionRun ? (
+                {!!task.taskExecutionStart ? (
                   <Tooltip
                     id="tooltip-top"
                     title="Task Session already running. Ask task initiator for personal link."

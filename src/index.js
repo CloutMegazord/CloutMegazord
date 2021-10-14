@@ -20,6 +20,7 @@ import ReactDOM from "react-dom";
 import { createBrowserHistory } from "history";
 import { Router, Route, Switch, Redirect, withRouter } from "react-router-dom";
 import Snackbar from "components/Snackbar/Snackbar.js";
+import SignIn from 'components/SignIn/SignIn';
 import AddAlert from "@material-ui/icons/AddAlert";
 import Icon from "@material-ui/core/Icon";
 import InfoIcon from "@material-ui/icons/Info";
@@ -32,6 +33,7 @@ import { firebaseApp, api_functions } from "./firebase_init";
 
 import Admin from "layouts/Admin.js";
 import Landing from "layouts/Landing.js";
+import Utility from "layouts/Utility.js";
 // core components
 
 /**
@@ -90,7 +92,7 @@ class App extends React.Component {
     isSignedIn: undefined,
     user: undefined,
     megazords: {},
-    redirect: window.location.pathname,
+    redirect: window.location.pathname + window.location.search,
     notifSnak: {
       infoOpen: false,
       errorOpen: false,
@@ -112,15 +114,13 @@ class App extends React.Component {
     api_functions.onError((e) => {
       this.notifSnak("open", "error", e.toString(), 7000);
     });
-    const updateIdToken = (userAuth) => {
-      userAuth.getIdToken(true).then(function (idToken) {
-        api_functions.authToken = idToken;
-      });
+    const updateIdToken = async (userAuth) => {
+      api_functions.authToken = await userAuth.getIdToken(true);
     }
-    this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged((userAuth) => {
+    this.unregisterAuthObserver = firebaseApp.auth().onAuthStateChanged(async (userAuth) => {
       var self = this;
       if (userAuth) {
-        updateIdToken(userAuth);
+        await updateIdToken(userAuth);
         setInterval(() => updateIdToken(userAuth), 60*1000)
       }
       const isSignedIn = !!userAuth;
@@ -129,10 +129,10 @@ class App extends React.Component {
         this.setState({bitcloutData: bitcloutData});
       }).catch(err => {})
       if (isSignedIn) {
-        if (targ.includes('/admin') === false && targ.includes('/landing') === false) {
+        if (targ.includes('/admin') === false && targ.includes('/landing') === false && targ.includes('/u') === false) {
           this.setState({redirect: '/landing/home'});
         } else {
-          if (!this.state.user) {
+          if (!self.state.user || (self.state.user?.id !== userAuth.uid)) {
             api_functions.onUserData(userAuth.uid, (userData) => {
               for (let megazordId in userData.megazordsIds) {
                 userData.megazords = userData.megazords || {};
@@ -160,7 +160,6 @@ class App extends React.Component {
         }
         api_functions.authToken = null;
         api_functions.onErrorSubscribers = [];
-        // this.setState({redirect: '/landing/home'});
       }
     });
   }
@@ -170,6 +169,7 @@ class App extends React.Component {
    */
   componentWillUnmount() {
     this.unregisterAuthObserver();
+    api_functions.authToken = null;
     api_functions.onErrorSubscribers = [];
   }
 
@@ -213,7 +213,9 @@ class App extends React.Component {
           <Switch>
             <Route path="/landing">
               <Landing api_functions={api_functions}></Landing>
-              {/* <Landing firebaseAuth={firebaseApp.auth()} api_signin={api_functions.signIn}/> */}
+            </Route>
+            <Route path="/u">
+              <Utility isSignedIn={this.state.isSignedIn} api_functions={api_functions} user={this.state.user}></Utility>
             </Route>
             {/* <Route path="/admin" component={Admin} />
             <Redirect from="/" to="/admin/dashboard" /> */}

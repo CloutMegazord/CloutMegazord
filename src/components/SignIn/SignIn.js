@@ -77,6 +77,7 @@ const SignIn = (props) => {
 	const [errorText, setErrorText] = React.useState(false);
 	const api_functions = props.api_functions;
   const component = props.component;
+  const autoRedirect = (props.autoRedirect === undefined) ? true : props.autoRedirect;
 	const accessLevel = 2;
 	const handleSignIn = (e) => {
 		api_functions.login({
@@ -91,8 +92,10 @@ const SignIn = (props) => {
       api_functions
         .signInWithCustomToken(result.data.token)
         .then((userCredential) => {
-          window.location.pathname = '/admin/megazordslist';
-          setSuccessOpen(true)
+          if (autoRedirect) {
+            window.location.pathname = '/admin/megazordslist';
+          }
+          setSuccessOpen(true);
         })
         .catch((error) => {
           setErrorText(error.response.message)
@@ -104,7 +107,7 @@ const SignIn = (props) => {
 		});
 	}
   const signInWrapperClick = (e) => {
-    if (api_functions.authToken) {
+    if (api_functions.authToken && autoRedirect) {
       e.nativeEvent.stopImmediatePropagation();
       e.stopPropagation();
       e.preventDefault();
