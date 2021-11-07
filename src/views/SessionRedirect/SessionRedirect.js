@@ -31,7 +31,7 @@ completedTasksChart,
 import styles from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 import avatar from "assets/img/faces/marc.jpg";
 import Box from "@material-ui/core/Box";
-import logo from "assets/img/logo_small.png";
+import logo from "assets/img/logo_150px.png";
 
 const useStyles = makeStyles((theme) => ({
   message: {

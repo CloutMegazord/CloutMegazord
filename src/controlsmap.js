@@ -38,10 +38,14 @@ const getPublicKey = (data) => {
 const updateProfile = (data) => {
   const {megazord, user, indexFunctons, bitcloutData, api_functions} = data;
   const postfix = '\n@mgzd'
-  const validateUsername = (account) => {
+  const validateUsername = (account, accName) => {
+    if (accName.match(/^[a-zA-Z0-9_]+$/) === null) {
+      indexFunctons.notifSnak('open', 'error', 'Your username contains invalid characters. Usernames can only numbers, English letters, and underscores.', 5000);
+      throw Error('Your username contains invalid characters. Usernames can only numbers, English letters, and underscores.');
+    }
     if (account && (account.Username !== megazord.Username)) {
       indexFunctons.notifSnak('open', 'error', 'Name already used', 2000);
-      throw Error('Cant send to self Megazord.');
+      throw Error('Name already used.');
     }
     return true
   }

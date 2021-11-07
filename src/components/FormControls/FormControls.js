@@ -181,7 +181,7 @@ export function InputBitcloutAccount(
       }
       try {
         var bitcloutAccountResp = await api_functions.getBitcloutAcc(PubKey, accName);
-        validate(bitcloutAccountResp);
+        validate(bitcloutAccountResp, accName);
       } catch (err) {
         console.log(err);
         setInputState(3);

@@ -236,7 +236,7 @@ async function bitcloutProxy(data) {
         resolve(resp.data);
       })
       .catch((error) => {
-        reject(error);
+        reject(new Error(error.response.data.error));
       });
   });
 }
