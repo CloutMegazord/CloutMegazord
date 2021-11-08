@@ -108,14 +108,13 @@ setInterval(async () => {
         task.taskExecutionStart &&
         (task.taskExecutionStart + taskExecutionExpire) < Date.now()
       ) {
-        await db.ref("taskSessions/" + taskid).remove();
         await db.ref(
           "megazords/" + megazordId + "/tasks/" + taskid + "/taskExecutionStart"
         ).remove();
       }
     }
   }
-}, 60 * 10 * 1000);
+}, 3 * 60 * 1000);
 
 function getReqData(req, field) {
   let data = req.body.data[field];
@@ -668,6 +667,7 @@ app.post("/api/createMegazord", async (req, res, next) => {
 app.get('/api/taskExecutionRedirect', async function(req, res) {
   const taskId = req.query.tid;
   const megazordId = req.query.mid;
+  await db.ref("taskSessions").child(taskId).remove();
   db.ref(
     "megazords/" + megazordId + "/tasks/" + taskId + "/taskExecutionStart"
   ).set(Date.now());
@@ -678,7 +678,6 @@ app.get('/api/taskExecutionRedirect', async function(req, res) {
 app.post("/api/finishTask", async (req, res, next) => {
   const { task, taskData, taskError } = req.body.data;
   const megazordRef = db.ref("megazords/" + taskData.megazordId);
-  await db.ref("taskSessions").child(task.id).remove();
   if (!taskError) {
     if (task.type === "getPublicKey") {
       megazordRef.child("PublicKeyBase58Check").set(taskData.megazordPublicKeyBase58Check);
