@@ -95,13 +95,14 @@ function CreateTask(props) {
   const [bitcloutAccount, setBitcloutAccount] = React.useState(null);
   const [inputState, setInputState] = React.useState(0);
   const [accounts, setAccounts] = React.useState([]);
+  const [taskState, setTaskState] = React.useState({});
 
   const [taskType, setTaskType] = React.useState("");
-  var tasksTypes = new Array(Object.keys(TasksMap).length);
+  var tasksTypes = [];
   var tasksMap = {};
-  for (let key in TasksMap) {
-    tasksMap[key] = TasksMap[key]({user, megazord, api_functions, bitcloutData, indexFunctons});
-    tasksTypes[tasksMap[key].order] = {name: tasksMap[key].name, key, disabled: tasksMap[key].disabled}
+  for (let [key, task] of TasksMap.entries()) {
+    tasksMap[key] = task({user, megazord, api_functions, bitcloutData, indexFunctons, taskState, setTaskState});
+    tasksTypes.push({name: tasksMap[key].name, key, disabled: tasksMap[key].disabled})
   }
   if (taskType) {
     var taskForm = tasksMap[taskType];
@@ -161,7 +162,6 @@ function CreateTask(props) {
     }
     setTaskType(event.target.value);
   };
-
   return (
     <Dialog
       fullScreen

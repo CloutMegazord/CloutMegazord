@@ -75,6 +75,26 @@ class Send extends Task {
     }
 }
 
+class Buy extends Task {
+    constructor(data) {
+        var AmountNanos = parseInt(data.AmountNanos) || 0;
+        data.defaultDescription =
+        `Buy ${data.CreatorUsername} Coins on ${parseFloat((AmountNanos * 1e-9).toFixed(4)).toLocaleString()} $DeSo`;
+        super(data);
+        this.Creator = data.Creator;
+        this.CreatorUsername = data.CreatorUsername;
+        this.AmountNanos = AmountNanos;
+    }
+
+    toDBRecord() {
+        var record = super.toDBRecord();
+        record.AmountNanos = this.AmountNanos;
+        record.Creator = this.Creator;
+        record.CreatorUsername = this.CreatorUsername;
+        return record;
+    }
+}
+
 class Repost extends Task {
     constructor(data) {
         data.type = 'repost'
@@ -159,6 +179,11 @@ function createTask(data) {
             task = new Repost(data);
             break;
         }
+        case 'buy': {
+            task = new Buy(data);
+            break;
+        }
+        
     }
     return task;
 }

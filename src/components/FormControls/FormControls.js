@@ -265,15 +265,16 @@ export function InputBitcloutAccount(
 
 export function InputAmount(props) {
   const classes = useStyles();
-  const {htmlIds, exchRate, feesMap, wallet, validate, getFee} = props;
+  const {htmlIds, exchRate, feesMap, wallet, validate, processAmount} = props;
   const currencyTypes = Object.keys(wallet).sort((a, b) => {return wallet[a].BalanceNanos - wallet[b].BalanceNanos}).reverse();
+  const [receiveUSDAmount, setReceiveUSDAmount] = React.useState(0);
+  const [coinAmount, setCoinAmount] = React.useState(0);
   const [USDAmount, setUSDAmount] = React.useState(0);
-  const [CoinAmount, setCoinAmount] = React.useState(0);
+  const [receiveCoinAmount, setReceiveCoinAmount] = React.useState(0);
   const [amountNanos, setAmountNanos] = React.useState(0);
+  const [founderReward, setFounderReward] = React.useState(null);
   const [MGZDfee, setMGZDFee] = React.useState(null);
-  const [lastReqId, setLastReqId] = React.useState(null);
   const [currency, setCurrency] = React.useState('$DESO');
-  const USDbyBTCLT = exchRate.USDbyBTCLT || 0;
 
   var feesMapTable = '<table style="width:50%"><thead><td>USD value</td><td>Fee</td></thead>';
   var fees = Object.keys(feesMap).sort().reverse();
@@ -294,26 +295,21 @@ export function InputAmount(props) {
   }
   feesMapTable += '</table>'
 
-  const handleChange = (_Amount) => {
-    setCoinAmount(_Amount);
-    let _USDAmount;
-    if (wallet[currency].CreatorPublicKeyBase58Check) {
-        let CoinPriceBitCloutNanos = wallet[currency].CoinPriceBitCloutNanos;
-        _USDAmount = _Amount * (CoinPriceBitCloutNanos / 1e9 ) * USDbyBTCLT;
-    } else {
-      _USDAmount = _Amount * USDbyBTCLT;
+  const handleChange = (inputValue) => {
+    try {
+      var amountObj = processAmount(inputValue, currency)
+    } catch(e) {
+      return
     }
-    setUSDAmount(_USDAmount);
-    setAmountNanos(_Amount * 1e9);
-    var trgFee = fees[0];
-    for (let fee of fees) {
-      let range = feesMap[fee];
-      if (_USDAmount < range) {
-        trgFee = fee;
-        break
-      }
+    setCoinAmount(amountObj.coinAmount);
+    setUSDAmount(amountObj.USDAmount);
+    setAmountNanos(amountObj.coinAmountNanos);
+    setReceiveCoinAmount(amountObj.receiveCoinAmount);
+    setReceiveUSDAmount(amountObj.receiveUSDAmount);
+    setMGZDFee(amountObj.trgFee);
+    if (amountObj.founderReward) {
+      setFounderReward(amountObj.founderReward)
     }
-    setMGZDFee(trgFee);
   }
 
   const maxHandler = (event) => {
@@ -338,6 +334,7 @@ export function InputAmount(props) {
       <Select
         labelId="currency-select-label"
         id="currency-select"
+        disabled={currencyTypes.length <= 1}
         value={currency}
         onChange={handleCurrencyChange}
       >
@@ -351,7 +348,7 @@ export function InputAmount(props) {
       </Select>
     </FormControl>
     <FormControl className={classes.formControl}>
-      <InputLabel htmlFor={'interact_amount'}>Amount of {currency} to send:</InputLabel>
+      <InputLabel htmlFor={'interact_amount'}>Amount of {currency}:</InputLabel>
       <Input
         id={'interact_interact_amount'}
         type="number"
@@ -362,40 +359,44 @@ export function InputAmount(props) {
         }}
         onChange={e => handleChange(e.target.value)}
         required
-        placeholder={CoinAmount.toLocaleString()}
-        value={CoinAmount}
+        placeholder={coinAmount.toLocaleString()}
+        value={coinAmount}
       />
       <FormHelperText component={'div'} id={'interact_amount_helper_text'} className={classes.helper}>
         <div>
           <div>
-          CloutMegazord fee: {MGZDfee !== null ? MGZDfee + "%" : 'Waiting'}
-          <Tooltip
-            id="tooltip-top"
-            title={<div dangerouslySetInnerHTML={{
-              __html: `Platform Fees included in total transaction amount and depending of USD value:${feesMapTable}
-                <i>NOTE:The USD value is calculated at the time of the task execution.</i>`
-            }}></div>}
-            placement="right"
-          >
-            <Icon className={classes.icon} fontSize="small">info</Icon>
-          </Tooltip>
-          </div>
-          <div>
-            Will receive:
+            {"Will receive: "}
             {
-              USDAmount ?
-            (CoinAmount - CoinAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString() : 0
+              receiveUSDAmount ?
+            receiveCoinAmount.toFixed(4).toLocaleString() : 0
             }
-            {" "}
+            {" coin "}
             (≈ $
             {
-            (USDAmount - USDAmount  * ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()
+            receiveUSDAmount.toFixed(2).toLocaleString()
             }
             USD)
           </div>
+          {founderReward &&
+            <div>
+              Creator Founder Reward: {founderReward}%
+            </div>
+          }
           <div>
-            Fee: { (CoinAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
-            (≈ ${(USDAmount* ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()} USD)
+           CloutMegazord Fee{" "}
+           {MGZDfee !== null ? MGZDfee + "%" : 'Waiting'}
+              <Tooltip
+                id="tooltip-top"
+                title={<div dangerouslySetInnerHTML={{
+                  __html: `Platform Fees included in total transaction amount and depending of USD value:${feesMapTable}
+                    <i>NOTE:The USD value is calculated at the time of the task execution.</i>`
+                }}></div>}
+                placement="right"
+              >
+            <Icon className={classes.icon} fontSize="small">info</Icon>
+            </Tooltip>
+            : { (USDAmount * ((MGZDfee || 0) / 100)).toFixed(4).toLocaleString()}{" "}
+            (≈ ${(USDAmount* ((MGZDfee || 0) / 100)).toFixed(2).toLocaleString()} USD) 
           </div>
         </div>
       </FormHelperText>

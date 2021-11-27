@@ -153,9 +153,9 @@ const getFeePercentage = async (zords, task) => {
             SkipForLeaderboard: true
         });
         let CoinPriceBitCloutNanos = userResp.UserList[0].ProfileEntryResponse.CoinPriceBitCloutNanos;
-        AmountUSD = (task.AmountNanos / 1e9) * (CoinPriceBitCloutNanos / 1e9 ) * exchRate.USDbyBTCLT;
+        AmountUSD = (task.AmountNanos / 1e9) * (CoinPriceBitCloutNanos / 1e9 ) * exchRate.USDbyDeSo;
     } else {
-        AmountUSD = task.AmountNanos / 1e9 * exchRate.USDbyBTCLT;
+        AmountUSD = task.AmountNanos / 1e9 * exchRate.USDbyDeSo;
     }
     var fees = Object.keys(FeesMap).sort().reverse();
     trgFee = fees[0];
@@ -347,9 +347,7 @@ async function getExchangeRate() {
     throw new Error(e);
   }
   var exchangeRate =  {
-    SatoshisPerBitCloutExchangeRate: exchangeRate.SatoshisPerBitCloutExchangeRate,
-    USDCentsPerBitcoinExchangeRate: exchangeRate.USDCentsPerBitcoinExchangeRate,
-    USDbyBTCLT: exchangeRate.USDCentsPerBitCloutExchangeRate / 100
+    USDbyDeSo: exchangeRate.USDCentsPerDeSoExchangeRate / 100
   }
   return exchangeRate;
 }
@@ -826,7 +824,7 @@ app.post("/api/task", async (req, res, next) => {
         });
       }
 
-      if (dbTask.type === 'send') {
+      if (['buy', 'sell', 'send'].includes(dbTask.type)) {
         taskSession.trgFee = await getFeePercentage(Object.keys(zords), dbTask);
       }
       try {

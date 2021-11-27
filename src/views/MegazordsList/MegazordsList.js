@@ -548,7 +548,7 @@ export default function MegazordsList(props) {
   const [apiLock, setApiLock] = React.useState(false);
   const api_functions = props.api_functions;
   const bitcloutData = props.bitcloutData;
-  var USDbyBTCLT, createFeeBCLT, createFeeUSD;
+  var USDbyDeSo, createFeeBCLT, createFeeUSD;
   const user = props.user || {};
   const megazords = user.megazords || {};
   const megazordsOrdered = Object.keys(megazords)
@@ -558,9 +558,9 @@ export default function MegazordsList(props) {
       return obj;
     }, {});
   if (bitcloutData) {
-    USDbyBTCLT = bitcloutData.exchangeRate.USDbyBTCLT;
+    USDbyDeSo = bitcloutData.exchangeRate.USDbyDeSo;
     createFeeBCLT = bitcloutData.appState.CreateProfileFeeNanos / 1e9;
-    createFeeUSD = (createFeeBCLT * USDbyBTCLT).toFixed(2);
+    createFeeUSD = (createFeeBCLT * USDbyDeSo).toFixed(2);
   }
 
   const handleClickListItem = () => {
@@ -891,8 +891,8 @@ export default function MegazordsList(props) {
                                 (item.BalanceNanos / 1e9).toFixed(4)
                               ).toLocaleString()}{" "}
                               ≈ $
-                              {(USDbyBTCLT
-                                ? (item.BalanceNanos / 1e9) * USDbyBTCLT
+                              {(USDbyDeSo
+                                ? (item.BalanceNanos / 1e9) * USDbyDeSo
                                 : 0
                               )
                                 .toFixed(2)
