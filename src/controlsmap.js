@@ -56,7 +56,7 @@ const updateProfile = (data) => {
       indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
       throw Error(errorMessage);
     }
-    if (fileToUpload.size > 2 * 1024 * 1024) {
+    if (fileToUpload.size >= 5 * 1024 * 1024) {
       errorMessage = "Please upload an image that is smaller than 5MB.";
       indexFunctons.notifSnak('open', 'error', errorMessage, 7000);
       throw Error(errorMessage);
