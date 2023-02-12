@@ -2,14 +2,6 @@ import firebase from 'firebase';
 import { getFunctions, httpsCallable } from "firebase/functions";
 
 const config = {
-  apiKey: "AIzaSyBG6Uo9bwEnxrVhDvxCnnGM88MfBgBm4EY",
-  authDomain: "cloutmegazord.firebaseapp.com",
-  databaseURL: "https://cloutmegazord-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "cloutmegazord",
-  storageBucket: "cloutmegazord.appspot.com",
-  messagingSenderId: "493989806019",
-  appId: "1:493989806019:web:05c697b2bfeb2f88a84776",
-  measurementId: "G-NJHY4QC4FJ"
 };
 
 export default firebase;
